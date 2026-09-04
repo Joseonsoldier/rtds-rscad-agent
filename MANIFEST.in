@@ -1,0 +1,7 @@
+include LICENSE README.md SECURITY.md CONTRIBUTING.md .gitattributes .gitignore .env.example
+include constraints-windows-py312.txt
+recursive-include docs *.md *.json
+recursive-include tools *.py
+recursive-include tests *.py
+recursive-include src/rtds_agent *.py *.json
+global-exclude __pycache__ *.py[cod] *.rtfx *.dfx *.sqlite *.pem *.key

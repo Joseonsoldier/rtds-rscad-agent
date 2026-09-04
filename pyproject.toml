@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77,<85"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rtds-rscad-agent"
+version = "0.1.0a1"
+description = "Local MCP tools for source-grounded RSCAD inspection and bounded simulation workflows"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Joseonsoldier"}]
+dependencies = ["mcp[cli]>=2.1,<3", "openai>=2.54,<3", "pypdf>=6,<7", "jsonschema>=4.23,<5", "referencing>=0.36,<1"]
+classifiers = ["Development Status :: 3 - Alpha", "Operating System :: Microsoft :: Windows", "Programming Language :: Python :: 3.12", "Topic :: Scientific/Engineering"]
+
+[project.optional-dependencies]
+dev = ["build>=1.2,<2", "twine>=6,<7"]
+
+[project.scripts]
+rtds-agent = "rtds_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["rtds_agent*"]
+
+[tool.setuptools.package-data]
+rtds_agent = ["schemas/*.json", "release_manifest.json"]

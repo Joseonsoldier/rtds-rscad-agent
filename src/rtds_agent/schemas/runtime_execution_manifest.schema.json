@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/runtime-execution-manifest-1.0.json",
+  "title": "Production RSCAD Runtime control and execution evidence",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "backend",
+    "action",
+    "status",
+    "authorization",
+    "runtime_plan",
+    "rack_snapshot",
+    "compiled_artifact",
+    "hashes",
+    "execution",
+    "cleanup",
+    "raw_data",
+    "safety",
+    "errors",
+    "cleanup_errors"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "backend": {
+      "const": "ProductionRscadBackend"
+    },
+    "action": {
+      "const": "runtime_start_stop"
+    },
+    "status": {
+      "enum": [
+        "runtime_completed",
+        "runtime_failed",
+        "runtime_cleanup_failed"
+      ]
+    },
+    "authorization": {
+      "type": "object",
+      "required": [
+        "approval_id",
+        "action",
+        "status",
+        "single_use",
+        "scope"
+      ],
+      "properties": {
+        "action": {
+          "const": "runtime_start_stop"
+        },
+        "status": {
+          "const": "consumed"
+        },
+        "single_use": {
+          "const": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "runtime_plan": {
+      "$ref": "runtime_test_spec.schema.json"
+    },
+    "rack_snapshot": {
+      "type": "object"
+    },
+    "compiled_artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "bytes"
+      ]
+    },
+    "hashes": {
+      "type": "object"
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "run_call_attempted",
+        "run_started",
+        "raw_data_collected",
+        "stop_call_attempted",
+        "stop_succeeded"
+      ]
+    },
+    "cleanup": {
+      "type": "object",
+      "required": [
+        "case_close_attempted",
+        "case_closed",
+        "disconnected"
+      ]
+    },
+    "raw_data": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "runtime_parameter_write_called",
+        "hardware_io_called",
+        "rack_configuration_changed",
+        "deployment_called",
+        "case_save_called",
+        "source_write_called"
+      ]
+    },
+    "errors": {
+      "type": "array"
+    },
+    "cleanup_errors": {
+      "type": "array"
+    },
+    "driver": {
+      "type": "object",
+      "properties": {
+        "runtime_controls": {
+          "type": "object",
+          "required": [
+            "planned",
+            "applied",
+            "restored",
+            "all_readbacks_verified",
+            "all_restored",
+            "actions"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

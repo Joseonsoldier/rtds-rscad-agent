@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/runtime-test-spec-1.1.json",
+  "title": "RSCAD Runtime control and signal-capture test specification",
+  "type": "object",
+  "required": [
+    "test_id",
+    "execution_mode",
+    "runtime_required",
+    "event",
+    "runtime_controls",
+    "runtime_capture",
+    "measurement_channels",
+    "output_requirements"
+  ],
+  "properties": {
+    "test_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_mode": {
+      "enum": [
+        "runtime_read_only_signal_capture",
+        "runtime_control_and_signal_capture"
+      ]
+    },
+    "runtime_required": {
+      "const": true
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "none"
+        }
+      },
+      "additionalProperties": true
+    },
+    "runtime_controls": {
+      "type": "object",
+      "required": [
+        "read_only_signal_capture",
+        "runtime_parameter_writes",
+        "hardware_io_changes",
+        "rack_configuration_changes",
+        "deployment_actions"
+      ],
+      "properties": {
+        "read_only_signal_capture": {
+          "const": true
+        },
+        "runtime_parameter_writes": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "required": [
+              "action_id",
+              "purpose",
+              "object_uuid",
+              "object_type",
+              "object_name",
+              "object_group",
+              "object_desc",
+              "attribute",
+              "expected_initial_value",
+              "value",
+              "apply_after_seconds",
+              "restore_after_capture"
+            ],
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "purpose": {
+                "enum": [
+                  "switch_operation",
+                  "slider_change",
+                  "dial_change",
+                  "runtime_parameter_write",
+                  "lockfree_change"
+                ]
+              },
+              "object_uuid": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "object_type": {
+                "enum": [
+                  "switch",
+                  "slider",
+                  "dial",
+                  "binary_switch",
+                  "button",
+                  "draft_variable"
+                ]
+              },
+              "object_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "object_group": {
+                "type": "string",
+                "minLength": 1
+              },
+              "object_desc": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attribute": {
+                "enum": [
+                  "position",
+                  "value"
+                ]
+              },
+              "expected_initial_value": {
+                "type": "number"
+              },
+              "value": {
+                "type": "number"
+              },
+              "apply_after_seconds": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 30
+              },
+              "restore_after_capture": {
+                "const": true
+              },
+              "phase": {
+                "enum": [
+                  "before_run",
+                  "after_run"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "hardware_io_changes": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "rack_configuration_changes": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "deployment_actions": {
+          "type": "array",
+          "maxItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtime_capture": {
+      "type": "object",
+      "required": [
+        "warmup_seconds",
+        "minimum_samples_per_channel"
+      ],
+      "properties": {
+        "warmup_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "minimum_samples_per_channel": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "loadflow_initialization": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "timeout_seconds",
+        "zero_impedance_threshold_pu",
+        "flat_start",
+        "method"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "zero_impedance_threshold_pu": {
+          "type": "number",
+          "minimum": 1e-09,
+          "maximum": 0.001
+        },
+        "flat_start": {
+          "type": "boolean"
+        },
+        "method": {
+          "enum": [
+            "FAST_DECOUPLED",
+            "NEWTON_RAPHSON",
+            "GAUSSIAN"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "measurement_channels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "channel_id",
+          "signal_path",
+          "units"
+        ],
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "signal_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "units": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "output_requirements": {
+      "type": "object",
+      "required": [
+        "raw_numeric_data_required",
+        "screenshot_only_pass_fail_forbidden"
+      ],
+      "properties": {
+        "raw_numeric_data_required": {
+          "const": true
+        },
+        "screenshot_only_pass_fail_forbidden": {
+          "const": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

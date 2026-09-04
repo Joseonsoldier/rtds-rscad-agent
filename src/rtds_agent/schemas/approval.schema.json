@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/approval-1.0.json",
+  "title": "Single-use RTDS workflow approval",
+  "type": "object",
+  "required": [
+    "approval_id",
+    "request_id",
+    "action",
+    "risk_level",
+    "actor",
+    "source",
+    "scope",
+    "granted_at",
+    "single_use",
+    "status"
+  ],
+  "properties": {
+    "action": {
+      "enum": [
+        "compile",
+        "offline_test",
+        "runtime_start_stop",
+        "runtime_parameter_write",
+        "hardware_io_change",
+        "deployment_or_rack_configuration_change",
+        "original_overwrite"
+      ]
+    },
+    "risk_level": {
+      "enum": [
+        "L2",
+        "L3",
+        "L4"
+      ]
+    },
+    "single_use": {
+      "const": true
+    },
+    "status": {
+      "enum": [
+        "granted",
+        "consumed",
+        "revoked"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "workflow_id",
+        "working_copy_sha256",
+        "test_spec_sha256"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/runtime-api-surface-1.0.json",
+  "title": "Installed RSCAD FX Runtime API static surface validation",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "status",
+    "mode",
+    "rscad_fx_version",
+    "python_api_version",
+    "source_files",
+    "adapter",
+    "surface",
+    "checks",
+    "safety",
+    "integrity"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "created_at": {"type": "string", "minLength": 1},
+    "status": {"const": "passed"},
+    "mode": {"const": "static_installed_rscad_fx_runtime_api_surface_validation"},
+    "rscad_fx_version": {"const": "2.7.3"},
+    "python_api_version": {"const": "1.1"},
+    "source_files": {
+      "type": "object",
+      "minProperties": 6,
+      "additionalProperties": {"$ref": "#/$defs/fileRef"}
+    },
+    "adapter": {
+      "allOf": [
+        {"$ref": "#/$defs/fileRef"},
+        {
+          "type": "object",
+          "required": ["required_fragment_count", "forbidden_fragment_count"],
+          "properties": {
+            "required_fragment_count": {"type": "integer", "minimum": 19},
+            "forbidden_fragment_count": {"type": "integer", "minimum": 7}
+          }
+        }
+      ]
+    },
+    "surface": {"type": "object", "minProperties": 16},
+    "checks": {
+      "type": "object",
+      "minProperties": 24,
+      "additionalProperties": {"const": true}
+    },
+    "safety": {
+      "type": "object",
+      "minProperties": 9,
+      "additionalProperties": {"const": false}
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["all_checks_passed", "payload_sha256"],
+      "properties": {
+        "all_checks_passed": {"const": true},
+        "payload_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fileRef": {
+      "type": "object",
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    }
+  },
+  "additionalProperties": false
+}

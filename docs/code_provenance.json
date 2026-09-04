@@ -1,0 +1,45 @@
+{
+  "description": "Agent-authored modules ported from a private prototype. No vendor SDK, documentation, project files, approvals or historical run evidence were copied.",
+  "modules": [
+    {
+      "module": "core/topology_parser.py",
+      "source_sha256_before_port": "bfe0c53c3ee5c14a1a10d838bce383c43b5f514bf4593e85eeddade348470dca"
+    },
+    {
+      "module": "core/state_machine.py",
+      "source_sha256_before_port": "4b0620846ef02545c735faf57c789c80dd63378841f304d6950e53fad02741fd"
+    },
+    {
+      "module": "core/orchestrator.py",
+      "source_sha256_before_port": "9a7c8d959e641399c48b55075567fc70095b26acad10752d8bff0053905e9d29"
+    },
+    {
+      "module": "core/production_backend.py",
+      "source_sha256_before_port": "7239a74466a6edc014835b1837ec7f1925dfd0251665558f5b6b0baa75729368"
+    },
+    {
+      "module": "core/runtime_backend.py",
+      "source_sha256_before_port": "aeba6ad48dab2c45ea5a52f15b201cb146e33ad1f65516b7374fd3765d9df763"
+    },
+    {
+      "module": "core/companion_dependencies.py",
+      "source_sha256_before_port": "539642fb67c357eaa40ed82bf18a71c630455fe3f3a541f289c38c995ae50c2a"
+    },
+    {
+      "module": "core/runtime_api_surface.py",
+      "source_sha256_before_port": "5133ebeea72cb5a51b33a09fa0d87245efbcef397338ec1e4879bf7150ebe357"
+    },
+    {
+      "module": "core/mock_backend.py",
+      "source_sha256_before_port": "6357e956d08574cda1fec09fa0eba0ad4c12143784995e503acc5ae8b2f5976d"
+    },
+    {
+      "module": "project_tools.py",
+      "source_sha256_before_port": "8f63f5bb57817caba1505a826bea80086100376b8311df45ebe8b628e0c76df7"
+    },
+    {
+      "module": "core/structured_patch.py",
+      "source_sha256_before_port": "d7cd41507365ea8b16f948ca3509b78989a38ae879eeeb3dbbec48b53a86037d"
+    }
+  ]
+}
