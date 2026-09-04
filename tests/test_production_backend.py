@@ -13,7 +13,7 @@ from rtds_agent.core.production_backend import BackendSafetyViolation, Productio
 from rtds_agent.core.state_machine import ApprovalAction, Workflow, WorkflowState, sha256_file, sha256_json
 import rtds_agent
 _TEST_TEMP = tempfile.TemporaryDirectory(prefix='rtds-core-tests-')
-ROOT = Path(_TEST_TEMP.name)
+ROOT = Path(_TEST_TEMP.name).resolve()
 AGENT = ROOT / 'agent-data'
 AGENT_ROOT = AGENT
 (AGENT / 'projects').mkdir(parents=True)

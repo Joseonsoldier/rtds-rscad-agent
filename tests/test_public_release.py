@@ -21,7 +21,7 @@ class PublicReleaseTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="rtds-public-tests-")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.vendor = self.root / "licensed install"
         self.sources = self.vendor / "Examples"
         self.docs = self.vendor / "DOC"
