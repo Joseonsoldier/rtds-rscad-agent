@@ -1,5 +1,11 @@
 # Public alpha validation
 
+## User-directed local recovery follow-up (2026-09-05)
+
+Recovery-only SDK validation passed: 19/19 allowlisted RPCs, exact temporary-path identity (no old case-ID lookup), stopped/unmodified state, empty Draft, isolated recovery save, verified `close(False)` and `disconnect(False)`, and absence of both exact trial paths from the connection registry. All 53 protected hashes passed, including the original/input, SDK and other startup temporary case. Two incident-specific markers were archived and removed under the user's explicit cleanup authorization. Installed Java implementation inspection identified the temporary-backing-file behavior and temporary-case close restriction. No vendor implementation text is distributed.
+
+This follow-up changes documentation only. The 86-file package manifest and previously tested wheel are unchanged; the 350-test result below belongs to `e7911e6`, not a newly repeated suite. No Compile, Runtime, rack operation or construction retry was performed. A future new-case adapter fix and full reconstruction qualification remain outstanding. See [recovery evidence](NATIVE_EDITING.md#explicit-recovery-follow-up).
+
 ## Native reconstruction checkpoint 2 (2026-09-05)
 
 Baseline `fc2580e`. Fixed native reconstruction and public preview/apply are tested with authored synthetic fixtures. Focused native regression: 33 tests passed (16 new reconstruction tests), 8.228 s; subsequent close-retry hardening is included in the final full suite below. Real SDK evidence is separate: one new-case trial stopped before insertion/save on unexpected file identity; cleanup unconfirmed, 56 protected hashes unchanged. No new Compile, Runtime or rack operation followed. Historical CH5/CH6 saved-file comparisons passed with explicit UUID/GROUP mapping. [Native evidence and limitations](NATIVE_EDITING.md#checkpoint-2-local-trial-and-recovery-limitation) records the unresolved recovery requirement.

@@ -1,5 +1,13 @@
 # Implementation status
 
+## Explicit recovery follow-up — completed
+
+After the user's explicit request to verify and clean up, the failed checkpoint-2 trial was recovered through the local API. Installed Java implementation inspection established that `new_case()` creates an existing temporary RTFX backing file; the adapter's existing-file rejection caused the incident. The exact temporary file was identified by its unique path and creation time inside the failed attempt, with a disk-empty Draft and matching trial process/launch evidence. No old session ID was used as a lookup target.
+
+The current connection resolved that exact backing path, confirmed stopped/unmodified state and zero Draft components, saved an isolated recovery copy, then completed `close(False)` and `disconnect(False)`. Exact source/recovery paths were absent from the connection registry after close. All 19 recovery RPCs were allowlisted; 53 protected hashes, including the other startup temporary case, stayed unchanged. Both incident-specific recovery markers were archived and removed after verification under this explicit cleanup authorization. No execution policy, grant or unrelated case was changed. No Compile, Runtime, rack query or model-building retry occurred.
+
+The earlier failure remains a failed attempt. This recovery is not reconstruction/Compile qualification. Before a new construction trial, the new-case guard still needs a provenance-bound temporary-file acceptance rule; broad acceptance of pre-existing files is not justified. Public source/schema/skill bytes are unchanged from `e7911e6`. Details are in [native recovery evidence](NATIVE_EDITING.md#explicit-recovery-follow-up).
+
 ## Native closed-loop checkpoint 2 — software implemented; local recovery required
 
 Baseline `fc2580e`. WP-N01/N02 now implement source-derived `rebuild_draft` with flat insertion/wire construction or GROUP/hierarchy clipboard reconstruction. The public preview/apply transaction retains component policy, source/snapshot/definition/companion/SDK hashes, isolated staging, saved comparison, exact reopen and atomic publication. Added explicit UUID/context mapping, per-context translation, world wire endpoints and GROUP membership/metadata checks. Saved Runtime records and opaque payloads are refused. Auto apply remains disabled.

@@ -54,6 +54,8 @@ After those pass, proceed to WP-N03 Runtime IR/binding and confirmed authoring A
 
 ## Checkpoint 2 local trial and recovery limitation
 
+This section records the original failed attempt. Its cleanup incident was subsequently resolved by the explicit user-directed recovery below; construction qualification remains incomplete.
+
 One isolated Voltage Divider `insert` trial opened/read the private input, read source parameters, confirmed source close, and called `new_case` once. The new handle's file value resolved to an existing filesystem entry and failed the strict identity guard. The old journal did not retain that returned file string, so its exact value and cause are unknown. No insert/wire/paste/save/Compile followed. There was no output candidate. All 56 protected source/SDK/definition hashes and the input copy were unchanged.
 
 The attempt recorded 197 RPCs. Case close for the new handle was not attempted after identity loss; disconnect was also unconfirmed because its transport `ping` was rejected. The code now persists the observed file value before validation and permits root transport ping during disconnect after identity loss. Synthetic tests cover these fixes; they have not been retried against the application. Existing-file identity rejection is retained rather than guessing an acceptable placeholder.
@@ -61,3 +63,13 @@ The attempt recorded 197 RPCs. Case close for the new handle was not attempted a
 Recovery markers were recorded in both the isolated trial data and configured operator data. Further native/Compile/Runtime dispatch is blocked. The recorded new case ID was 2 in that connection only; it is not safe to reconnect by that ID. Operator review of the exact trial and application state is required under [SAFETY.md](SAFETY.md). No marker is cleared automatically, no force-close is attempted, and this incident is not reported as a completed local reconstruction.
 
 Separately, the new comparator read historical CH5 `indmac` and CH6 `gen1` normalized-reference/generated files without SDK import or app connection. It verified 77/135 records and one GROUP each. This qualifies comparison against those existing bytes only. It is not a new native reconstruction or Compile result. Raw evidence remains ignored under `.validation/native-rebuild-20260905`.
+
+## Explicit recovery follow-up
+
+The user subsequently requested confirmation and cleanup. Read-only inspection of installed SDK/Java implementation showed that `newCase` creates a physical `tempCaseFile*.rtfx`; `getFile` returns its absolute backing path. The existing-file guard therefore rejected a legitimate new temporary case. Temporary cases also reject `close(False)` until saved. This explains the failure without treating every existing path as safe.
+
+The unique temporary file created within the failed attempt was matched to the trial process/launch and an empty saved Draft. Recovery used that exact path, never the old numeric ID. The SDK connection registry is not a global case inventory; when the exact path was absent from that registry, the reviewed `open_case` path resolved the global CaseTab for that backing file. Readback confirmed stopped/unmodified state, one Draft subpage and zero components. The case was saved to a new isolated recovery file, its empty Draft was verified, `close(False)` returned true, both exact paths were absent from the registry, and `disconnect(False)` completed. The application and unrelated startup case were retained.
+
+All 19 recovery RPCs were allowed. The 53 protected hashes remained unchanged. Recovery artifact SHA-256: `064f1f91f33a3fd37ba5895715efacb239926b7a46aba6ffbcfbf2cea6290a53`. Both markers for this specific incident were archived and removed only after successful verification and the user's explicit cleanup request. No policy was activated, forced close or model-building retry was used, and no Compile/Runtime/rack call occurred. Raw evidence and marker archives remain private under `.validation/native-rebuild-20260905/recovery_01`.
+
+The production new-case guard is unchanged in this documentation-only follow-up. Its future correction must prove that the temporary backing file was freshly created by the current owned call, with exact identity and initial-content checks; permitting arbitrary existing files would weaken source protection. Recovery does not make the previous attempt successful or qualify the new reconstruction protocol.
