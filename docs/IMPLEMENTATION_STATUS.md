@@ -2,6 +2,10 @@
 
 Work orders v1.0 and v2.0, 2026-09-05. Statuses describe software implementation and explicitly listed tests. They do not certify RSCAD, an installed vendor SDK, a rack, or an engineering design. Historical checkpoints below retain their original counts and scope.
 
+## Voltage Divider native API checkpoint
+
+The user requested tutorial reproduction through Compile and then required API-only operation. A new Voltage Divider Draft was constructed through installed native API insertion, parameter setting and wiring; save/close/reopen and readbacks passed. Six native circuit records and five static nets match the reference electrical topology; 72 protected files remained unchanged. Compile is **not executed** because rack-free behavior remains unestablished. Runtime layout/decorations and all-stored-parameter identity are not complete. See [actual evidence, differences and remaining Compile prerequisite](VOLTAGE_DIVIDER_API.md). This limited native qualification does not replace the general unqualified structural-adapter entries below.
+
 ## V2.0 engineering implementation
 
 Baseline: clean `main` at `06a67ad`. The new work order was reviewed in dependency order. Existing numeric transactions, snapshots, policy/grants, native capture driver, diagnostics and assessment were reused. [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md) gives the exact callable scope and limitations. All original 43 tools remain; six additions bring full mode to 49. Core/engineering profiles have 10/29. Nine skills carry capability manifests. Package/dependency/support target versions are unchanged.
