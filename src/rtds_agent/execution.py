@@ -169,6 +169,8 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
     # Policy gate precedes even API inspection, backend construction and rack queries.
     policy = require_action(settings, action.value)
     with execution_lock(settings):
+        if (settings.data_dir / "native_recovery_required.json").exists():
+            raise PermissionError("Unverified native case cleanup blocks live execution; inspect the exact native journal before operator recovery")
         path, workflow = _load_workflow(workflow_path)
         if expected_workflow_sha256 and sha256_file(path) != expected_workflow_sha256:
             raise ToolSafetyError("Runtime request changed before execution lock")

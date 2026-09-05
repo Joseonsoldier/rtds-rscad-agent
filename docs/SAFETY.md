@@ -26,6 +26,8 @@ An exclusive local execution lock serializes runs. A process killed unexpectedly
 
 `policy disable` prevents subsequent runs; it does not interrupt an active run. Normal CLI policy changes are refused while a run holds the lock.
 
+Explicit native Draft editing also uses this execution lock. An uncertain native worker leaves its attempt files and `native_recovery_required.json` in the data directory. The shared lock then blocks native editing, Compile and Runtime dispatch. Inspect the recorded exact case and verified cleanup before an operator manually removes that marker. It is never cleared automatically, and it does not authorize Compile/Runtime for recovery. [Native editing](NATIVE_EDITING.md) documents the bounded component-policy path and source-copy protection.
+
 ## Public contribution boundary
 
 Use synthetic fixtures only in public tests. Do not connect GitHub-hosted or untrusted pull-request code to a lab rack. No self-hosted lab runner, OpenAI credentials or proprietary documentation belongs in the public CI environment. Release checksums are not a substitute for code review or an OS security boundary.

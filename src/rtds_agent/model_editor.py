@@ -1,7 +1,7 @@
-"""Bounded offline record editing, with reviewed preview and atomic publication.
+"""Bounded reviewed editing with static and explicit native candidate backends.
 
 Insertion uses an exact existing same-context template, never an invented vendor
-record. The SDK adapter is deliberately not called by this file transaction.
+record. The default static transaction never calls the SDK.
 """
 from __future__ import annotations
 import codecs
@@ -199,7 +199,19 @@ def edit_dfx(data, operations, definitions, policy, *, has_other_members):
 
 
 def edit_rscad_model(request: EditRequest) -> dict[str, Any]:
-    """Preview/apply an isolated static candidate; no SDK, Compile, rack or Runtime calls."""
+    """Preview/apply isolated candidates with static or bounded native Draft editing.
+
+    Omitted backend preserves static behavior. Auto falls back to preview only
+    until operation-scoped native integration qualification is available.
+    """
+    validate_edit(request)
+    if request.get("backend", "static") != "static":
+        from .native_editor import native_edit
+        return native_edit(request, _edit_static)
+    return _edit_static(request)
+
+
+def _edit_static(request):
     validate_edit(request)
     settings = get_settings()
     source, _, before = _document(request["source_project"], request["snapshot_id"])

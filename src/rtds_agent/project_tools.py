@@ -1136,6 +1136,9 @@ def compare_project_versions(
     net_counts_b = Counter(topology_signature({"nets": [net]}) for net in second["nets"])
     topology_changes = [{"net_signature_sha256": key, "project_a_count": net_counts_a[key], "project_b_count": net_counts_b[key]}
                         for key in sorted(net_counts_a.keys() | net_counts_b.keys()) if net_counts_a[key] != net_counts_b[key]]
+    from .core.model_ir import group_diff
+    groups = group_diff(first, second)
+    group_changes = [{"kind": kind, "change": change} for kind, values in groups.items() for change in values]
     selected = component_changes[offset:offset + limit]
     return {
         "status": "completed",
@@ -1160,11 +1163,15 @@ def compare_project_versions(
         "topology_change_count": len(topology_changes),
         "topology_changes": topology_changes[offset:offset + limit],
         "topology_pagination": _pagination(len(topology_changes), limit, offset, snapshot_id_a),
+        "group_change_count": len(group_changes),
+        "group_changes": group_changes[offset:offset + limit],
+        "group_pagination": _pagination(len(group_changes), limit, offset, snapshot_id_a),
+        "group_identity_basis": "context_group_ordinal_in_snapshot; not native persistent IDs",
         "project_setting_changes": setting_changes,
         "coverage_changes": coverage_changes,
         "component_change_count": len(component_changes),
         "returned_component_change_count": len(selected),
-        **_pagination(max(len(component_changes), len(topology_changes)), limit, offset, snapshot_id_a),
+        **_pagination(max(len(component_changes), len(topology_changes), len(group_changes)), limit, offset, snapshot_id_a),
         "component_changes_truncated": len(component_changes) > offset + limit,
         "component_changes": selected,
         "limitations": [

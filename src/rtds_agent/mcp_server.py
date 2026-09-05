@@ -51,9 +51,9 @@ READ = [component_catalog.search_component_catalog, component_catalog.get_compon
         project_tools.compare_component_settings, project_tools.compare_project_versions,
         execution.get_execution_policy,
         execution.get_workflow_status, execution.revalidate_execution_evidence]
-LOCAL_WRITE = [model_editor.edit_rscad_model, result_capture.capture_rtds_results, extension_trials.prepare_extension_trial, editing.apply_parameter_patch_batch, assessment.save_result_assessment, editing.apply_parameter_patch,
+LOCAL_WRITE = [result_capture.capture_rtds_results, extension_trials.prepare_extension_trial, editing.apply_parameter_patch_batch, assessment.save_result_assessment, editing.apply_parameter_patch,
                execution.prepare_workflow, execution.prepare_simulation_run]
-LIVE = [experiments.run_experiment_suite, execution.compile_project, execution.run_offline_test, execution.run_simulation]
+LIVE = [model_editor.edit_rscad_model, experiments.run_experiment_suite, execution.compile_project, execution.run_offline_test, execution.run_simulation]
 @wraps(knowledge.get_manual_figure)
 def manual_figure_mcp(source_path: str, page: int = 1) -> dict:
     from .media import manual_figure_result

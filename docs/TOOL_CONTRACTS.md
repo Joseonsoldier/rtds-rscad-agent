@@ -1,5 +1,7 @@
 # Public tool contracts
 
+Native checkpoint addition: `edit_rscad_model.request.backend` optionally accepts `static` (default), `native` or `auto`. Explicit native apply is limited to existing flat Draft parameter/location edits with the same reviewed component-policy preview, isolated SDK worker, readback, save/close/reopen and verified publication. Auto is currently preview-only. This mixed-mode tool has live/destructive annotations. `compare_project_versions` adds paginated GROUP changes, IR adds `groups`, and parser coverage adds `group_count`. Names/profile counts remain 49/10/29. See [exact scope, journal and qualification](NATIVE_EDITING.md); earlier statements below about unexposed native editing describe the previous checkpoint.
+
 The local STDIO server uses an explicit allowlist. Treat the connected server's `tools/list` input schemas as the callable contract; the repository's independent smoke test detects missing, renamed, or unreviewed tools. Optional project-query fields are additive. No tool enables policy, runs arbitrary code, writes arbitrary paths, changes rack/hardware configuration, saves a running case, or deploys.
 
 ## Read tools

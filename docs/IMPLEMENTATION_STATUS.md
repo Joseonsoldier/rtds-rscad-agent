@@ -1,5 +1,22 @@
 # Implementation status
 
+## Native closed-loop checkpoint 1 — in progress
+
+New work order reviewed against baseline `352ae0b`. This is the first implementation checkpoint, not completion of the full work order. [Native scope, transactions and evidence](NATIVE_EDITING.md) distinguish public synthetic tests from task-scoped installed SDK trials.
+
+| Package | Current implementation and remaining work |
+|---|---|
+| WP-N01 | Partial: static/native/auto selection; fixed native worker for existing flat Draft parameter/location edits; source/policy/SDK-bound preview, durable intent/readback, exact save/close/reopen, semantic checks and atomic publication. Auto remains preview-only. New-case construction, insert/wire/clone and complete public native integration DoD remain pending. |
+| WP-N02 | Partial: GROUP entities, nesting/hierarchy context, IR and paginated semantic changes; internal -1 paste-sentinel handling; possible-mutation/identity/cleanup journals and follow-up blocking. Public grouped reconstruction/mutation and new live paste qualification remain pending. |
+| WP-N03–N06 | Pending after native construction/GROUP completion: Runtime IR/authoring, live capture integration, simulator-time events and load-flow/initialization. No new Runtime/rack/load-flow action is authorized or executed. |
+| WP-N07–N11 | Pending prerequisites: component knowledge, grounded rules, native failure corpus, line/cable authoring and model-driven evaluation. |
+
+Actual local evidence: static SDK 1.1 inspection of 24 sources; nine CH1–CH6 originals parsed with hashes preserved. CH5/CH6 now expose 77/135 components and one GROUP each. The bounded native adapter changed an isolated Voltage Divider resistor 1.0→2.0, verified readback/save/close/reopen/cleanup, unchanged topology and 56 protected hashes. A separate copy compiled once with `True`, a success log, empty error log and a 107,329-byte binary; cleanup and 26 protected hashes passed. Public native apply was exercised synthetically only; no real operator component policy was created. Software/release results are recorded in [VALIDATION.md](VALIDATION.md).
+
+Final software regression: 334 run, 332 passed, two existing optional-host/OS-link skips, no failures. Real STDIO49/core10/engineering29, nine skill validators, manifest84, build/Twine/source checks and a fresh external-venv wheel installation passed. Native recovery blocks subsequent live dispatch while preserving operator policy revocation. The default editor remains static; parser/preview hashes changed and the mixed native editor has live/destructive annotations.
+
+Changed-file groups: editor/worker/journal (`model_editor.py`, `native_editor.py`, `core/native_edit.py`, `core/native_edit_worker.py`); GROUP inspection/comparison (`core/topology_parser.py`, `core/model_ir.py`, `project_tools.py`); live recovery gate (`execution.py`); capability/MCP/schema/skill contracts and release manifest; `tests/test_native_edit.py`, `tools/mcp_smoke.py`; README, AGENTS and eight documentation pages including this status and the native guide. No vendor model, SDK source, private log, active policy or configuration is committed.
+
 Work orders v1.0 and v2.0, 2026-09-05. Statuses describe software implementation and explicitly listed tests. They do not certify RSCAD, an installed vendor SDK, a rack, or an engineering design. Historical checkpoints below retain their original counts and scope.
 
 ## Introductory Course CH1–CH6 API checkpoint

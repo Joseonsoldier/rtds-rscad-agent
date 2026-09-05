@@ -8,6 +8,7 @@ def model_ir(document):
     components = [{k: row[k] for k in ("context", "uuid", "component_type", "parameters", "location", "orientation", "mirrored")}
                   for row in document["components"]]
     result = {"schema_version": "1.0", "representation": "parsed_rscad_subset", "components": components,
+              "groups": document.get("groups", []),
               "hierarchy": sorted({r["context"] for r in components}), "ports": document["ports"],
               "connections": document["nets"], "metadata": {"source": document["source"],
               "coverage": document["coverage"], "warnings": document["warnings"], "limitations": document["limitations"]}}
@@ -27,9 +28,24 @@ def semantic_diff(before, after):
     a, b = keyed(before), keyed(after)
     from .static_comparison import topology_signature
     return {"added": [b[k] for k in sorted(b.keys()-a.keys())],
+            **group_diff(before, after),
             "removed": [a[k] for k in sorted(a.keys()-b.keys())],
             "changed": [{"identity": list(k), "before": a[k], "after": b[k]} for k in sorted(a.keys() & b.keys()) if a[k] != b[k]],
             "same_static_topology": topology_signature(before) == topology_signature(after)}
+
+
+def group_diff(before, after):
+    """Group comparison independent of the optional IR's component/output limits."""
+    ga = {g["group_id"]: g for g in before.get("groups", [])}
+    gb = {g["group_id"]: g for g in after.get("groups", [])}
+    if len(ga) != len(before.get("groups", [])) or len(gb) != len(after.get("groups", [])):
+        raise ValueError("Duplicate GROUP identity prevents semantic comparison")
+    common = sorted(ga.keys() & gb.keys())
+    return {"group_added": [gb[k] for k in sorted(gb.keys()-ga.keys())],
+            "group_removed": [ga[k] for k in sorted(ga.keys()-gb.keys())],
+            "group_member_changed": [k for k in common if ga[k]["members"] != gb[k]["members"]],
+            "group_moved": [k for k in common if ga[k]["location"] != gb[k]["location"]],
+            "group_structure_changed": [k for k in common if ga[k] != gb[k]]}
 
 
 def mermaid_overview(document):

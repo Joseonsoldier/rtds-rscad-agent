@@ -1,5 +1,7 @@
 # Compatibility and migration
 
+Native checkpoint 1 is additive: optional editor `backend`, GROUP IR/coverage and group comparison pagination. Existing calls without backend remain static. The editor now has live/destructive MCP annotations; clients that cache tool schemas/annotations should refresh them. Parser and skill hashes changed, so old project snapshots and previews must be re-read/reviewed. No configuration, operator component policy, execution policy or grant is migrated. Native construction and auto apply remain unavailable. See [scope and evidence](NATIVE_EDITING.md).
+
 These changes retain Python 3.12, the declared MCP major version, unittest, setuptools, local STDIO, original-project protection, and default-inactive execution. No migration enables a policy, changes a rack, uploads data, or rewrites historical evidence.
 
 ## Existing clients

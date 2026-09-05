@@ -1,5 +1,27 @@
 # Public alpha validation
 
+## Native closed-loop checkpoint 1 (2026-09-05)
+
+Baseline `352ae0b`; bounded native existing-component editing and GROUP inspection, with remaining WP-N01–N11 work explicitly tracked in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). Full construction/Runtime integration remains unqualified.
+
+| Check | Actual result |
+|---|---|
+| New synthetic regression | 17 new tests pass in the final full run. The earlier 16-test focused run passed in 9.111 s. Coverage includes save/close/reopen/readback, original protection, wrong-case refusal, mutation-before-error journaling, no force-close/retry, cleanup failures, worker timeout recovery marker, preview/policy binding, extra-change rejection, GROUP/nesting/diff, safe legacy grouped-edit refusal and preserving the existing comparison range for 5,001 components. |
+| Full regression | Final source: 334 run, 332 passed, 2 existing optional-host/OS-symlink skips, no failures/errors, 178.532 s, exit 0. Native recovery blocks Compile/Runtime before workflow/backend creation while operator policy revocation remains usable. |
+| Actual MCP STDIO | Full49/core10/engineering29 passed, including native preview without SDK calls, auto-apply refusal, static roundtrip, saved CSV metrics and inactive live execution rejection. No real RSCAD calls in the software smoke test. |
+| Skills | All nine quick validators passed. Full regression also validated packaged manifests and callable schemas. No host skill export/configuration change. |
+| Static installed sources | 24 SDK Python files; SDK 1.1; required declarations present. Nine CH1–CH6 originals parsed with hashes preserved, including complete CH5/CH6 GROUP members. Vendor imports, process and network calls blocked in the read-only probe. |
+| Local native adapter | Two isolated R=1.0→2.0 trials passed. Instrumented trial: 40 allowed RPCs, three old/new/reopened readbacks, verified close/reopen/cleanup, 56 protected files unchanged, exact requested parameter difference and unchanged topology/non-DFX members. FX reports 2.7, patch unknown. One static ground-port warning retained; no engineering pass. |
+| Separate authorized Compile | One call returned True in 0.688 s; fresh success log, empty error log, 107,329-byte binary, all 13 output file hashes verified. 16 allowed RPCs; source/candidate hash c67a9f79b52198c26e1c01121c769745df2f9567cdd6ad78ca3aa3a028b653f1; binary b407cf7c6c45160a877563f7f48040f000c6c7626e4c37603919e20676045133. Cleanup and 26 protected hashes passed. |
+| Source/distribution gates | Manifest84 matched; source/wheel/sdist scanner386 reported zero issues; whitespace check passed. Build produced wheel and sdist; Twine passed both. |
+| Fresh installed wheel | Passed in a new external venv: constrained dependency installation, pip check, installed import origin, integrity84, nine packaged/exported skills, synthetic demo and actual STDIO49/core10/engineering29 including native preview/auto rejection. `source_checkout_imported=false`, `live_rscad_calls=false`. |
+
+Final tested wheel SHA-256: `e396279385f9a5d79c17b4e1c0814847720507fae9ed57257bc5c76285ed8e07`, retained in ignored `delivery-dist`. Its code/schema/skill hashes match the delivered manifest. The sdist is refreshed after these documentation-only result entries; the tested wheel is unchanged.
+
+Native public policy-bound apply was tested synthetically; the local native trials invoked the same internal SDK adapter under standing isolated-edit permission, without creating a real component policy. No Runtime/rack/load-flow call, live group paste, new-case construction through this public adapter, failure-corpus qualification or model-driven evaluation occurred. Python loopback/RPC restrictions do not measure Java background network traffic. Earlier tutorial construction evidence is historical and not inherited as new adapter qualification.
+
+Development testing found a Windows cp949 decode error in the new synthetic worker fixture. Explicit UTF-8 reads corrected it before the passing focused/full runs. Final review also kept the recovery gate inside live dispatch so policy revocation remains possible, and separated GROUP comparison from optional IR size limits. Both are covered by the final regression. Local evidence is retained under ignored `.validation/native-closed-loop-20260905` and is excluded from Git/distribution. Older wheel results below belong to their earlier bytes.
+
 ## V2.0 engineering validation (2026-09-05)
 
 Clean baseline `main` was `06a67ad`. All testing used isolated temporary configuration and cleared inherited cloud/RSCAD settings. Source/schema/skill changes were reviewed before recording the final 81-file portable manifest. Software results and static installed-source observations below do not qualify an actual structural/native/rack workflow.

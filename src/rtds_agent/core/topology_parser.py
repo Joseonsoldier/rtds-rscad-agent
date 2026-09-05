@@ -104,7 +104,7 @@ def _parse_component(lines: list[str], start: int, context: str) -> tuple[dict[s
     in_parameters = False
     while index < len(lines):
         line = lines[index]
-        if line.startswith("COMPONENT_TYPE=") or line in {"HIERARCHY-START:", "HIERARCHY-END:", "SUBSYSTEM-END:"}:
+        if line.startswith("COMPONENT_TYPE=") or line in {"HIERARCHY-START:", "HIERARCHY-END:", "SUBSYSTEM-END:", "GROUP-END:"}:
             break
         stripped = line.strip()
         if stripped == "PARAMETERS-START:":
@@ -137,14 +137,30 @@ def _parse_component(lines: list[str], start: int, context: str) -> tuple[dict[s
 
 def parse_dfx_components(text: str) -> list[dict[str, Any]]:
     """Parse Draft components while preserving subsystem/hierarchy coordinate spaces."""
+    return parse_dfx_entities(text)[0]
+
+
+def parse_dfx_entities(text: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Read UUID-bearing components and anonymous GROUP containers separately.
+
+    GROUP IDs are context/ordinal identities in this parsed snapshot, not SDK IDs.
+    Child positions remain absolute in their Draft context. Bounds describe member
+    anchor points only; unavailable graphical extents are never manufactured.
+    """
     lines = text.splitlines()
     components: list[dict[str, Any]] = []
+    groups: list[dict[str, Any]] = []
+    group_stack = []
+    group_counts = defaultdict(int)
     subsystem_index = -1
     hierarchy_stack: list[str | None] = []
+    def context():
+        return "/".join([f"subsystem:{max(subsystem_index, 0)}", *(v for v in hierarchy_stack if v)])
     index = 0
     while index < len(lines):
         line = lines[index]
         if line == "SUBSYSTEM-START:":
+            if group_stack: raise ValueError("Unclosed GROUP across subsystem boundary")
             subsystem_index += 1
             hierarchy_stack.clear()
             index += 1
@@ -154,9 +170,45 @@ def parse_dfx_components(text: str) -> list[dict[str, Any]]:
             index += 1
             continue
         if line == "HIERARCHY-END:":
+            if group_stack and group_stack[-1]["context"] == context():
+                raise ValueError("Unclosed GROUP across hierarchy boundary")
             if hierarchy_stack:
                 hierarchy_stack.pop()
             index += 1
+            continue
+        if line == "SUBSYSTEM-END:" and group_stack:
+            raise ValueError("Unclosed GROUP at subsystem end")
+        if line == "GROUP-END:":
+            if not group_stack or group_stack[-1]["context"] != context():
+                raise ValueError("Orphan or cross-context GROUP-END")
+            group_stack.pop()
+            index += 1
+            continue
+        if line.strip() == "COMPONENT_TYPE=GROUP":
+            current = context()
+            group_counts[current] += 1
+            if len(groups) >= 2000 or len(group_stack) >= 32:
+                raise ValueError("GROUP count/depth exceeds parser bounds")
+            index += 1
+            while index < len(lines) and not lines[index].strip(): index += 1
+            header = HEADER_RE.fullmatch(lines[index].strip()) if index < len(lines) else None
+            if not header: raise ValueError("Missing GROUP placement header")
+            x, y, rotation, mirror, declared = map(int, header.groups())
+            group = {"group_id": f"{current}/group:{group_counts[current]}", "context": current,
+                     "parent_group": group_stack[-1]["group_id"] if group_stack and group_stack[-1]["context"] == current else None,
+                     "location": [x, y], "bounds": None, "members": [],
+                     "metadata": {"orientation": rotation*90, "mirrored": bool(mirror),
+                                  "declared_header_count": declared, "identity_basis": "context_group_ordinal",
+                                  "bounds_basis": "member_anchor_points", "unparsed_header_lines": []}}
+            if group["parent_group"]:
+                group_stack[-1]["members"].append({"kind": "group", "group_id": group["group_id"]})
+            groups.append(group)
+            group_stack.append(group)
+            index += 1
+            boundaries = {"GROUP-END:", "HIERARCHY-START:", "HIERARCHY-END:", "SUBSYSTEM-START:", "SUBSYSTEM-END:"}
+            while index < len(lines) and not (lines[index].startswith("COMPONENT_TYPE=") or lines[index] in boundaries):
+                if lines[index].strip(): group["metadata"]["unparsed_header_lines"].append(lines[index])
+                index += 1
             continue
         if not line.startswith("COMPONENT_TYPE="):
             index += 1
@@ -168,10 +220,23 @@ def parse_dfx_components(text: str) -> list[dict[str, Any]]:
         context_parts.extend(value for value in active_hierarchies if value)
         component, index = _parse_component(lines, index, "/".join(context_parts))
         components.append(component)
+        if group_stack and group_stack[-1]["context"] == component["context"]:
+            group_stack[-1]["members"].append({"kind": "component", "context": component["context"], "uuid": component["uuid"]})
         if is_hierarchy and hierarchy_stack and hierarchy_stack[-1] is None:
             raw_name = component["parameters"].get("Name", "box").rstrip("#") or "box"
             hierarchy_stack[-1] = f"{raw_name}:{component['uuid']}"
-    return components
+    if group_stack: raise ValueError("Unclosed GROUP at end of document")
+    locations = {(c["context"], c["uuid"]): c["location"] for c in components}
+    by_group = {g["group_id"]: g for g in groups}
+    for group in reversed(groups):
+        points = []
+        for member in group["members"]:
+            if member["kind"] == "component": points.append(locations[(member["context"], member["uuid"])])
+            else:
+                bounds = by_group[member["group_id"]]["bounds"]
+                if bounds: points.extend([bounds[:2], bounds[2:]])
+        if points: group["bounds"] = [min(p[0] for p in points), min(p[1] for p in points), max(p[0] for p in points), max(p[1] for p in points)]
+    return components, groups
 
 
 class DefinitionIndex:
@@ -571,7 +636,7 @@ class TopologyResult:
 def parse_rtfx_topology(rtfx_path: Path, definition_root: Path) -> TopologyResult:
     rtfx_path = rtfx_path.resolve()
     member, dfx_text, dfx_sha = read_rtfx_dfx(rtfx_path)
-    components = parse_dfx_components(dfx_text)
+    components, groups = parse_dfx_entities(dfx_text)
     definitions = DefinitionIndex(definition_root)
     definition_cache: dict[Path, str] = {}
     definition_evidence: dict[str, dict[str, Any]] = {}
@@ -748,6 +813,7 @@ def parse_rtfx_topology(rtfx_path: Path, definition_root: Path) -> TopologyResul
             "settings": parse_project_settings(dfx_text),
         },
         "coverage": {
+            "group_count": len(groups),
             "component_count": len(components),
             "definition_resolved_count": definition_resolved,
             "definition_coverage": round(definition_resolved / len(components), 6) if components else 1.0,
@@ -759,6 +825,7 @@ def parse_rtfx_topology(rtfx_path: Path, definition_root: Path) -> TopologyResul
             "hierarchy_link_count": len(hierarchy_links),
         },
         "components": components,
+        "groups": groups,
         "ports": ports,
         "segments": segments,
         "nets": nets,
@@ -782,6 +849,7 @@ __all__ = [
     "evaluate_condition",
     "parse_active_nodes",
     "parse_dfx_components",
+    "parse_dfx_entities",
     "parse_parameter_schema",
     "parse_rtfx_topology",
     "read_rtfx_dfx",

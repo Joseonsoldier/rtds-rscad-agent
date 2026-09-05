@@ -27,8 +27,8 @@ READ_TOOLS = frozenset({
     "get_component_parameters", "find_project_parameters", "find_unconnected_ports",
     "compare_component_settings", "compare_project_versions",
 })
-LOCAL_WRITE_TOOLS = frozenset({"edit_rscad_model", "capture_rtds_results", "prepare_extension_trial", "apply_parameter_patch_batch", "save_result_assessment", "get_manual_figure", "apply_parameter_patch", "prepare_workflow", "prepare_simulation_run"})
-LIVE_TOOLS = frozenset({"run_experiment_suite", "compile_project", "run_offline_test", "run_simulation"})
+LOCAL_WRITE_TOOLS = frozenset({"capture_rtds_results", "prepare_extension_trial", "apply_parameter_patch_batch", "save_result_assessment", "get_manual_figure", "apply_parameter_patch", "prepare_workflow", "prepare_simulation_run"})
+LIVE_TOOLS = frozenset({"edit_rscad_model", "run_experiment_suite", "compile_project", "run_offline_test", "run_simulation"})
 CLOUD_READ_TOOLS = frozenset({"search_rtds_knowledge"})
 REQUIRED_TOOLS = READ_TOOLS | LOCAL_WRITE_TOOLS | LIVE_TOOLS | CLOUD_READ_TOOLS
 FORBIDDEN_TOOLS = frozenset({
@@ -238,6 +238,12 @@ async def engineering_calls(session,root,sources,project):
         "policy_sha256":overview["component_policy"]["sha256"],"project_label":"stdio-structure","mode":"preview","operations":[{
         "op":"move_component","component_id":1,"context":"subsystem:0","component_type":"synthetic_gain","expected_location":[0,0],"location":[32,32]}]}
     preview=await call("edit_rscad_model",{"request":request})
+    auto=await call("edit_rscad_model",{"request":{**request,"backend":"auto"}})
+    assert auto["backend"]=="static" and auto["live_calls_made"] is False
+    denied_auto=await session.call_tool("edit_rscad_model",{"request":{**request,"backend":"auto","mode":"apply","preview_id":auto["preview_id"]}})
+    assert denied_auto.is_error
+    native=await call("edit_rscad_model",{"request":{**request,"backend":"native"}})
+    assert native["backend"]=="native" and native["live_calls_made"] is False and native["integration_qualified"] is False
     edited=await call("edit_rscad_model",{"request":{**request,"mode":"apply","preview_id":preview["preview_id"]}})
     assert digest(project)==request["source_sha256"] and edited["integration_qualified"] is False
     ir=await call("inspect_rscad_project",{"project_path":edited["working_project"],"representation":"ir"})
@@ -263,7 +269,7 @@ async def engineering_calls(session,root,sources,project):
     denied=await session.call_tool("run_experiment_suite",{"request":{**request,"mode":"execute","suite_id":plan["suite_id"],
         "executions":[{"run_id":run_id,"action":"compile","workflow_sha256":digest(Path(row["workflow_path"]))}]}})
     assert denied.is_error
-    return {"catalog_schema":True,"static_editor_roundtrip":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
 
 
 async def smoke():

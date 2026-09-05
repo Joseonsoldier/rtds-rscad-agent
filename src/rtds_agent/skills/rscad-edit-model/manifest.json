@@ -1,6 +1,6 @@
 {
   "name": "rscad-edit-model",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "required_tools": [
     "apply_parameter_patch_batch",
     "lookup_parameter"
@@ -16,7 +16,7 @@
     "agent": "0.1.0a1",
     "vendor_sdk": "1.1 when a workflow actually uses native APIs"
   },
-  "safety_class": "isolated_file_write",
+  "safety_class": "isolated_file_write_or_authorized_native_edit",
   "tags": [
     "edit",
     "parameters"

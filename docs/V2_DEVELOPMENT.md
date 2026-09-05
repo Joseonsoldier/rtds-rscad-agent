@@ -1,5 +1,7 @@
 # Engineering development v2.0
 
+The subsequent [native checkpoint](NATIVE_EDITING.md) adds a bounded existing-component SDK backend and GROUP inspection. Its explicit scope supersedes this page's earlier statements about native editing being entirely unavailable; native construction, Runtime and full closed-loop qualification remain pending.
+
 The v2.0 work order is implemented as bounded software extensions to the existing workflows. Full MCP now has 49 tools: all previous 43 plus six engineering entry points. No dependency, supported FX target, execution policy or existing grant is migrated automatically. Native structural qualification, native Compile-log grammar, actual Runtime/rack experiments and general DFX generation remain separate, uncompleted qualifications.
 
 ## Component discovery and project policy
