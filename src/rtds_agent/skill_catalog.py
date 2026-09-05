@@ -20,6 +20,8 @@ SKILL_NAMES = (
     "rtds-validate-results",
     "rtds-ground-with-manuals",
     "rtds-read-documentation",
+    "rtds-derive-test-requirements",
+    "rtds-verify-grid-code",
 )
 _SAFE_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 
@@ -48,7 +50,7 @@ def _bundled_files(name: str) -> dict[str, bytes]:
             relative = prefix + child.name
             if child.is_dir():
                 visit(child, relative + "/")
-            elif child.is_file() and child.name.endswith(".md"):
+            elif child.is_file() and (child.name.endswith(".md") or child.name == "manifest.json"):
                 result[relative] = child.read_bytes()
             else:
                 raise ValueError("Unsupported bundled skill resource")
@@ -87,7 +89,10 @@ def list_skills() -> dict:
         metadata = _metadata(files["SKILL.md"])
         if metadata["name"] != name:
             raise ValueError("Skill directory and frontmatter name differ")
-        skills.append({**metadata, "files": [
+        manifest = json.loads(files["manifest.json"])
+        if manifest.get("name") != name or set(manifest) != {"name","version","required_tools","optional_tools","required_capabilities","minimum_api","safety_class","tags","examples"}:
+            raise ValueError("Invalid skill capability manifest")
+        skills.append({**metadata, "manifest":manifest, "files": [
             {"path": relative, "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
             for relative, body in files.items()
         ]})

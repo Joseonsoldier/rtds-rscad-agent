@@ -28,6 +28,7 @@ def main(argv=None) -> int:
     sub.add_parser("mcp-config", help="Print a Codex TOML entry")
     mcp = sub.add_parser("mcp")
     mcp.add_argument("action", choices=["serve"])
+    mcp.add_argument("--profile", choices=["core", "engineering", "full"], default="full")
     knowledge = sub.add_parser("knowledge")
     ks = knowledge.add_subparsers(dest="action", required=True)
     ks.add_parser("index")
@@ -102,7 +103,7 @@ def main(argv=None) -> int:
             print('RTDS_AGENT_CONFIG = ' + json.dumps(str(config_path())))
         elif args.command == "mcp":
             from .mcp_server import main as serve
-            serve()
+            serve(profile=args.profile)
         elif args.command == "knowledge":
             from .knowledge import index_documents, index_parameters, upload_documents
             if args.action == "index":

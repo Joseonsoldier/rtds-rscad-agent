@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/result-capture-1.0.json",
+  "title": "Acquisition of existing saved native CSV results",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "source",
+        "channels",
+        "time_basis"
+      ],
+      "properties": {
+        "mode": {
+          "const": "supplied_csv"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "data_path",
+            "data_sha256",
+            "input_project",
+            "input_project_sha256",
+            "run_id",
+            "attempt_id"
+          ],
+          "properties": {
+            "data_path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "data_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "input_project": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "input_project_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "run_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "attempt_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "channel_id",
+              "signal_path",
+              "units",
+              "sign_convention"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "signal_path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "units": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "sign_convention": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "pu_base": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        "time_basis": {
+          "enum": [
+            "simulator_time",
+            "wall_clock"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "workflow_path",
+        "channels",
+        "time_basis"
+      ],
+      "properties": {
+        "mode": {
+          "const": "workflow"
+        },
+        "workflow_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "channel_id",
+              "signal_path",
+              "units",
+              "sign_convention"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "signal_path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "units": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "sign_convention": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "pu_base": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        "time_basis": {
+          "enum": [
+            "simulator_time",
+            "wall_clock"
+          ]
+        }
+      }
+    }
+  ]
+}

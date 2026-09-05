@@ -117,7 +117,7 @@ def _published_copy(candidate: Path, root: Path) -> dict[str, Any] | None:
     if working is None:
         return None
     run = working.parent
-    for name in ("workflow.json", "structured_parameter_patch.json"):
+    for name in ("workflow.json", "structured_parameter_patch.json", "structural_model_edit.json"):
         marker = run / name
         if marker.is_symlink() or not within(marker, run) or not marker.is_file() or marker.stat().st_size > 20 * 1024 * 1024:
             continue
@@ -135,7 +135,7 @@ def _published_copy(candidate: Path, root: Path) -> dict[str, Any] | None:
                     continue
                 record = manifest["working"]
                 bound_path, bound_hash = record["path"], record["sha256"]
-                kind = "parameter_patch"
+                kind = "structural_edit" if name == "structural_model_edit.json" else "parameter_patch"
             if not isinstance(bound_path, str) or Path(bound_path).resolve() != candidate.resolve() or bound_hash != sha256_file(candidate):
                 continue
             if marker.read_bytes() != raw:
@@ -197,14 +197,27 @@ def list_rscad_projects(limit: int = 100, offset: int = 0, source_root: str | No
             "projects": projects, "mutations_performed": False, "live_rscad_connection_opened": False}
 
 
-def inspect_rscad_project(project_path: str, snapshot_id: str | None = None) -> dict[str, Any]:
+def inspect_rscad_project(project_path: str, snapshot_id: str | None = None, representation: str | None = None) -> dict[str, Any]:
     """Return a bounded static overview of one RTFX file."""
     target, scope, document = _document(project_path, snapshot_id)
     contexts = sorted({
         str(item["context"])
         for item in document["components"]
     })
+    if representation not in {None, "ir", "mermaid"}:
+        raise ToolSafetyError("representation must be ir, mermaid or omitted")
+    extra = {}
+    from .core.component_policy import read_component_policy
+    try:
+        extra["component_policy"] = read_component_policy(target)
+    except (ValueError,OSError) as exc:
+        # Malformed edit policy must not disable legacy read-only inspection.
+        extra["component_policy"] = {"status":"invalid","reason":str(exc),"sha256":None}
+    if representation:
+        from .core.model_ir import model_ir, mermaid_overview
+        extra[representation] = model_ir(document) if representation == "ir" else mermaid_overview(document)
     return {
+        **extra,
         "status": document["status"],
         "access_scope": scope,
         **_snapshot_metadata(document),

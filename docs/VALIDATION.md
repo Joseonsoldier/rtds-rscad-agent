@@ -1,5 +1,26 @@
 # Public alpha validation
 
+## V2.0 engineering validation (2026-09-05)
+
+Clean baseline `main` was `06a67ad`. All testing used isolated temporary configuration and cleared inherited cloud/RSCAD settings. Source/schema/skill changes were reviewed before recording the final 81-file portable manifest. Software results and static installed-source observations below do not qualify an actual structural/native/rack workflow.
+
+| Check | Actual result |
+|---|---|
+| Full regression | `python -m unittest discover -s tests -v`: 317 run, 315 passed, 2 skipped, no failures/errors, 43.008 s, exit 0. The skips are default-off host discovery and unavailable OS symlink privilege. |
+| New tests | 37 passed in the full run: editor/catalog/check/IR11; CSV/metrics9; DSL/suite/traceability13; profiles/skills/diagnostics/eval scorer4. Existing 280 tests retained. |
+| Actual STDIO | Full49 plus core10 and engineering29 passed, including new catalog/policy discovery, hash-bound candidate save/static reopen, CSV→canonical→metric, suite plan/prepare and inactive execution rejection. Four live entry points denied, 14 forbidden tool names absent. No real RSCAD calls. |
+| Skills | Nine `quick_validate.py` checks passed. Packaged/exported manifests and actual callable tool schemas passed. Separate opt-in installed Codex discovery found all nine enabled repository skills: 16 run, 15 passed, one OS-link skip, 2.476 s. No model rollout or host configuration change. |
+| Installed sources | 1,590 local definition files hashed/rechecked; actual GAIN schema and three SDK declarations resolved. Invented structured log API unresolved. All 70 protected source/SDK/document/model hashes match. Vendor imports, process launch and sockets blocked during the probe. |
+| Source gates | Release manifest81 matched. Source scanner137 found zero issues. |
+| Distribution | `python -m build` built sdist and wheel from sdist; Twine passed both. Source+wheel+sdist scanner369 found zero issues, exit 0. The sdist was refreshed after recording final documentation; the tested wheel/application contents are unchanged. |
+| Fresh wheel | `tools/wheel_check.py` passed in a new external venv: constrained dependency install, pip check, installed import origin, integrity81, nine-skill read/dry-run/export, synthetic demo and actual STDIO49/core10/engineering29. `source_checkout_imported=false`, `live_rscad_calls=false`. |
+
+Tested wheel: `rtds_rscad_agent-0.1.0a1-py3-none-any.whl`, SHA-256 `65858e48fe2f181e151c91d9567c92cd2ca3dd7652484dfd83104d8122a15a34`. Its final code/schema/skill hashes match the source manifest. Raw logs, the installed-source probe and build outputs are retained under ignored `.validation/v2-20260905`.
+
+Development checks exposed and resolved missing new-schema registry IDs, an in-memory mock that lacked real artifact hashes for resume verification, an incorrect expected exception class in a new negative test, and multi-record smoke stdout incompatible with the wheel checker's single-JSON contract. The final checks above passed after those corrections. Final review also connected read-only component-policy hashes to the public overview, added hash-bound requirement/metric aggregation, and fixed LockFree matching to exact hierarchy segments. No test/manifest change bypassed a failing live gate.
+
+Unexecuted/unqualified: native structural editing/save/reopen, native Compile log grammar and return semantics, actual new capture/Runtime/FSAT/rack operations, hardware allocation/electrical completeness, deterministic simulator-time event scheduling, general IR→DFX serialization and model-driven benchmark execution. Existing earlier native open/read/save/reopen reports remain historical evidence and are not reused as new-editor qualification. No licensed source/artifact, credential, active policy or local validation data is included in the distribution.
+
 Validation date: 2026-09-05. Actual environment: Windows, Python 3.12.9. Supported configuration remains RSCAD FX 2.7.3 / vendor API 1.1. The subsequent local SDK trial returned RSCAD version 2.7, without an exact patch; 2.7.3 remains a support target rather than an observed version. Package version and dependency constraints were not changed.
 
 ## Unknown resolution and documentation discovery (2026-09-05)
@@ -133,7 +154,7 @@ Optional host discovery can be run with `RTDS_TEST_CODEX_DISCOVERY=1` and `pytho
 
 No real RSCAD/SDK connection, rack query, Compile, Runtime, FSAT, control or external I/O test was performed. The earlier WP checkpoint did not rerun the installed API audit. The EXT follow-up above subsequently ran its 24 source checks without importing or connecting the SDK; these are static evidence only. A configured version or available executable never becomes observed live qualification.
 
-Codex model image ingestion and model-driven skill task evaluation were not performed. Cloud search/upload, remote CI and other Windows/RSCAD/API configurations were not tested. Numerical assessment supports the documented bounded JSON adapter only; native Runtime capture/CSV ingestion and vendor-log grammar parsing remain unsupported. Empty partial diagnostic logs and inadequate sample evidence cannot produce an engineering pass.
+Codex model image ingestion and model-driven skill task evaluation were not performed. Cloud search/upload, remote CI and other Windows/RSCAD/API configurations were not tested. The v2.0 update adds explicit saved native-CSV ingestion into the bounded JSON adapter; actual native capture sessions and vendor-log grammar remain unqualified. Empty partial diagnostic logs and inadequate sample evidence cannot produce an engineering pass.
 
 Local raw logs are retained in the git-ignored `.validation/` directory; repository documentation intentionally omits private installation/operator paths. The source/artifact scanner checks conservative patterns/types and is not a comprehensive secret detector or legal certification. No licensed manual/model/definition/SDK, credential, active configuration or execution record is intentionally shipped. The release manifest is not a publisher signature or experiment approval.
 

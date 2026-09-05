@@ -276,9 +276,12 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
                 "attempt": attempt, "preflight": evidence_ref(audit_path), "engineering_verdict": "not_evaluated"}
 
 
-def compile_project(workflow_path: str) -> dict[str, Any]:
+def compile_project(workflow_path: str, expected_workflow_sha256: str | None = None) -> dict[str, Any]:
     """Compile an isolated prepared workflow using local opt-in and a fresh grant."""
-    return _execute(workflow_path, ApprovalAction.COMPILE)
+    if expected_workflow_sha256 is not None and (not isinstance(expected_workflow_sha256,str) or len(expected_workflow_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in expected_workflow_sha256)):
+        raise ToolSafetyError("expected_workflow_sha256 must be a lowercase SHA-256")
+    return _execute(workflow_path, ApprovalAction.COMPILE, expected_workflow_sha256=expected_workflow_sha256)
 
 
 def run_offline_test(workflow_path: str) -> dict[str, Any]:

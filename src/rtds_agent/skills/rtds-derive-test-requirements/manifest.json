@@ -1,0 +1,25 @@
+{
+  "name": "rtds-derive-test-requirements",
+  "version": "1.0.0",
+  "required_tools": [
+    "get_manual_page",
+    "run_experiment_suite"
+  ],
+  "optional_tools": [
+    "get_component_schema"
+  ],
+  "required_capabilities": [
+    "experiment_suites"
+  ],
+  "minimum_api": {
+    "agent": "0.1.0a1",
+    "vendor_sdk": "1.1 when a workflow actually uses native APIs"
+  },
+  "safety_class": "plan_only",
+  "tags": [
+    "requirements"
+  ],
+  "examples": [
+    "Draft a source-backed LVRT test without execution."
+  ]
+}

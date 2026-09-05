@@ -1,0 +1,24 @@
+{
+  "name": "rtds-read-documentation",
+  "version": "1.0.0",
+  "required_tools": [
+    "lookup_rscad_api",
+    "search_rtds_local"
+  ],
+  "optional_tools": [
+    "get_component_schema",
+    "get_manual_page"
+  ],
+  "required_capabilities": [],
+  "minimum_api": {
+    "agent": "0.1.0a1",
+    "vendor_sdk": "1.1 when a workflow actually uses native APIs"
+  },
+  "safety_class": "read_only",
+  "tags": [
+    "unknown_resolution"
+  ],
+  "examples": [
+    "Find the installed signature of this SDK method."
+  ]
+}

@@ -1,12 +1,14 @@
 # RTDS/RSCAD Agent
 
-Local MCP tools for RSCAD project inspection, document search and images, atomic numeric-copy edits, prepared-data assessment, Compile, and bounded simulation control.
+Local MCP tools for RSCAD inspection, installed component/API discovery, isolated numeric and structural candidates, static model checks, saved-result metrics, and guarded sequential experiments.
 
 **Early alpha — not an official RTDS Technologies product.** Live operation targets Windows, RSCAD FX 2.7.3, vendor Python API 1.1 and Python 3.12. You must supply your own licensed RSCAD installation and permitted rack access. This repository includes no RTDS software, manuals, MLIB, vendor example projects, API keys, active authorizations, or historical experiment results.
 
 [한국어 시작 안내](docs/QUICKSTART.ko.md) · [Safety and recovery](docs/SAFETY.md) · [Runtime workflow](docs/WORKFLOWS.md) · [Validation](docs/VALIDATION.md) · [Tool contracts](docs/TOOL_CONTRACTS.md) · [Migration](docs/MIGRATION.md) · [Implementation status](docs/IMPLEMENTATION_STATUS.md)
 
 ## Install
+
+The [v2.0 engineering guide](docs/V2_DEVELOPMENT.md) documents six added tools, a JSON experiment DSL, fourteen sampled metrics, project component policy, nine packaged skills and optional tool profiles. Default full mode preserves the previous 43 tools and adds six (49 total). Software/static-source tests are separate from native structural, Compile-log and rack qualification; see [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 In PowerShell, from this repository:
 
@@ -59,7 +61,7 @@ Use project snapshots to navigate hierarchy, components, stored parameters, and 
 
 For optional structural/GUI investigation, `rtds-agent extensions` reads installed API declarations without connecting. New tools preview TOGGLE node impacts, prepare unchanged isolated trial copies, and inventory saved Runtime headers. They do not apply live structural edits or verify a GUI target. See [extension scope and pending qualification](docs/EXTENSION_QUALIFICATION.md).
 
-Seven task skills are bundled as installed package resources. To export into a chosen repository directory:
+Nine task skills with versioned capability manifests are bundled as installed package resources. To export into a chosen repository directory:
 
 ```powershell
 rtds-agent skills list

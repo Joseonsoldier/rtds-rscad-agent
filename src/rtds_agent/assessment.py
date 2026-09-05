@@ -17,7 +17,7 @@ ASSESSMENT_SCHEMA = schema("result_assessment_request.schema.json")
 LIMITATIONS = ["Only supplied discrete samples are assessed; behavior between samples is not proven.",
               "Declared run/attempt IDs are checked against supplied data, not independently qualified on a simulator.",
               "Criteria provenance is supplied by the caller; this is not grid-code certification or general stability approval.",
-              "No unit conversion, interpolation, time resampling or arbitrary expressions are supported."]
+              "No unit conversion, sample resampling, reference interpolation or arbitrary expressions are supported; individual metrics declare their estimators."]
 
 
 def validate_request(value):
@@ -40,6 +40,11 @@ def validate_request(value):
             raise ToolSafetyError("Criterion fields do not apply to this assessment kind")
         if req["kind"] == "reference_error" and "reference" not in value:
             raise ToolSafetyError("Reference-error criterion needs a hash-bound reference artifact")
+        if req["kind"] == "power_metric":
+            from .core.power_metrics import validate_metric
+            validate_metric(req)
+        elif set(req) & {"metric", "metric_options", "metric_acceptance"}:
+            raise ToolSafetyError("Metric fields require kind=power_metric")
     return value
 
 
@@ -180,6 +185,26 @@ def evaluate_results(request: EvaluationRequest) -> dict[str, Any]:
             if req["kind"] == "settling_band":
                 last_out = max((i for i,v in enumerate(inside) if not v),default=-1)
                 result["metrics"]["sampled_settling_time"] = times[last_out+1] if last_out+1 < len(times) else None
+        elif req["kind"] == "power_metric":
+            from .core.power_metrics import compute_metric
+            other_values = None
+            if req["metric"] == "angle_separation":
+                other = channels.get(req["metric_options"]["other_channel_id"])
+                if other is None:
+                    result["reasons"] = ["comparison_channel_not_found"]; continue
+                errors = _quality(data, other, req)
+                other_pairs = list(zip(other.get("times",[]),other.get("values",[])))
+                other_pairs = [(t,v) for t,v in other_pairs if req["start_time"] <= t <= req["end_time"]]
+                if errors or [t for t,v in other_pairs] != times:
+                    result["reasons"] = errors or ["comparison_time_alignment_failed"]; continue
+                other_values = [v for t,v in other_pairs]
+            try:
+                metric, state = compute_metric(req,times,values,other_values)
+                result["metrics"] = metric
+                result["status"] = state
+                if state == "not_evaluated": result["reasons"] = ["metrics_only_no_acceptance_threshold"]
+            except (ValueError, OverflowError, ZeroDivisionError) as exc:
+                result["reasons"] = [str(exc)]
         else:
             ref_data, ref_channels = reference
             ref_channel = ref_channels.get(req.get("reference_channel_id",req["channel_id"]))

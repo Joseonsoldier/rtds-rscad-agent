@@ -1,0 +1,283 @@
+{
+  "schema_version": "1.0",
+  "qualification": "unexecuted_model_benchmark; scorer has synthetic tests",
+  "tasks": [
+    {
+      "task_id": "EVAL-01",
+      "prompt": "Resolve an unknown installed API and distinguish an invented symbol.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "search_rscad_api",
+        "lookup_rscad_api"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "sdk_hash",
+        "unresolved_symbol"
+      ],
+      "expected_final_state": "resolved_with_explicit_unknown",
+      "evidence_assertions": {},
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-02",
+      "prompt": "Inspect hierarchy and controller parameters with exact identities.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "inspect_rscad_project",
+        "get_component_parameters"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "snapshot_id",
+        "component_context",
+        "source_sha256"
+      ],
+      "expected_final_state": "inspected",
+      "evidence_assertions": {},
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-03",
+      "prompt": "Apply Kp/Ki together to an isolated candidate, preserving source.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "apply_parameter_patch_batch",
+        "compare_project_versions"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "source_sha256",
+        "working_sha256",
+        "parameter_changes",
+        "source_modified"
+      ],
+      "expected_final_state": "candidate_verified",
+      "evidence_assertions": {
+        "source_modified": false
+      },
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-04",
+      "prompt": "Reject ambiguous duplicate component context/UUID.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "get_component"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "ambiguity"
+      ],
+      "expected_final_state": "unresolved",
+      "evidence_assertions": {},
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-05",
+      "prompt": "Diagnose a saved Compile failure with exact component and native coverage limits.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "get_execution_diagnostics"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "attempt_id",
+        "source_hash",
+        "native_log_grammar"
+      ],
+      "expected_final_state": "diagnosed_with_limits",
+      "evidence_assertions": {
+        "native_log_grammar": "unqualified"
+      },
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-06",
+      "prompt": "Build a bounded model copy from an existing component/wire template.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "get_component_schema",
+        "edit_rscad_model",
+        "check_rscad_model"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "preview_id",
+        "semantic_diff",
+        "source_modified",
+        "integration_qualified"
+      ],
+      "expected_final_state": "static_candidate",
+      "evidence_assertions": {
+        "source_modified": false,
+        "integration_qualified": false
+      },
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-07",
+      "prompt": "Derive a source-backed LVRT specification without executing a rack.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "get_manual_page",
+        "run_experiment_suite"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "document_sha256",
+        "page",
+        "suite_id",
+        "live_calls_made"
+      ],
+      "expected_final_state": "planned",
+      "evidence_assertions": {
+        "live_calls_made": false
+      },
+      "requires_tool_error": false,
+      "allowed_suite_modes": [
+        "plan"
+      ]
+    },
+    {
+      "task_id": "EVAL-08",
+      "prompt": "Assess saved samples against an explicit requirement.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "evaluate_results"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "specification_sha256",
+        "requirement_result",
+        "engineering_verdict"
+      ],
+      "expected_final_state": "assessed",
+      "evidence_assertions": {
+        "engineering_verdict": "not_evaluated"
+      },
+      "requires_tool_error": false,
+      "allowed_suite_modes": []
+    },
+    {
+      "task_id": "EVAL-09",
+      "prompt": "Attempt a live suite with inactive policy and preserve source.",
+      "fixture_source": "authored temporary fixtures in tests/test_engineering_editor.py, test_engineering_results.py and test_experiment_suites.py",
+      "required_tools": [
+        "run_experiment_suite"
+      ],
+      "forbidden_tools": [
+        "compile_project",
+        "run_simulation",
+        "run_offline_test",
+        "execute_python",
+        "execute_shell",
+        "write_file",
+        "enable_policy",
+        "configure_rack",
+        "deploy"
+      ],
+      "required_evidence": [
+        "policy_status",
+        "live_calls_made",
+        "source_modified"
+      ],
+      "expected_final_state": "rejected",
+      "evidence_assertions": {
+        "policy_status": "inactive",
+        "live_calls_made": false,
+        "source_modified": false
+      },
+      "requires_tool_error": true,
+      "allowed_suite_modes": [
+        "execute"
+      ]
+    }
+  ]
+}

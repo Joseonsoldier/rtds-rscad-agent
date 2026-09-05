@@ -4,6 +4,10 @@ These changes retain Python 3.12, the declared MCP major version, unittest, setu
 
 ## Existing clients
 
+V2.0 adds six tools to default full mode (49 total), optional core/engineering profiles (10/29), optional overview representations/diagnostic grounding/Compile workflow hash, and `power_metric` assessment kinds. Existing 43 tools and old required fields remain. Saved native CSV conversion is explicit through `capture_rtds_results`, with independent provenance and hash validation. New structural edits require an operator-authored component policy and a reviewed preview; existing numeric edits do not. Nine skills now include JSON capability manifests. See [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md) for scope and unqualified native operations.
+
+`inspect_rscad_project` adds read-only component-policy status/hash so a pure MCP client can prepare the editor request. A malformed policy does not break legacy inspection but blocks the new editor. Runtime LockFree validation now requires an exact `Machines` or `Breakers` hierarchy segment; previously accepted near-substrings such as `NotMachines` and `BreakersBackup` are rejected. Exact intended targets are unchanged.
+
 Existing tool names remain available. `compare_projects` retains count/coverage summary semantics; use `compare_project_versions` for detailed settings/parameter/topology differences. The six existing detail readers are now publicly advertised. New batch, capability, assessment, and diagnostic tools have separate names.
 
 Project reads add snapshot evidence and optional snapshot/pagination arguments. Callers should accept additive result fields and preserve `snapshot_id` across pages. A nonzero `offset` now requires a snapshot. Comparisons use `snapshot_id_a` and `snapshot_id_b`. Changed project, definitions, companions, parser, or listing content requires a fresh observation; modification time and size are not sufficient. Default project listing remains published working copies; explicitly pass a configured `source_root` to inspect source projects.
@@ -32,13 +36,13 @@ Migration validates and copies the legacy evidence to an immutable generation. I
 
 ## Prepared result data
 
-The numerical adapter accepts only the documented JSON sample structure and hash-bound request in [TOOL_CONTRACTS.md](TOOL_CONTRACTS.md#numerical-assessment-request). Existing Runtime CSV or other vendor captures are not silently converted. Any separate conversion needs its own source provenance and validation; it cannot be described as a tested native capture adapter.
+The numerical adapter accepts the documented canonical JSON sample structure and hash-bound request in [TOOL_CONTRACTS.md](TOOL_CONTRACTS.md#numerical-assessment-request). Runtime long-form CSV is converted only by the explicit v2.0 acquisition tool with source provenance and validation. Synthetic native-format conversion tests do not qualify an actual simulator capture session.
 
 Assessments are independent local artifacts. They do not add an engineering pass to previous workflows or change prior approvals. Match source/candidate/reference hashes, channel units/sign/pu bases, exact time axes, evaluation windows, and explicit criterion provenance. An inconclusive requirement must remain visible.
 
 ## Skills, distributions and release integrity
 
-Seven instruction-only skills ship as package resources and can be explicitly exported with `rtds-agent skills export --destination PATH --dry-run`, followed by the same command without `--dry-run`. Export refuses existing skill directories and symlink/junction/path traversal targets. It does not choose a global location or modify host configuration. Use an empty chosen destination or separately review existing skills; there is no overwrite flag.
+Nine instruction-only skills and capability manifests ship as package resources and can be explicitly exported with `rtds-agent skills export --destination PATH --dry-run`, followed by the same command without `--dry-run`. Export refuses existing skill directories and symlink/junction/path traversal targets. It does not choose a global location or modify host configuration. Use an empty chosen destination or separately review existing skills; there is no overwrite flag.
 
 Release integrity now includes bundled Markdown skills as well as code and schemas. A missing, changed, or unexpected packaged skill fails integrity. Regenerate the release manifest only after reviewing a legitimate release change, then rerun the release and installed-wheel checks. This is accidental-change detection, not a publisher signature or a mechanism to re-authorize stale live work. Existing workflow/grant bindings remain subject to their original checks; prepare a new grounded workflow when evidence no longer matches.
 

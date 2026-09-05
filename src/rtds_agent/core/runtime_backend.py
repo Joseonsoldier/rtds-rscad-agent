@@ -348,7 +348,7 @@ def _canonical_runtime_parameter_writes(value: Any) -> list[dict[str, Any]]:
                 or object_name.casefold() != "lockfree"
                 or object_desc.casefold() != "lockfree"
                 or not re.search(
-                    r"(^||)(machines|breakers)(||$)",
+                    r"(^|\|)(machines|breakers)(\||$)",
                     object_group,
                     flags=re.IGNORECASE,
                 )

@@ -16,6 +16,7 @@ from mcp.client.stdio import stdio_client
 # Deliberately independent of mcp_server.READ/LOCAL_WRITE/LIVE. New tools require a
 # conscious public-contract update; a matching count cannot conceal a missing tool.
 READ_TOOLS = frozenset({
+    "search_component_catalog", "get_component_schema", "check_rscad_model",
     "search_rscad_api", "lookup_rscad_api",
     "inspect_extension_support", "preview_selector_change", "inspect_runtime_layout",
     "get_execution_diagnostics", "get_capabilities", "evaluate_results", "read_result_samples", "get_knowledge_status", "search_rtds_local", "get_manual_page", "get_manual_section",
@@ -26,8 +27,8 @@ READ_TOOLS = frozenset({
     "get_component_parameters", "find_project_parameters", "find_unconnected_ports",
     "compare_component_settings", "compare_project_versions",
 })
-LOCAL_WRITE_TOOLS = frozenset({"prepare_extension_trial", "apply_parameter_patch_batch", "save_result_assessment", "get_manual_figure", "apply_parameter_patch", "prepare_workflow", "prepare_simulation_run"})
-LIVE_TOOLS = frozenset({"compile_project", "run_offline_test", "run_simulation"})
+LOCAL_WRITE_TOOLS = frozenset({"edit_rscad_model", "capture_rtds_results", "prepare_extension_trial", "apply_parameter_patch_batch", "save_result_assessment", "get_manual_figure", "apply_parameter_patch", "prepare_workflow", "prepare_simulation_run"})
+LIVE_TOOLS = frozenset({"run_experiment_suite", "compile_project", "run_offline_test", "run_simulation"})
 CLOUD_READ_TOOLS = frozenset({"search_rtds_knowledge"})
 REQUIRED_TOOLS = READ_TOOLS | LOCAL_WRITE_TOOLS | LIVE_TOOLS | CLOUD_READ_TOOLS
 FORBIDDEN_TOOLS = frozenset({
@@ -218,6 +219,53 @@ async def extension_calls(session, root, vendor, sources):
             "saved_runtime_inventory":True, "live_calls_made":False, "integration_qualified":False}
 
 
+async def engineering_calls(session,root,sources,project):
+    def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+    async def call(name,args):
+        result=await session.call_tool(name,args)
+        assert not result.is_error,(name,result)
+        return result.structured_content
+    found=await call("search_component_catalog",{"query":"synthetic_gain"})
+    definition=await call("get_component_schema",{"component_type":"synthetic_gain","snapshot_id":found["catalog_snapshot_id"]})
+    assert definition["parameters"]["Gain"]["data_type"]=="REAL"
+    checked=await call("check_rscad_model",{"project_path":str(project)})
+    assert checked["engineering_verdict"]=="not_evaluated"
+    policy=sources/"rtds-component-policy.json"
+    policy.write_text(json.dumps({"allowed_components":["synthetic_gain"],"denied_components":[],"allowed_parameters":{},"structural_edits":True}),encoding="utf-8")
+    overview=await call("inspect_rscad_project",{"project_path":str(project),"representation":"mermaid"})
+    assert overview["mermaid"].startswith("flowchart LR")
+    request={"source_project":str(project),"source_sha256":digest(project),"snapshot_id":overview["snapshot_id"],
+        "policy_sha256":overview["component_policy"]["sha256"],"project_label":"stdio-structure","mode":"preview","operations":[{
+        "op":"move_component","component_id":1,"context":"subsystem:0","component_type":"synthetic_gain","expected_location":[0,0],"location":[32,32]}]}
+    preview=await call("edit_rscad_model",{"request":request})
+    edited=await call("edit_rscad_model",{"request":{**request,"mode":"apply","preview_id":preview["preview_id"]}})
+    assert digest(project)==request["source_sha256"] and edited["integration_qualified"] is False
+    ir=await call("inspect_rscad_project",{"project_path":edited["working_project"],"representation":"ir"})
+    assert ir["ir"]["components"][0]["location"]==[32,32]
+    raw=root/"data"/"native-authored.csv"
+    raw.write_text("channel_id,signal_path,units,sample_index,time_s,value\nv,synthetic-only,V,0,0,1\nv,synthetic-only,V,1,1,0.5\nv,synthetic-only,V,2,2,1\n",encoding="utf-8")
+    channels=[{"channel_id":"v","signal_path":"synthetic-only","units":"V","sign_convention":"as_recorded"}]
+    captured=await call("capture_rtds_results",{"request":{"mode":"supplied_csv","source":{"data_path":str(raw),"data_sha256":digest(raw),
+        "input_project":str(project),"input_project_sha256":digest(project),"run_id":"authored","attempt_id":"csv-1"},"channels":channels,"time_basis":"simulator_time"}})
+    spec={"schema_version":"1.0","requirements":[{"requirement_id":"nadir","kind":"power_metric","metric":"voltage_nadir","metric_options":{},
+        "channel_id":"v","units":"V","sign_convention":"as_recorded","time_unit":"s","time_basis":"simulator_time","start_time":0,"end_time":2,
+        "provenance":{"kind":"user_defined","reference":"Authored metric; no engineering threshold"}}]}
+    spec_hash=hashlib.sha256(json.dumps(spec,ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+    evaluated=await call("evaluate_results",{"request":{"source":captured["source"],"specification":spec,"specification_sha256":spec_hash}})
+    assert evaluated["status"]=="not_evaluated" and evaluated["results"][0]["metrics"]["value"]==.5
+    dsl={"schema_version":"1.0","test_id":"stdio-suite","controls":[],"initial_conditions":[],"events":[],"channels":channels,
+        "capture_after_seconds":2,"minimum_samples_per_channel":2,"criteria":spec,"traceability":[]}
+    request={"mode":"plan","source_project":str(project),"source_sha256":digest(project),"snapshot_id":overview["snapshot_id"],
+        "grounding_paths":[str(sources/"synthetic-guide.md")],"specification":dsl,"sweep":{"mode":"cartesian","axes":[]}}
+    plan=await call("run_experiment_suite",{"request":request})
+    prepared=await call("run_experiment_suite",{"request":{**request,"mode":"prepare","suite_id":plan["suite_id"]}})
+    run_id,row=next(iter(prepared["runs"].items()))
+    denied=await session.call_tool("run_experiment_suite",{"request":{**request,"mode":"execute","suite_id":plan["suite_id"],
+        "executions":[{"run_id":run_id,"action":"compile","workflow_sha256":digest(Path(row["workflow_path"]))}]}})
+    assert denied.is_error
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
+
+
 async def smoke():
     with tempfile.TemporaryDirectory(prefix="rtds-mcp-smoke-") as directory:
         root = Path(directory)
@@ -273,9 +321,22 @@ async def smoke():
                 assert after == before, "Read/denied operations changed files"
                 scenario = await scenario_calls(session,root,vendor,sources,project,env)
                 scenario["extensions"] = await extension_calls(session,root,vendor,sources)
-                print(json.dumps({"scenario":scenario,"status": "passed", "transport": "stdio", "tool_count": len(tools.tools),
+                scenario["engineering"] = await engineering_calls(session,root,sources,project)
+                summary={"scenario":scenario,"status": "passed", "transport": "stdio", "tool_count": len(tools.tools),
                                   "detail_normal_calls": 6, "detail_error_calls": 7, "forbidden_calls": len(FORBIDDEN_TOOLS),
-                                  "default_policy": "inactive", "live_actions_blocked": 3, "live_rscad_calls": False}))
+                         "default_policy": "inactive", "live_actions_blocked": 4, "live_rscad_calls": False}
+        profile_results=[]
+        for profile,count in (("core",10),("engineering",29)):
+            params=StdioServerParameters(command=sys.executable,args=["-m","rtds_agent","mcp","serve","--profile",profile],env=env)
+            async with stdio_client(params) as streams:
+                async with ClientSession(*streams) as session:
+                    await session.initialize()
+                    tools=await session.list_tools()
+                    assert len(tools.tools)==count,(profile,len(tools.tools))
+                    blocked=await session.call_tool("execute_python",{})
+                    assert blocked.is_error
+                    profile_results.append({"profile":profile,"tool_count":count,"status":"passed","transport":"stdio"})
+        print(json.dumps({**summary,"profiles":profile_results}))
 
 
 if __name__ == "__main__":

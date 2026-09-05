@@ -1,0 +1,27 @@
+{
+  "name": "rscad-edit-model",
+  "version": "1.0.0",
+  "required_tools": [
+    "apply_parameter_patch_batch",
+    "lookup_parameter"
+  ],
+  "optional_tools": [
+    "edit_rscad_model",
+    "check_rscad_model"
+  ],
+  "required_capabilities": [
+    "numeric_parameter_editing"
+  ],
+  "minimum_api": {
+    "agent": "0.1.0a1",
+    "vendor_sdk": "1.1 when a workflow actually uses native APIs"
+  },
+  "safety_class": "isolated_file_write",
+  "tags": [
+    "edit",
+    "parameters"
+  ],
+  "examples": [
+    "Change Kp/Ki together on an isolated copy."
+  ]
+}

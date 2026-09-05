@@ -2,6 +2,7 @@ include LICENSE README.md SECURITY.md CONTRIBUTING.md AGENTS.md .gitattributes .
 include constraints-windows-py312.txt
 recursive-include docs *.md *.json
 recursive-include tools *.py
+recursive-include evals *.json *.md
 recursive-include tests *.py
 recursive-include src/rtds_agent *.py *.json
 recursive-include src/rtds_agent/skills *.md

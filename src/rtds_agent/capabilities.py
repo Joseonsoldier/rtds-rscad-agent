@@ -146,6 +146,14 @@ def get_capabilities() -> dict[str, Any]:
     executable = files.get("rscad_executable", {}).get("status") == "present"
     fsat = files.get("fsat_executable", {}).get("status") == "present"
     runtime_inspected = inspection["status"] == "passed"
+    definition_profile = {"status":"unavailable","sha256":None,"file_count":0}
+    if settings is not None and definitions_available:
+        try:
+            from .core.component_catalog import inventory
+            _,definition_rows,definition_digest = inventory()
+            definition_profile = {"status":"statically_hashed","sha256":definition_digest,"file_count":len(definition_rows)}
+        except (ValueError,OSError) as exc:
+            definition_profile = {"status":"unresolved","sha256":None,"reason":str(exc)}
     common_reasons = []
     if not host_supported:
         common_reasons.append("Live adapters support Windows with Python 3.12 only")
@@ -160,6 +168,16 @@ def get_capabilities() -> dict[str, Any]:
     common_reasons.append("RSCAD executable version and target-specific integration qualification are not observed")
     live_dependencies = host_supported and executable and api_available
     features = {
+        "static_structural_editing": _feature(implemented=True, available=settings is not None and definitions_available,
+            reasons=["Bounded offline record/template adapter only; project policy, source/snapshot/preview hashes and model checks required", "Native structural editing, opaque-reference removal, and general DFX generation remain unqualified"]),
+        "component_definition_catalog": _feature(implemented=True, available=definitions_available,
+            reasons=["Installed definition identity/hash and parsed ports/parameters; unsupported grammar remains explicit"]),
+        "model_check": _feature(implemented=True, available=settings is not None,
+            reasons=["Static and explicitly mapped unit-bound rules only; hardware allocation and engineering acceptance not evaluated"]),
+        "saved_native_result_acquisition": _feature(implemented=True, available=settings is not None,
+            reasons=["Existing backend long-form CSV to canonical JSON; does not initiate native capture"]),
+        "experiment_suites": _feature(implemented=True, available=settings is not None,
+            reasons=["Canonical JSON DSL, <=64 sequential runs, cartesian/paired sweep and supplied-sample assessment", "Execution uses existing policy/Compile/Runtime gates and exact grants; no automatic repair or retry"]),
         "project_parsing": _feature(implemented=True, available=settings is not None,
                                     reasons=[] if definitions_available else ["Unresolved installed definitions will be reported as partial parser coverage"]),
         "numeric_parameter_editing": _feature(implemented=True, available=settings is not None and definitions_available and catalog["status"] == "ready",
@@ -188,6 +206,11 @@ def get_capabilities() -> dict[str, Any]:
             "configuration": configuration, "package_versions": packages, "release_integrity": release,
             "installation_files": files, "api_source_files": api_files, "runtime_api_inspection": inspection,
             "parameter_catalog": catalog, "poppler_available": renderer is not None, "policy": policy, "features": features,
+            "version_profile": {"configured_fx": configuration["configured_rscad_version"], "observed_fx": "unknown",
+                "sdk_version": observed_api, "sdk_source_sha256": sha256_json(api_files) if api_files else None,
+                "definition_set_sha256": definition_profile["sha256"], "definition_profile": definition_profile,
+                "qualified_live_structural_operations": [], "native_log_grammar": "unqualified",
+                "tool_profiles": ["core", "engineering", "full"], "default_tool_profile": "full"},
             "qualification": {"integration_qualified": False, "state": "not_evaluated", "reason": "No current-installation RSCAD/rack qualification evidence was evaluated",
                               "required_conditions": ["Explicit authorization for the particular test", "Confirmed installation and permitted source/document roots",
                                                       "Specified rack/actions, signal/control meanings and external I/O effects", "Verified restore, stop and cleanup plan"]},

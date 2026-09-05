@@ -3,6 +3,8 @@ from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 from . import __version__, knowledge, execution, project_tools, editing, capabilities, assessment, diagnostics
 from . import extension_support, extension_trials, runtime_layout, api_discovery
+from . import model_editor, model_check, result_capture, experiments
+from . import component_catalog
 from functools import wraps
 from inspect import signature
 from typing import get_type_hints
@@ -38,8 +40,7 @@ INSTRUCTIONS = (
     "The public alpha has no inherited approval, verified experiment catalogue or automatic error promotion. "
     "If dependencies or policy are missing, explain the specific setup step; do not bypass the check."
 )
-server = MCPServer(name="rtds-rscad-agent", title="RTDS/RSCAD Agent", version=__version__, instructions=INSTRUCTIONS)
-READ = [api_discovery.search_rscad_api, api_discovery.lookup_rscad_api, extension_support.inspect_extension_support, extension_trials.preview_selector_change, runtime_layout.inspect_runtime_layout, diagnostics.get_execution_diagnostics, capabilities.get_capabilities, assessment.evaluate_results, assessment.read_result_samples, knowledge.get_knowledge_status, knowledge.search_rtds_local, knowledge.get_manual_page,
+READ = [component_catalog.search_component_catalog, component_catalog.get_component_schema, model_check.check_rscad_model, api_discovery.search_rscad_api, api_discovery.lookup_rscad_api, extension_support.inspect_extension_support, extension_trials.preview_selector_change, runtime_layout.inspect_runtime_layout, diagnostics.get_execution_diagnostics, capabilities.get_capabilities, assessment.evaluate_results, assessment.read_result_samples, knowledge.get_knowledge_status, knowledge.search_rtds_local, knowledge.get_manual_page,
         knowledge.get_manual_section, knowledge.lookup_parameter,
         project_tools.list_rscad_projects, project_tools.inspect_rscad_project,
         project_tools.get_project_hierarchy, project_tools.get_component_graph,
@@ -50,23 +51,40 @@ READ = [api_discovery.search_rscad_api, api_discovery.lookup_rscad_api, extensio
         project_tools.compare_component_settings, project_tools.compare_project_versions,
         execution.get_execution_policy,
         execution.get_workflow_status, execution.revalidate_execution_evidence]
-LOCAL_WRITE = [extension_trials.prepare_extension_trial, editing.apply_parameter_patch_batch, assessment.save_result_assessment, editing.apply_parameter_patch,
+LOCAL_WRITE = [model_editor.edit_rscad_model, result_capture.capture_rtds_results, extension_trials.prepare_extension_trial, editing.apply_parameter_patch_batch, assessment.save_result_assessment, editing.apply_parameter_patch,
                execution.prepare_workflow, execution.prepare_simulation_run]
-LIVE = [execution.compile_project, execution.run_offline_test, execution.run_simulation]
+LIVE = [experiments.run_experiment_suite, execution.compile_project, execution.run_offline_test, execution.run_simulation]
 @wraps(knowledge.get_manual_figure)
 def manual_figure_mcp(source_path: str, page: int = 1) -> dict:
     from .media import manual_figure_result
     return manual_figure_result(knowledge.get_manual_figure(source_path, page))
 
 LOCAL_WRITE.append(manual_figure_mcp)
-for function in READ:
-    server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False), structured_output=True)(anticipated_errors(function))
-for function in LOCAL_WRITE:
-    server.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False), structured_output=True)(anticipated_errors(function))
-for function in LIVE:
-    server.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True), structured_output=True)(anticipated_errors(function))
-server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True), structured_output=True)(anticipated_errors(knowledge.search_rtds_knowledge))
+CORE_NAMES = frozenset({"get_capabilities", "inspect_rscad_project", "get_component_parameters", "edit_rscad_model", "check_rscad_model",
+                       "search_rtds_local", "get_execution_diagnostics", "run_experiment_suite", "capture_rtds_results", "evaluate_results"})
+ENGINEERING_NAMES = CORE_NAMES | frozenset({"search_component_catalog", "get_component_schema", "search_rscad_api", "lookup_rscad_api",
+    "list_rscad_projects", "find_components", "get_component", "get_component_graph", "get_manual_page", "get_manual_section", "get_manual_figure",
+    "lookup_parameter", "get_execution_policy", "get_workflow_status", "prepare_simulation_run", "read_result_samples", "save_result_assessment",
+    "apply_parameter_patch_batch", "compare_project_versions"})
 
 
-def main():
-    server.run(transport="stdio")
+def build_server(profile="full"):
+    if profile not in {"core","engineering","full"}:
+        raise ValueError("Unknown tool profile")
+    selected = None if profile == "full" else CORE_NAMES if profile == "core" else ENGINEERING_NAMES
+    instance = MCPServer(name="rtds-rscad-agent", title="RTDS/RSCAD Agent", version=__version__,
+                         instructions=INSTRUCTIONS + " Tool profile: " + profile + ". Only advertised tools are callable.")
+    for group, flags in ((READ,(True,False,True,False)),(LOCAL_WRITE,(False,False,False,False)),(LIVE,(False,True,False,True)),
+                         ([knowledge.search_rtds_knowledge],(True,False,True,True))):
+        for function in group:
+            if selected is not None and function.__name__ not in selected: continue
+            annotation=ToolAnnotations(readOnlyHint=flags[0],destructiveHint=flags[1],idempotentHint=flags[2],openWorldHint=flags[3])
+            instance.tool(annotations=annotation,structured_output=True)(anticipated_errors(function))
+    return instance
+
+
+server = build_server()
+
+
+def main(profile="full"):
+    (server if profile == "full" else build_server(profile)).run(transport="stdio")

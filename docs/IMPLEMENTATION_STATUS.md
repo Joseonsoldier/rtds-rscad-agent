@@ -1,6 +1,46 @@
 # Implementation status
 
-Work order v1.0, 2026-09-05. All WP statuses below describe software implementation and the explicitly listed tests. They do not certify RSCAD, an installed vendor SDK, a rack, or an engineering design. No basic work package is left as a stub.
+Work orders v1.0 and v2.0, 2026-09-05. Statuses describe software implementation and explicitly listed tests. They do not certify RSCAD, an installed vendor SDK, a rack, or an engineering design. Historical checkpoints below retain their original counts and scope.
+
+## V2.0 engineering implementation
+
+Baseline: clean `main` at `06a67ad`. The new work order was reviewed in dependency order. Existing numeric transactions, snapshots, policy/grants, native capture driver, diagnostics and assessment were reused. [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md) gives the exact callable scope and limitations. All original 43 tools remain; six additions bring full mode to 49. Core/engineering profiles have 10/29. Nine skills carry capability manifests. Package/dependency/support target versions are unchanged.
+
+| Priority / requested item | Implemented and software-tested scope | Unfinished or unverified scope |
+|---|---|---|
+| P0 component catalog/policy | Fresh bounded installed-definition catalog, exact library identity/hash, schema/selectors/active ports, operator-authored default-deny project policy. | Full definition grammar, electrical port meaning and placement semantics. |
+| P0 structural editor A/B/C | Parameter/selector/string/name/location, same-context template insert/clone, WIRE creation/rewire, supported simple-record removal; preview/hash/policy binding, isolated save/static reopen, semantic diff, check and atomic publication. | Native structural adapter/roundtrip, hierarchy mutation, opaque metadata/reference removal, blank component generation. |
+| P0 model check | Identity/count/value/selector/connection/dangling-wire checks; explicit unit-bound positive/range/equality/ratio rules; actionable evidence without autofix. | General electrical correctness, arbitrary symbolic evaluation, full required/optional/placement rules and RTDS hardware allocation. |
+| P0/P1 diagnostics | Saved attempt/hash/component mapping plus exact installed exception declarations and local manual grounding; ranked category-level causes and recovery suggestions. | Native Compile-log grammar/code qualification and actual native failures. No automatic repair. |
+| P1 native result acquisition | Existing backend long-form CSV and saved workflow artifacts to bounded canonical samples, source/run/attempt/units/sign/pu/time metadata; assessment integration. | Actual new Runtime capture, hardware signal semantics, independently verified supplied provenance/time basis. |
+| P1 experiment DSL | Strict canonical JSON, initial conditions, sequential events/durations, exact control mapping, expected-value chains, restored outputs through existing driver. | Free-text Gherkin parser; deterministic simulator-time event scheduling; physical effect of fault/trip labels. |
+| P1 sweeps | Cartesian/paired Draft/event/initial axes, ≤64 sequential runs, immutable IDs, prepare resume, explicit guarded actions, completed-evidence skipping, failure isolation, assessment/status aggregation. | Multi-rack parallelism, automatic retry/repair, actual suite execution. Runtime failure stops dispatch. |
+| P1 metrics | All 14 requested sampled metrics, explicit options/units/acceptance; analytical waveform tests. | Broad stability/certification conclusions, PLL/GFM/collapse indicators and unmeasured sampling/event behavior. |
+| P1 requirement traceability | Exact document/hash/page → requirement → events/channels → criterion → assessment; two instruction-only skills. | Authenticated interpretation of grid-code clauses and engineering certification. |
+| P1/P2 capability profile | Configured/observed FX distinction, SDK fingerprint/version, bounded definition-set hash, per-feature qualification, profile availability. | Broader supported-version matrix and actual executable/rack qualification. |
+| P2 visualization | Deterministic escaped Mermaid plus parsed-subset IR and semantic diff. | General electrical drawing/GUI matching and full vendor IR roundtrip. |
+| P2 tool/skill profiles | Full49/core10/engineering29 explicit registries; nine packaged/exportable JSON skill manifests. | Actual model selection/effectiveness of the new skills. |
+| P2 evaluation | Nine benchmark tasks, required/forbidden tool/evidence/final-state contracts and tested trace scorer; actual STDIO scenarios. | Model-driven benchmark rollout, authenticated external traces and task success rate. |
+| P3 IR / DFX generation | Versioned hierarchy/component/parameter/port/connection/coordinate IR, visualization and semantic diff. | General IR→DFX backend deferred until native structural editing stabilizes; no third-party generator code copied. |
+
+Installed-source evidence: 1,590 definition files hashed and rechecked, actual GAIN schema resolved, CommunicationError/ConnectionSetupError/Case.compile declarations found, invented structured log API unresolved. All 70 previously protected source/SDK/document/model hashes remain unchanged. The probe blocked SDK import, sockets and subprocesses. No app, Compile, Runtime, rack or GUI operation was performed for v2.0. Earlier local save/reopen evidence does not qualify the new structural editor.
+
+Final validation: 317 tests run, 315 passed, 2 skipped, zero failures/errors, 43.008 seconds. All 37 new tests (editor11, results9, experiment13, integration4) passed. Actual fresh-venv STDIO49 plus core10/engineering29 passed, including policy discovery, candidate save/static reopen, native-format conversion, metric calculation, suite preparation and execution rejection. All nine skills passed static validation; separate actual Codex discovery passed 15/16 tests with only the OS symlink skip. Manifest81 matched; source scan137 and source+distribution scan369 found no issues. Final wheel/sdist build and Twine passed. Fresh external-venv wheel installation, pip check, installed imports/integrity, nine-skill export, demo and STDIO passed; `source_checkout_imported=false`. See [VALIDATION.md](VALIDATION.md) for commands, corrected development-check failures and qualification limits. Private logs and installed-source output remain in ignored `.validation/v2-20260905`; no licensed data is distributed.
+
+Changed implementation files are grouped below; packaged schemas, all skill manifests and the independent release/transport checks are included in the same change.
+
+| Area | Files |
+|---|---|
+| Catalog/policy | `component_catalog.py`, `core/component_catalog.py`, `core/component_policy.py` |
+| Editing/checking/IR | `model_editor.py`, `model_check.py`, `core/model_ir.py`, `project_tools.py` |
+| Capture/metrics | `result_capture.py`, `core/power_metrics.py`, `assessment.py` |
+| Experiments/traceability | `experiments.py`, `core/experiment_spec.py`, `traceability.py`, `execution.py`, `core/runtime_backend.py` |
+| Diagnostics/profiles | `core/diagnostic_grounding.py`, `diagnostics.py`, `capabilities.py`, `mcp_server.py`, `cli.py` |
+| Contracts/skills | New `model_edit`, `result_capture`, `experiment_suite` schemas; extended assessment schema; `skill_catalog.py`; nine manifests/two new skills and existing edit/result instructions. |
+| Verification/distribution | Four new test modules, updated skill tests, `tools/mcp_smoke.py`, `tools/wheel_check.py`, `tools/run_evals.py`, `evals/`, `release_manifest.json`, `MANIFEST.in`, `pyproject.toml`. |
+| Documentation | `AGENTS.md`, README, this status, v2.0 guide, tool contracts, migration, workflows and validation records. |
+
+Compatibility: old numeric editing remains available without the new structural policy; existing 43 full-profile tool names and required inputs are retained. Overview policy metadata, diagnostic grounding, optional Compile workflow-hash binding and metric kinds are additive. Invalid near-substring LockFree hierarchy groups are now rejected. Native Compile return semantics (installed `None` annotation versus existing truthy-return check) remain explicitly unqualified; no native success is inferred.
 
 ## Unknown resolution and documentation discovery (2026-09-05)
 

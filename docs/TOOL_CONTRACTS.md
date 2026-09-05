@@ -4,6 +4,10 @@ The local STDIO server uses an explicit allowlist. Treat the connected server's 
 
 ## Read tools
 
+The v2.0 full registry has 49 tools. Six additions are `search_component_catalog`, `get_component_schema`, `edit_rscad_model`, `check_rscad_model`, `capture_rtds_results` and `run_experiment_suite`. Their fields, modes, bounds, qualifications and safety behavior are in [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md) and the packaged JSON schemas. All previous 43 names remain in default full mode. Optional core/engineering profiles expose 10/29 names. The mixed-mode suite tool carries live/destructive annotations because execute mode can call existing guarded live actions; plan/prepare/assess do not call RSCAD.
+
+Existing signatures add optional fields: `inspect_rscad_project(..., representation=None)` accepts `ir` or `mermaid`; `get_execution_diagnostics(..., include_grounding=False)` adds local evidence; `compile_project(..., expected_workflow_sha256=None)` pins the workflow hash inside the existing execution lock. Existing assessment kinds remain and `power_metric` is additive. Existing numeric tools retain their original policy/catalog requirements; only the new structural tool needs a component policy and reviewed preview.
+
 | Tools | Contract and evidence |
 | --- | --- |
 | `get_capabilities()` | Reads package versions, configured/observed version evidence, installation files, optional dependencies, parameter catalog, policy, and per-feature qualification state. It does not import vendor code, launch a process, connect to RSCAD, or query racks. `dependency_available`, `statically_inspected`, and `integration_qualified` have separate meanings. `doctor` includes this report while retaining its legacy top-level fields. |
@@ -81,12 +85,12 @@ There are 1-64 channels and at most 100,000 samples per channel. Times must be f
 | `settling_band` | Inclusive bounds and `settle_after` inside the interval; checks samples at/after that time and reports a sampled settling time. |
 | `reference_error` | Hash-bound `reference`, `absolute_tolerance`, `relative_tolerance`; optionally `reference_channel_id` and `rmse_limit`. Every absolute error must meet `absolute_tolerance + relative_tolerance * abs(reference)`; optional RMSE also must pass. |
 
-`max_sample_gap_seconds` optionally bounds sampling gaps. Channel units, sign, time basis and pu base must match exactly; reference-error timestamps must match exactly. There is no interpolation, resampling, unit conversion, arbitrary expression evaluator, direct CSV, or native vendor-capture adapter. Unsupported formats/kinds are validation errors. Missing/invalid samples or inadequate intervals produce `inconclusive` requirements; no criteria yields metrics and `not_evaluated`. A numerical `passed` status applies only to the supplied requirements and samples. `engineering_verdict` remains `not_evaluated`, and caller-supplied criterion provenance is recorded without authenticating it.
+`max_sample_gap_seconds` optionally bounds sampling gaps. Channel units, sign, time basis and pu base must match exactly; reference-error timestamps must match exactly. There is no sample resampling, reference interpolation, unit conversion or arbitrary expression evaluator. Existing native long-form CSV can be explicitly converted by `capture_rtds_results`; assessment itself still reads canonical JSON. Individual power metrics declare their estimators. Unsupported formats/kinds are validation errors. Missing/invalid samples or inadequate intervals produce `inconclusive` requirements; no criteria yields metrics and `not_evaluated`. A numerical `passed` status applies only to supplied requirements and samples. `engineering_verdict` remains `not_evaluated`, and caller-supplied criterion provenance is recorded without authenticating it.
 
 
 ## Offline extension investigation and trials
 
-The earlier four extension tools remain available; API discovery now brings the full public contract to 43 tools. Existing numeric edits and live tools retain their contracts.
+The earlier four extension tools remain available. The API-discovery checkpoint had 43 tools; the subsequent v2.0 additions bring full mode to 49. Existing numeric edits and live tools retain their required-input contracts.
 
 | Tool | Input/output and side effects |
 |---|---|
@@ -95,10 +99,10 @@ The earlier four extension tools remain available; API discovery now brings the 
 | `prepare_extension_trial(request)` | Local write. Same selector request; requires resolved preview and complete current companions. Copies unchanged source/companion bytes under projects/.extension-trials, publishes a hash-bound prepared_unexecuted manifest, leaves candidate absent and hides trials from normal project listings. No actual selector edit, RSCAD call, policy change or engineering pass. |
 | `inspect_runtime_layout(project_path, snapshot_id=None, offset=0, limit=100)` | Read only, max 500 records per page, 10,000 records/32 nesting levels/16 MiB RTX. Returns stored headers and references with unknown live values/units. Missing layout is unsupported; duplicate/unknown records are partial. Its snapshot_id includes the layout parser and differs from the project_snapshot_id also returned; paginate using the layout tool's snapshot. It is not live target or GUI discovery. |
 
-[Extension findings and exact unexecuted stages](EXTENSION_QUALIFICATION.md) distinguish confirmed API declarations from working, qualified integration. Structure application, clipboard clone, native case save and screenshot tools are not exposed. A prepared trial is not permission to connect or run.
+[Extension findings and exact unexecuted stages](EXTENSION_QUALIFICATION.md) distinguish confirmed API declarations from working, qualified integration. Native structural application, clipboard clone, native case save and screenshot tools are not exposed. V2.0 adds a separate bounded offline candidate editor. A prepared trial is not permission to connect or run.
 
 ## API discovery and evidence additions
 
 Two additive read-only tools, search_rscad_api(query, top_k=10, expected_api_version=None, snapshot_id=None) and lookup_rscad_api(symbol, expected_api_version=None, snapshot_id=None), expose bounded static installed-source declarations. Search yields found/unresolved and candidates; lookup yields found/ambiguous/unresolved and never selects an arbitrary ambiguous target. Source hashes, lines, signature/docstring, snapshot and SDK version are returned. No vendor import or live call occurs. [Bounds, coverage, version interpretation and exact usage](UNKNOWN_RESOLUTION.md) are part of this contract.
 
-Existing local search/page outputs add source type, evidence level, document/chunk/version/relevance metadata without changing their database schema or required inputs. Parameter lookups and project snapshot outputs add provenance labels; stored/default and configured/observed distinctions remain. Vector Store results are explicitly supplementary and never installed API verification. Existing result fields and execution safety contracts remain intact. The public registry contains 43 tools.
+Existing local search/page outputs add source type, evidence level, document/chunk/version/relevance metadata without changing their database schema or required inputs. Parameter lookups and project snapshot outputs add provenance labels; stored/default and configured/observed distinctions remain. Vector Store results are explicitly supplementary and never installed API verification. Existing result fields and execution safety contracts remain intact. The discovery checkpoint contained 43 tools; the current full registry contains 49.

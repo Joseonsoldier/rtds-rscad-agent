@@ -1,17 +1,17 @@
 ---
 name: rscad-edit-model
-description: Change supported numeric RSCAD component parameters in an isolated copy using catalog evidence, exact old values, and post-edit comparison.
+description: Change supported RSCAD parameters or bounded component templates in an isolated copy using definition evidence, exact old values, project policy, and post-edit comparison.
 ---
 
 # Edit RSCAD numeric parameters
 
 ## Use when
 
-The user requests supported REAL or INTEGER parameter changes while preserving the original project and companions.
+The user requests supported parameter changes or bounded structural edits while preserving the original project and companions.
 
 ## Do not use when
 
-The request needs string or selector edits, component creation, wiring changes, live Runtime controls, or changes to vendor definitions. Do not replace unsupported edits with arbitrary file writes.
+The request needs live Runtime controls, changes to vendor definitions, opaque-reference removal, or general model generation without a verified template. Do not replace unsupported edits with arbitrary file writes.
 
 ## Prerequisites
 
@@ -23,6 +23,8 @@ Establish the source hash, exact component UUID and context, component type, old
 2. Use `lookup_parameter(component_type, parameter, rscad_version, parameter_catalog_snapshot_id)` to inspect supported type, definition provenance, and bounds. If catalog evidence is absent, report the required local indexing setup; do not manufacture defaults.
 3. Call `apply_parameter_patch_batch(request)` once for related changes. The structured request contains `schema_version` = `"1.0"`, `source_project`, `source_sha256`, supported `rscad_version`, `project_label`, the selected `parameter_catalog_snapshot_id`, and 1-20 `operations`. Each operation specifies `op` = `"set_parameter"`, `component_id`, `context`, `component_type`, `parameter`, and exact `expected_old_value` / `new_value` strings. This validates the whole transaction before publishing a copy; do not split Kp/Ki across independent single changes.
 4. Re-read the resulting isolated copy using `get_component(project_path, component_id, context)` and `validate_project(project_path)`. Use `compare_project_versions(project_a, project_b)` to verify that only requested values changed; the summary `compare_projects(project_a, project_b)` is not a detailed unchanged-parameter or wiring proof.
+
+For selector/string/location or structure edits, use `get_component_schema(component_type)` and the existing operator-authored project component policy. Use `edit_rscad_model(request)` in preview mode, inspect every changed component/net and model-check finding, then use apply mode with that preview ID within the user's authorized scope. Insertion/clone/wire creation require an exact same-context template; removal with opaque non-DFX records is unsupported. The editor cannot write or enable its policy. `check_rscad_model(project_path)` adds static rules; candidate publication does not qualify native RSCAD structural editing.
 
 ## Completion
 

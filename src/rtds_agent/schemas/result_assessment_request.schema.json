@@ -134,7 +134,8 @@
                   "min_max",
                   "range",
                   "settling_band",
-                  "reference_error"
+                  "reference_error",
+                  "power_metric"
                 ]
               },
               "channel_id": {
@@ -222,6 +223,81 @@
                     "maxLength": 500
                   }
                 }
+              },
+              "metric": {
+                "enum": [
+                  "voltage_nadir",
+                  "voltage_recovery_time",
+                  "frequency_nadir",
+                  "RoCoF",
+                  "active_power_recovery",
+                  "reactive_power_peak",
+                  "reactive_current_injection",
+                  "overshoot",
+                  "settling_time",
+                  "oscillation_frequency",
+                  "damping_ratio",
+                  "angle_separation",
+                  "THD",
+                  "current_limit_duration"
+                ]
+              },
+              "metric_options": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "baseline": {
+                    "type": "number"
+                  },
+                  "lower": {
+                    "type": "number"
+                  },
+                  "upper": {
+                    "type": "number"
+                  },
+                  "event_time": {
+                    "type": "number"
+                  },
+                  "threshold": {
+                    "type": "number"
+                  },
+                  "fundamental_hz": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "harmonics": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 50
+                  },
+                  "other_channel_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              },
+              "metric_acceptance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "lower",
+                  "upper",
+                  "units"
+                ],
+                "properties": {
+                  "lower": {
+                    "type": "number"
+                  },
+                  "upper": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
               }
             },
             "allOf": [
@@ -269,6 +345,21 @@
                   "required": [
                     "absolute_tolerance",
                     "relative_tolerance"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "power_metric"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "metric",
+                    "metric_options"
                   ]
                 }
               }

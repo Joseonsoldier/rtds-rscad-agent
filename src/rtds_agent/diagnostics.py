@@ -70,7 +70,7 @@ def _entries(result: dict[str, Any]) -> tuple[list[tuple[dict[str, Any], str, st
 
 
 def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset: int = 0,
-                              limit: int = 100) -> dict[str, Any]:
+                              limit: int = 100, include_grounding: bool = False) -> dict[str, Any]:
     """Read one saved attempt's diagnostics with source, artifact and exact model identity checks.
 
     Accepted stages are compile, runtime and offline_test. Unsupported native log
@@ -80,6 +80,8 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
         raise ToolSafetyError("stage must be compile, runtime or offline_test")
     if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 500:
         raise ToolSafetyError("offset must be non-negative and limit an integer from 1 through 500")
+    if type(include_grounding) is not bool:
+        raise ToolSafetyError("include_grounding must be boolean")
     settings = get_settings()
     path = checked_file(workflow_path, (settings.projects_root,), ".json")
     if path.name != "workflow.json" or path.parent.parent != settings.projects_root:
@@ -232,6 +234,9 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
                                 "mapping_snapshot_id": current["snapshot_id"] if len(matches) == 1 else "unknown",
                                 "timestamp": str(row.get("timestamp", result.get("created_at") or "unknown"))[:100],
                                 "source_artifact": base["source_artifact"], "source_hash": base["source_hash"], "location": {"json_pointer": location}})
+            if include_grounding and offset <= index < offset+limit:
+                from .core.diagnostic_grounding import ground_diagnostic
+                diagnostics[-1]["grounding"] = ground_diagnostic(row,matches[0] if len(matches)==1 else None,current)
         selected = diagnostics[offset:offset + limit]
         base.update(diagnostics=selected, diagnostic_count=len(diagnostics), returned_count=len(selected),
                     next_offset=offset + limit if offset + limit < len(diagnostics) else None,

@@ -78,7 +78,7 @@ loaded = Path(rtds_agent.__file__).resolve()
 assert loaded.is_relative_to(installation), "Imported outside isolated venv"
 assert not loaded.is_relative_to(checkout), "Imported source checkout"
 skills = list_skills()
-assert len(skills["skills"]) == 7
+assert len(skills["skills"]) == 9
 print(json.dumps({"import_path_in_venv": loaded.relative_to(installation).as_posix(),
                   "version": metadata.version("rtds-rscad-agent"),
                   "integrity": verify_release(), "skill_count": len(skills["skills"])}))
@@ -94,7 +94,7 @@ print(json.dumps({"import_path_in_venv": loaded.relative_to(installation).as_pos
             raise RuntimeError("Skill dry-run wrote files")
         exported = run("installed skills export", ["-m", "rtds_agent", "skills", "export", "--destination",
                                                    str(root / "exported-skills")], json_output=True)
-        if exported.get("status") != "exported" or len(exported.get("skills", [])) != 7:
+        if exported.get("status") != "exported" or len(exported.get("skills", [])) != 9:
             raise RuntimeError("Installed skill export is incomplete")
         smoke = root / "mcp_smoke.py"
         shutil.copyfile(ROOT / "tools" / "mcp_smoke.py", smoke)
