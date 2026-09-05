@@ -9,9 +9,9 @@ MANIFEST = ROOT / "release_manifest.json"
 
 
 def payload():
-    return {"schema_version": 1, "scope": "code and schemas; no installation or experiment approval",
+    return {"schema_version": 1, "scope": "code, schemas and bundled skills; no installation or experiment approval",
             "files": {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".py", ".json"} and p != MANIFEST}}
+                      for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".py", ".json", ".md"} and p != MANIFEST}}
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     value = payload()
     if args.write:
         MANIFEST.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
-        print(f"Recorded {len(value['files'])} code/schema hashes; rerun tests before release")
+        print(f"Recorded {len(value['files'])} code/schema/skill hashes; rerun tests before release")
         return 0
     if not MANIFEST.exists() or json.loads(MANIFEST.read_text(encoding="utf-8")) != value:
         print("Release manifest does not match reviewed source")

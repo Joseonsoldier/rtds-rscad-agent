@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/offline-test-spec-1.0.json",
+  "title": "Offline FSAT plan",
+  "type": "object",
+  "required": [
+    "test_id",
+    "execution_mode",
+    "runtime_required",
+    "execution_notes",
+    "scan"
+  ],
+  "properties": {
+    "test_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "execution_mode": {
+      "enum": [
+        "offline_analytical_frequency_scan",
+        "offline_frequency_scan"
+      ]
+    },
+    "runtime_required": {
+      "const": false
+    },
+    "execution_notes": {
+      "type": "object",
+      "required": [
+        "case_run_forbidden"
+      ],
+      "properties": {
+        "case_run_forbidden": {
+          "const": true
+        }
+      }
+    },
+    "scan": {
+      "type": "object",
+      "required": [
+        "system_frequency_hz",
+        "start_frequency_hz",
+        "end_frequency_hz",
+        "frequency_increment_hz",
+        "domain",
+        "selected_bus"
+      ],
+      "properties": {
+        "system_frequency_hz": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "start_frequency_hz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_frequency_hz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "frequency_increment_hz": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "domain": {
+          "const": "DQ0"
+        },
+        "selected_bus": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "output_basename": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,80}$"
+        },
+        "expected_extension": {
+          "const": ".fscn"
+        }
+      }
+    }
+  }
+}

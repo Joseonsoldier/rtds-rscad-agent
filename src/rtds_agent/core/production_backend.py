@@ -619,7 +619,7 @@ class ProductionRscadBackend:
                 artifacts["rack_binary"]["sha256"] if succeeded else None
             ),
             "result_ref": {
-                "path": str(output_path),
+                **file_ref(output_path),
                 "dtp": artifacts.get("dtp"),
                 "rack_binary": artifacts.get("rack_binary"),
             },
@@ -673,7 +673,7 @@ class ProductionRscadBackend:
             raise BackendSafetyViolation("offline test must explicitly forbid Runtime")
         if notes.get("case_run_forbidden") is not True:
             raise BackendSafetyViolation("offline test must forbid case.run()")
-        if test_spec.get("execution_mode") != "offline_analytical_frequency_scan":
+        if test_spec.get("execution_mode") not in {"offline_analytical_frequency_scan", "offline_frequency_scan"}:
             raise BackendSafetyViolation("unsupported offline execution mode")
         scan = test_spec.get("scan", {})
         if scan.get("domain") != "DQ0":

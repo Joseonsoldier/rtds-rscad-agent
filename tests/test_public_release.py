@@ -1,4 +1,5 @@
 """Public setup and safety regressions using only synthetic temporary files."""
+import test_environment  # isolate config and credentials before application imports
 from contextlib import redirect_stdout
 import importlib
 import io

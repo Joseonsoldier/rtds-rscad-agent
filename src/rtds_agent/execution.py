@@ -8,6 +8,7 @@ import os
 import shutil
 import uuid
 
+from .input_contracts import TestSpecification, validate_test_spec
 from .settings import get_settings, within
 from .safety import ToolSafetyError, checked_file, resolve_rtfx_path, read_json
 from .policy import read_policy, require_action, execution_lock, policy_path
@@ -60,7 +61,7 @@ def inspect_installation() -> dict[str, Any]:
     return result
 
 
-def prepare_workflow(source_project: str, test_spec: dict, grounding_paths: list[str]) -> dict[str, Any]:
+def prepare_workflow(source_project: str, test_spec: TestSpecification, grounding_paths: list[str]) -> dict[str, Any]:
     """Make an isolated case/companion copy and bind static sources. Does not compile/run.
 
     Grounding records source availability and hashes, not an engineering verdict.
@@ -71,12 +72,7 @@ def prepare_workflow(source_project: str, test_spec: dict, grounding_paths: list
     if not grounding_paths or len(grounding_paths) > 30:
         raise ToolSafetyError("Provide 1–30 local grounding document paths")
     docs = [checked_file(p, settings.document_roots) for p in grounding_paths]
-    if not isinstance(test_spec, dict) or len(json.dumps(test_spec)) > 100000:
-        raise ToolSafetyError("test_spec must be a bounded JSON object")
-    if test_spec.get("runtime_required") is True:
-        validate_runtime_test_spec(test_spec)
-    elif test_spec.get("execution_mode") != "offline_frequency_scan":
-        raise ToolSafetyError("Use a Runtime capture plan or offline_frequency_scan plan")
+    validate_test_spec(test_spec)
     source_hash = sha256_file(source)
     discovery = discover_companion_dependencies(source, settings.definition_root, search_root=source.parent)
     require_complete(discovery)
@@ -178,6 +174,9 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
             raise ToolSafetyError("Runtime request changed before execution lock")
         if expected_policy_sha256 and sha256_json(require_action(settings, action.value)) != expected_policy_sha256:
             raise ToolSafetyError("Runtime policy changed before execution lock")
+        marker = path.parent / (action.value + ".attempt.json")
+        if marker.exists():
+            raise ToolSafetyError("Existing attempt requires recovery review; prepare a new workflow, never automatically retry")
         runtime = action is ApprovalAction.RUNTIME
         plan = validate_runtime_test_spec(workflow.manifest["test_spec"]) if runtime else None
         policy = require_action(settings, action.value, controls=bool(plan and plan["runtime_controls"]["runtime_parameter_writes"]))
@@ -189,23 +188,92 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
         workflow.request_approval(action, reason="Local operator opt-in; exact workflow and fresh evidence")
         workflow.grant_approval(action, actor=policy["operator"], source=f"local policy {sha256_file(policy_path(settings))}; preflight {sha256_file(audit_path)}")
         _save_workflow(path, workflow)
-        marker = path.parent / (action.value + ".attempt.json")
-        _write(marker, {"status": "in_progress", "workflow_sha256": sha256_file(path), "at": now_iso()}, exclusive=True)
-        backend = (backend_factory or _backend)(policy, workflow, runtime)
-        orchestrator = ApprovalGatedOrchestrator(workflow, backend)
+        attempt = {"schema_version": 1, "attempt_id": uuid.uuid4().hex,
+                   "workflow_id": workflow.manifest["workflow_id"], "action": action.value,
+                   "status": "in_progress", "phase": "backend_init", "execution": "not_started",
+                   "cleanup": "unknown", "workflow_sha256": sha256_file(path),
+                   "input_hashes": {"source_sha256": workflow.manifest["project"]["source_sha256"],
+                                    "working_sha256": workflow.manifest["project"]["working_sha256"]},
+                   "at": now_iso()}
+        _write(marker, attempt, exclusive=True)
+        primary_error = None
+        result = None
         try:
+            backend = (backend_factory or _backend)(policy, workflow, runtime)
+            attempt["phase"] = "orchestrator_init"
+            orchestrator = ApprovalGatedOrchestrator(workflow, backend)
+            attempt["phase"] = "execution"
+            attempt["execution"] = "unknown"
             result = {ApprovalAction.COMPILE: orchestrator.execute_compile,
                       ApprovalAction.RUNTIME: orchestrator.execute_runtime,
                       ApprovalAction.OFFLINE_TEST: orchestrator.execute_offline_test}[action]()
+            ok = result.get("safe_completion") if runtime else result.get("succeeded")
+            attempt["execution"] = "succeeded" if ok is True else "failed" if ok is False else "unknown"
+            # A returned workflow state alone cannot prove restoration/disconnection.
+            if runtime and result.get("safe_completion") is True:
+                attempt["cleanup"] = "succeeded"
+            elif runtime and result.get("safe_completion") is False:
+                attempt["cleanup"] = "unknown"
+            cleanup_source = result
+            ref = result.get("result_ref", {})
+            if isinstance(ref, dict) and ref.get("path") and ref.get("sha256"):
+                artifact = checked_file(ref["path"], (path.parent,), ".json")
+                if sha256_file(artifact) != ref["sha256"]:
+                    raise ToolSafetyError("Result changed before attempt cleanup recording")
+                cleanup_source = read_json(artifact)
+                attempt["result_ref"] = ref
+            if "cleanup" not in cleanup_source and isinstance(cleanup_source.get("driver"), dict):
+                cleanup_source = cleanup_source["driver"]
+            cleanup = cleanup_source.get("cleanup")
+            errors = cleanup_source.get("cleanup_errors")
+            if isinstance(cleanup, dict):
+                attempt["cleanup_evidence"] = cleanup
+                attempt["cleanup_errors"] = errors or []
+                if errors or any(cleanup.get(k) is False for k in ("case_closed", "disconnected")):
+                    attempt["cleanup"] = "failed"
+                elif all(cleanup.get(k) is True for k in ("case_closed", "disconnected")):
+                    attempt["cleanup"] = "succeeded"
+            if runtime:
+                attempt["stop"] = "succeeded" if result.get("stopped") is True else "failed" if result.get("stopped") is False else "unknown"
+                has_controls = bool(plan and plan["runtime_controls"]["runtime_parameter_writes"])
+                attempt["restoration"] = "not_required" if not has_controls else "succeeded" if result.get("safe_completion") is True else "unknown"
+                if result.get("stopped") is False:
+                    attempt["cleanup"] = "failed"
+                elif attempt["cleanup"] != "failed" and not (result.get("safe_completion") is True and result.get("stopped") is True):
+                    attempt["cleanup"] = "unknown"
+            attempt["phase"] = "persist"
         except Exception as exc:
-            _write(marker, {"status": "failed", "error_type": type(exc).__name__, "at": now_iso()})
-            raise
-        else:
-            _write(marker, {"status": "finished", "workflow_state": workflow.state.value, "at": now_iso()})
+            primary_error = exc
+            attempt.update(status="failed", error_type=type(exc).__name__)
+            if attempt["phase"] == "execution":
+                # An exception does not prove the simulator never started/stopped.
+                attempt["execution"] = "unknown"
         finally:
-            _save_workflow(path, workflow)
+            attempt["workflow_state"] = workflow.state.value
+            attempt["at"] = now_iso()
+            try:
+                _save_workflow(path, workflow)
+            except Exception as exc:
+                attempt["persistence_error_type"] = type(exc).__name__
+                attempt["failure_phase"] = attempt["phase"]
+                attempt.update(status="failed", phase="persist")
+                if primary_error is None:
+                    primary_error = exc
+                else:
+                    primary_error.add_note("Workflow persistence also failed: " + type(exc).__name__)
+            if primary_error is None:
+                attempt["status"] = "finished"
+            try:
+                _write(marker, attempt)
+            except Exception as exc:
+                if primary_error is None:
+                    primary_error = exc
+                else:
+                    primary_error.add_note("Attempt persistence also failed: " + type(exc).__name__)
+        if primary_error is not None:
+            raise primary_error
         return {"workflow_path": str(path), "state": workflow.state.value, "execution": result,
-                "preflight": evidence_ref(audit_path), "engineering_verdict": "not_evaluated"}
+                "attempt": attempt, "preflight": evidence_ref(audit_path), "engineering_verdict": "not_evaluated"}
 
 
 def compile_project(workflow_path: str) -> dict[str, Any]:

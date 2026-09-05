@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/parameter-patch-batch-1.0.json",
+  "title": "Atomic isolated numeric parameter patch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_project",
+    "source_sha256",
+    "rscad_version",
+    "project_label",
+    "operations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "source_project": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rscad_version": {
+      "const": "2.7.3"
+    },
+    "project_label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "parameter_catalog_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "op",
+          "component_id",
+          "context",
+          "component_type",
+          "parameter",
+          "expected_old_value",
+          "new_value"
+        ],
+        "properties": {
+          "op": {
+            "const": "set_parameter"
+          },
+          "component_id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "context": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "component_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "parameter": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "expected_old_value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "new_value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    }
+  }
+}

@@ -15,7 +15,6 @@ import uuid
 from .settings import get_settings, within
 from .safety import checked_file, read_openai_api_key, ToolSafetyError
 from .core.state_machine import sha256_file, now_iso
-from .core.topology_parser import DefinitionIndex, parse_parameter_schema, parse_dfx_components, read_rtfx_dfx
 
 EXTENSIONS = {".pdf", ".md", ".txt", ".rst", ".html", ".htm", ".py"}
 
@@ -106,8 +105,11 @@ def get_knowledge_status() -> dict[str, Any]:
     """Report configuration without contacting OpenAI or RSCAD."""
     s = get_settings()
     import os
+    from .core.parameter_catalog import catalog_status
+    catalog = catalog_status()
     return {"local_index_ready": (s.data_dir / "knowledge/index.sqlite").is_file(),
-            "parameter_index_ready": (s.data_dir / "knowledge/parameters.sqlite").is_file(),
+            "parameter_index_ready": catalog["status"] == "ready",
+            "parameter_catalog": catalog,
             "document_roots": [str(p) for p in s.document_roots],
             "vector_store_configured": bool(s.vector_store_id),
             "api_key_configured": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
@@ -178,68 +180,22 @@ def get_manual_section(source_path: str, start_page: int = 1, page_count: int = 
 
 
 def get_manual_figure(source_path: str, page: int = 1) -> dict[str, Any]:
-    """Render a local PDF page using optional Poppler on PATH; never install tools."""
-    settings = get_settings()
-    path = checked_file(source_path, settings.document_roots, ".pdf")
-    if type(page) is not int or page < 1:
-        raise ToolSafetyError("page must be a positive integer")
-    get_manual_page(str(path), page)
-    executable = shutil.which("pdftoppm")
-    if not executable:
-        raise ToolSafetyError("Install Poppler and add pdftoppm to PATH for page images")
-    digest = sha256_file(path)
-    output = settings.data_dir / "knowledge_cache" / digest / f"page-{page}"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run([executable, "-f", str(page), "-l", str(page), "-scale-to", "1800", "-singlefile", "-png", str(path), str(output)], check=True, capture_output=True, timeout=45)
-    if sha256_file(path) != digest:
-        raise ToolSafetyError("Source changed during rendering")
-    return {"path": str(output.with_suffix(".png")), "source_sha256": digest, "page": page}
+    """Render one local manual page with hash-verified image provenance."""
+    from .media import render_manual_figure
+    return render_manual_figure(source_path, page)
 
 
 def index_parameters(project_path: str) -> dict[str, Any]:
-    """Build a local definition index for component types in one user-selected project."""
-    from .safety import resolve_rtfx_path
-    settings = get_settings()
-    project, _ = resolve_rtfx_path(project_path)
-    _, dfx, _ = read_rtfx_dfx(project)
-    components = parse_dfx_components(dfx)
-    definitions = DefinitionIndex(settings.definition_root)
-    folder = settings.data_dir / "knowledge"
-    folder.mkdir(parents=True, exist_ok=True)
-    temp = folder / f"parameters-{uuid.uuid4().hex}.tmp"
-    count = 0
-    try:
-        with closing(sqlite3.connect(temp)) as db, db:
-            db.execute("CREATE TABLE parameters(component TEXT, parameter TEXT, rscad_version TEXT, data_type TEXT, unit TEXT, default_value TEXT, minimum REAL, maximum REAL, enum_values_json TEXT, description TEXT, definition_path TEXT, definition_sha256 TEXT, verification_status TEXT, raw_definition TEXT, PRIMARY KEY(component,parameter,rscad_version))")
-            for kind in sorted({c["component_type"] for c in components}):
-                definition, error = definitions.resolve(kind)
-                if error or definition is None or not within(definition, settings.definition_root):
-                    raise ToolSafetyError(f"Cannot resolve installed definition for {kind}")
-                digest = sha256_file(definition)
-                schema = parse_parameter_schema(definition.read_text(encoding="utf-8", errors="replace"))
-                for name, entry in schema.items():
-                    db.execute("INSERT INTO parameters VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (kind, name, settings.expected_rscad_version,
-                        entry["data_type"], entry["unit"], entry["default"], entry["minimum"], entry["maximum"],
-                        json.dumps(entry["enum_values"]), entry["description"], str(definition), digest,
-                        "parsed_from_local_definition_not_simulation_verified", entry["raw"]))
-                    count += 1
-                if sha256_file(definition) != digest:
-                    raise ToolSafetyError("Definition changed during indexing")
-        target = folder / "parameters.sqlite"
-        temp.replace(target)
-    finally:
-        temp.unlink(missing_ok=True)
-    result = {"status": "passed", "checks": {"definitions_resolved": True, "source_hashes_unchanged": True},
-              "database": {"path": str(target), "sha256": sha256_file(target)}, "parameters": count,
-              "scope": "definition parsing and provenance only; no simulation/engineering verdict", "created_at": now_iso()}
-    (folder / "parameter_audit.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    return result
+    """Publish an immutable definition snapshot without replacing previous projects' evidence."""
+    from .core.parameter_catalog import index_project
+    return index_project(project_path)
 
 
-def lookup_parameter(component_type: str, parameter: str, rscad_version: str = "2.7.3") -> dict[str, Any]:
-    """Read one locally indexed definition, rechecking its source hash."""
+def lookup_parameter(component_type: str, parameter: str, rscad_version: str = "2.7.3",
+                     parameter_catalog_snapshot_id: str | None = None) -> dict[str, Any]:
+    """Read hash-verified definition evidence; select a snapshot when definitions differ."""
     from .core.structured_patch import parameter_schema
-    return parameter_schema(component_type, parameter, rscad_version)
+    return parameter_schema(component_type, parameter, rscad_version, parameter_catalog_snapshot_id)
 
 
 def upload_documents(paths: list[str], *, allow_upload: bool = False) -> dict[str, Any]:

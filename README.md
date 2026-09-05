@@ -1,10 +1,10 @@
 # RTDS/RSCAD Agent
 
-Local MCP tools for RSCAD project inspection, document search, isolated numeric edits, Compile, and bounded simulation control.
+Local MCP tools for RSCAD project inspection, document search and images, atomic numeric-copy edits, prepared-data assessment, Compile, and bounded simulation control.
 
 **Early alpha — not an official RTDS Technologies product.** Live operation targets Windows, RSCAD FX 2.7.3, vendor Python API 1.1 and Python 3.12. You must supply your own licensed RSCAD installation and permitted rack access. This repository includes no RTDS software, manuals, MLIB, vendor example projects, API keys, active authorizations, or historical experiment results.
 
-[한국어 시작 안내](docs/QUICKSTART.ko.md) · [Safety and recovery](docs/SAFETY.md) · [Runtime workflow](docs/WORKFLOWS.md) · [Validation](docs/VALIDATION.md)
+[한국어 시작 안내](docs/QUICKSTART.ko.md) · [Safety and recovery](docs/SAFETY.md) · [Runtime workflow](docs/WORKFLOWS.md) · [Validation](docs/VALIDATION.md) · [Tool contracts](docs/TOOL_CONTRACTS.md) · [Migration](docs/MIGRATION.md) · [Implementation status](docs/IMPLEMENTATION_STATUS.md)
 
 ## Install
 
@@ -31,7 +31,7 @@ Replace paths with your installation. Code and user data should be kept separate
 
 Settings default to `%LOCALAPPDATA%\rtds-agent\config.json`. Set `RTDS_AGENT_CONFIG` to an absolute JSON path before initialization to use another location. `--data-dir`, repeatable `--source-root` and repeatable `--document-root` customize the permitted directories. By default, Examples and DOC under your RSCAD installation are used. Include the directory containing your licensed Python API documentation if you want it indexed too. Never configure a source/document root that contains your data directory.
 
-`doctor` only inspects files and configuration; it never connects to RSCAD. It reports unavailable optional features. To render PDF pages, install Poppler independently and put `pdftoppm` on PATH. Text retrieval does not require Poppler.
+`doctor` only inspects files and configuration; it never connects to RSCAD. It includes `get_capabilities` evidence separating software support, dependency availability, static API inspection, configured policy, and unverified live qualification. To render PDF pages, install Poppler independently and put `pdftoppm` on PATH. Text retrieval does not require Poppler.
 
 Paste the TOML printed by `mcp-config` into your MCP host's configuration without replacing other server entries. For Codex, see the [official MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). Restart the MCP connection after changing configuration. The server supports local STDIO only.
 
@@ -46,6 +46,24 @@ There are no automatic uploads. The CLI can upload explicitly selected documents
 ```
 
 Only configured document roots are accepted. Check your right to upload the files and OpenAI storage/search charges first. Failed indexing can leave an uploaded file in your OpenAI project; inspect the local `upload_receipts` and remove unwanted resources through your account. Never commit your keys, generated indexes or upload receipts. HTML is optional; use it when it adds content not already present in indexed documents.
+
+## Inspect, edit, and assess without a rack
+
+Use project snapshots to navigate hierarchy, components, stored parameters, and ports. Build parameter catalog evidence with `rtds-agent knowledge parameters --project PATH`; indexing another project preserves earlier generations. `apply_parameter_patch_batch` applies related REAL/INTEGER changes in one validated isolated-copy transaction. Re-read the copy and use `compare_project_versions` for detailed settings/parameter/topology differences; `compare_projects` retains its summary meaning.
+
+`get_manual_figure` returns actual MCP image content plus source/page/image hashes when Poppler is available. `evaluate_results` assesses supplied, hash-bound JSON samples against explicit interval/range/settling/reference-error requirements. It does not directly ingest existing Runtime CSV, infer engineering criteria, convert units, or certify a real model. [Follow the Kp/Ki workflow and inspect its limitations](docs/WORKFLOWS.md#change-kp-and-ki-together-while-preserving-the-original).
+
+For optional structural/GUI investigation, `rtds-agent extensions` reads installed API declarations without connecting. New tools preview TOGGLE node impacts, prepare unchanged isolated trial copies, and inventory saved Runtime headers. They do not apply live structural edits or verify a GUI target. See [extension scope and pending qualification](docs/EXTENSION_QUALIFICATION.md).
+
+Six task skills are bundled as installed package resources. To export into a chosen repository directory:
+
+```powershell
+rtds-agent skills list
+rtds-agent skills export --destination ".agents\skills" --dry-run
+rtds-agent skills export --destination ".agents\skills"
+```
+
+Export refuses conflicts and path redirection, and does not modify host settings. See [discovery evidence and installation details](docs/WORKFLOWS.md#optional-task-skills).
 
 ## Execution permissions
 
@@ -78,7 +96,11 @@ Failures and result evidence remain in your local data directory. Error records 
 .\.venv\Scripts\python.exe -m twine check dist/*
 ```
 
-After reviewing a code/schema change, refresh the release hash manifest with `python tools/release_manifest.py --write`, rerun tests and review the diff. This checksum detects accidental local changes; it is not a cryptographic publisher signature or protection against a malicious local administrator. Do not use manifest regeneration to bypass a failed safety check.
+The unittest harness uses temporary product configuration/data and clears inherited API keys before application imports. Optional installed-host discovery is enabled only with `RTDS_TEST_CODEX_DISCOVERY=1`; normal software tests make no RSCAD/rack calls.
+
+After reviewing a code/schema/bundled-skill change, refresh the release hash manifest with `python tools/release_manifest.py --write`, rerun tests and review the diff. This checksum detects accidental local changes; it is not a cryptographic publisher signature or protection against a malicious local administrator. Do not use manifest regeneration to bypass a failed safety check.
+
+Use `python tools/wheel_check.py PATH_TO_WHEEL` to verify a built wheel in a separate temporary venv with constrained dependencies, installed imports, synthetic demo, actual STDIO, and skill resource/export checks. The repository [AGENTS.md](AGENTS.md) provides development navigation.
 
 ## License
 

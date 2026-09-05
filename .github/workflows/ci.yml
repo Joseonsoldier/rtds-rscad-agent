@@ -45,5 +45,11 @@ jobs:
           $releaseArtifacts = Get-ChildItem -LiteralPath dist -File | Select-Object -ExpandProperty FullName
           python tools/release_check.py --artifacts $releaseArtifacts
 
+      - name: Verify isolated wheel installation without source checkout imports
+        run: |
+          $wheel = Get-ChildItem -LiteralPath dist -Filter *.whl -File
+          if ($wheel.Count -ne 1) { throw "Expected exactly one wheel" }
+          python tools/wheel_check.py $wheel.FullName
+
 # No OpenAI secret, vendor document, private model or self-hosted lab runner is used.
 # Real-rack qualification belongs to an operator-controlled local environment.

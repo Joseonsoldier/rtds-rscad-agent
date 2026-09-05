@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import codecs
 import hashlib
 import json
@@ -10,7 +11,6 @@ import os
 import re
 import secrets
 import shutil
-import sqlite3
 import tempfile
 import zipfile
 from datetime import datetime
@@ -19,14 +19,6 @@ from typing import Any
 
 
 from rtds_agent.settings import get_settings
-
-_SETTINGS = get_settings()
-AGENT = _SETTINGS.data_dir
-PROJECTS_ROOT = _SETTINGS.projects_root
-PATCH_ROOT = PROJECTS_ROOT / "model_patches"
-DEFINITION_ROOT = _SETTINGS.definition_root
-PARAMETER_DB = _SETTINGS.data_dir / "knowledge" / "parameters.sqlite"
-PARAMETER_AUDIT = _SETTINGS.data_dir / "knowledge" / "parameter_audit.json"
 
 from rtds_agent.safety import ToolSafetyError, is_within, resolve_rtfx_path, sha256_file
 from rtds_agent.core.topology_parser import parse_dfx_components, parse_rtfx_topology
@@ -75,58 +67,25 @@ def file_record(path: Path) -> dict[str, Any]:
     }
 
 
-def read_parameter_audit() -> tuple[dict[str, Any], str]:
-    if not PARAMETER_DB.is_file() or not PARAMETER_AUDIT.is_file():
-        raise PatchSafetyError("audited parameter DB evidence is missing")
-    audit = json.loads(PARAMETER_AUDIT.read_text(encoding="utf-8"))
-    if audit.get("status") != "passed" or not all((audit.get("checks") or {}).values()):
-        raise PatchSafetyError("parameter DB audit is not passed")
-    database_hash = sha256_file(PARAMETER_DB)
-    if audit.get("database", {}).get("sha256") != database_hash:
-        raise PatchSafetyError("parameter DB hash differs from its passed audit")
-    return audit, database_hash
+def read_parameter_audit(parameter_catalog_snapshot_id: str | None = None) -> tuple[dict[str, Any], str]:
+    from .parameter_catalog import read_audit
+    try:
+        return read_audit(parameter_catalog_snapshot_id)
+    except ToolSafetyError as exc:
+        raise PatchSafetyError(str(exc)) from exc
 
 
 def parameter_schema(
     component_type: str,
     parameter: str,
     rscad_version: str,
+    parameter_catalog_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
-    _, database_hash = read_parameter_audit()
-    connection = sqlite3.connect(
-        PARAMETER_DB.as_uri() + "?mode=ro&immutable=1",
-        uri=True,
-    )
-    connection.row_factory = sqlite3.Row
-    row = connection.execute(
-        """
-        SELECT component,parameter,rscad_version,data_type,unit,default_value,
-               minimum,maximum,enum_values_json,description,definition_path,
-               definition_sha256,verification_status,raw_definition
-        FROM parameters
-        WHERE component=? COLLATE NOCASE
-          AND parameter=? COLLATE NOCASE
-          AND rscad_version=?
-        """,
-        (component_type, parameter, rscad_version),
-    ).fetchone()
-    connection.close()
-    if row is None:
-        raise PatchSafetyError(
-            "parameter is outside the audited component/parameter/version subset"
-        )
-    result = dict(row)
-    definition = Path(result["definition_path"]).resolve()
-    if (
-        not is_within(definition, DEFINITION_ROOT)
-        or not definition.is_file()
-        or sha256_file(definition) != result["definition_sha256"]
-    ):
-        raise PatchSafetyError("installed parameter definition provenance failed")
-    result["parameter_database_sha256"] = database_hash
-    result["parameter_audit_path"] = str(PARAMETER_AUDIT)
-    result["parameter_audit_sha256"] = sha256_file(PARAMETER_AUDIT)
-    return result
+    from .parameter_catalog import lookup
+    try:
+        return lookup(component_type, parameter, rscad_version, parameter_catalog_snapshot_id)
+    except ToolSafetyError as exc:
+        raise PatchSafetyError(str(exc)) from exc
 
 
 def validate_new_value(schema: dict[str, Any], new_value: str) -> dict[str, Any]:
@@ -207,6 +166,8 @@ def component_blocks(text: str) -> tuple[list[str], list[tuple[int, int]]]:
 
 
 def normalize_request(request: dict[str, Any]) -> dict[str, Any]:
+    from rtds_agent.input_contracts import validate_patch
+    validate_patch(request)
     if not isinstance(request, dict):
         raise PatchSafetyError("patch request must be an object")
     if request.get("schema_version") != "1.0":
@@ -252,7 +213,7 @@ def normalize_request(request: dict[str, Any]) -> dict[str, Any]:
         if identity in identities:
             raise PatchSafetyError("duplicate component/context/parameter operation")
         identities.add(identity)
-        schema = parameter_schema(component_type, parameter, version)
+        schema = parameter_schema(component_type, parameter, version, request.get("parameter_catalog_snapshot_id"))
         value_validation = validate_new_value(schema, new_value)
         if expected_old_value == new_value:
             raise PatchSafetyError("new_value must differ from expected_old_value")
@@ -280,6 +241,10 @@ def normalize_request(request: dict[str, Any]) -> dict[str, Any]:
                         "parameter_database_sha256",
                         "parameter_audit_path",
                         "parameter_audit_sha256",
+                        "parameter_catalog_snapshot_id",
+                        "library_identity",
+                        "rscad_version_evidence",
+                        "api_version_evidence",
                     )
                 },
                 "value_validation": value_validation,
@@ -293,12 +258,14 @@ def normalize_request(request: dict[str, Any]) -> dict[str, Any]:
         "source_sha256": source_hash,
         "rscad_version": version,
         "project_label": label,
+        "parameter_catalog_snapshot_id": request.get("parameter_catalog_snapshot_id"),
         "operations": normalized_operations,
     }
 
 
 def patch_dfx(data: bytes, operations: list[dict[str, Any]]) -> tuple[bytes, list[dict[str, Any]]]:
     text, had_bom, components = dfx_components(data)
+    expected_components = copy.deepcopy(components)
     lines, ranges = component_blocks(text)
     if len(components) != len(ranges):
         raise PatchSafetyError("component parser and DFX block count disagree")
@@ -369,9 +336,12 @@ def patch_dfx(data: bytes, operations: list[dict[str, Any]]) -> tuple[bytes, lis
             }
         )
         component["parameters"][parameter] = operation["new_value"]
+        expected_components[component_index]["parameters"][parameter] = operation["new_value"]
 
     modified_text = "".join(lines)
     after_components = parse_dfx_components(modified_text)
+    if expected_components != after_components:
+        raise PatchSafetyError("Unexpected component or parameter change after reparse")
     before_identity = [
         (row["uuid"], row["context"], row["component_type"])
         for row in components
@@ -417,9 +387,11 @@ def write_patched_archive(source: Path, output: Path, dfx_member: str, dfx_data:
             temp.unlink()
 
 
-def topology_summary(path: Path) -> dict[str, Any]:
-    document = parse_rtfx_topology(path, DEFINITION_ROOT).document
+def topology_summary(path: Path, definition_root: Path | None = None) -> dict[str, Any]:
+    from .static_comparison import topology_signature
+    document = parse_rtfx_topology(path, definition_root or get_settings().definition_root).document
     return {
+        "topology_signature": topology_signature(document),
         "source": document["source"],
         "coverage": document["coverage"],
         "warnings": document["warnings"],
@@ -433,13 +405,16 @@ def topology_summary(path: Path) -> dict[str, Any]:
 def apply_parameter_patch_request(
     request: dict[str, Any],
     *,
-    output_root: Path = PATCH_ROOT,
+    output_root: Path | None = None,
     run_id: str | None = None,
 ) -> dict[str, Any]:
+    settings = get_settings()
     normalized = normalize_request(request)
+    if get_settings() != settings:
+        raise PatchSafetyError("Configuration changed during patch validation")
     source = Path(normalized["source_project"])
-    output_root = output_root.resolve()
-    if not is_within(output_root, PROJECTS_ROOT):
+    output_root = (output_root or settings.projects_root / "model_patches").resolve()
+    if not is_within(output_root, settings.projects_root):
         raise PatchSafetyError("output_root must be inside agent projects")
     label_root = output_root / normalized["project_label"]
     run_name = run_id or (
@@ -452,8 +427,24 @@ def apply_parameter_patch_request(
     if not is_within(run_dir, output_root) or run_dir.exists():
         raise PatchSafetyError("patch run directory is unsafe or already exists")
 
+    from .companion_dependencies import discover_companion_dependencies, require_complete, input_files_from_discovery
     source_before = file_record(source)
     request_sha = canonical_sha256(normalized)
+    discovery = discover_companion_dependencies(source, settings.definition_root, search_root=source.parent)
+    require_complete(discovery)
+    companions = input_files_from_discovery(discovery)
+    # Validate every requested old value before even creating a temporary copy.
+    before_archive = archive_snapshot(source)
+    with zipfile.ZipFile(source) as archive:
+        dfx_before = archive.read(before_archive["dfx_member"])
+    dfx_after, changes = patch_dfx(dfx_before, normalized["operations"])
+    final_dir = run_dir
+    staging_root = settings.data_dir / ".patch-staging"
+    if not is_within(staging_root, settings.data_dir):
+        raise PatchSafetyError("Staging path escapes configured data directory")
+    staging_root.mkdir(parents=True, exist_ok=True)
+    run_dir = Path(tempfile.mkdtemp(prefix="patch-", dir=staging_root))
+    published = False
     try:
         source_dir = run_dir / "source_snapshot"
         working_dir = run_dir / "working"
@@ -462,14 +453,35 @@ def apply_parameter_patch_request(
         shutil.copy2(source, snapshot)
         if sha256_file(snapshot) != normalized["source_sha256"]:
             raise PatchSafetyError("source snapshot verification failed")
-
+        # The mutable-source precheck is advisory. Derive every published byte
+        # from the hash-verified snapshot, even if the source changed and reverted.
         before_archive = archive_snapshot(snapshot)
-        with zipfile.ZipFile(snapshot, "r") as archive:
+        with zipfile.ZipFile(snapshot) as archive:
             dfx_before = archive.read(before_archive["dfx_member"])
+        if sha256_bytes(dfx_before) != before_archive["member_sha256"][before_archive["dfx_member"]]:
+            raise PatchSafetyError("Verified snapshot DFX changed during reading")
         dfx_after, changes = patch_dfx(dfx_before, normalized["operations"])
+
         working = working_dir / source.name
         write_patched_archive(snapshot, working, before_archive["dfx_member"], dfx_after)
 
+        companion_records = []
+        for item in companions:
+            original = Path(item["path"]).resolve()
+            if not is_within(original, source.parent):
+                raise PatchSafetyError("Companion escapes source directory")
+            relative = original.relative_to(source.parent)
+            for directory in (source_dir, working_dir):
+                destination = directory / relative
+                if destination.exists() or not is_within(destination, directory):
+                    raise PatchSafetyError("Companion output collision or path escape")
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(original, destination)
+                if sha256_file(destination) != item["sha256"]:
+                    raise PatchSafetyError("Companion changed while copying")
+            companion_records.append({"source": file_record(original), "working": file_record(working_dir / relative)})
+        copied_discovery = discover_companion_dependencies(working, settings.definition_root, search_root=working_dir)
+        require_complete(copied_discovery)
         after_archive = archive_snapshot(working)
         if before_archive["members"] != after_archive["members"]:
             raise PatchSafetyError("archive member order changed")
@@ -481,8 +493,8 @@ def apply_parameter_patch_request(
         if before_archive["archive_comment_sha256"] != after_archive["archive_comment_sha256"]:
             raise PatchSafetyError("archive comment changed")
 
-        topology_before = topology_summary(snapshot)
-        topology_after = topology_summary(working)
+        topology_before = topology_summary(snapshot, settings.definition_root)
+        topology_after = topology_summary(working, settings.definition_root)
         graph_fields = (
             "component_count",
             "definition_resolved_count",
@@ -494,7 +506,8 @@ def apply_parameter_patch_request(
             "hierarchy_link_count",
         )
         graph_unchanged = (
-            topology_before["component_identity"] == topology_after["component_identity"]
+            topology_before["topology_signature"] == topology_after["topology_signature"]
+            and topology_before["component_identity"] == topology_after["component_identity"]
             and all(
                 topology_before["coverage"][field] == topology_after["coverage"][field]
                 for field in graph_fields
@@ -508,7 +521,19 @@ def apply_parameter_patch_request(
         if sha256_file(source) != normalized["source_sha256"]:
             raise PatchSafetyError("source project changed while patch was being created")
 
+        for item in companions:
+            if sha256_file(Path(item["path"])) != item["sha256"]:
+                raise PatchSafetyError("Source companion changed during patch")
+        for op in normalized["operations"]:
+            prior = op["schema_evidence"]
+            current = parameter_schema(op["component_type"], op["parameter"], normalized["rscad_version"], prior.get("parameter_catalog_snapshot_id"))
+            if any(current.get(k) != prior.get(k) for k in ("definition_sha256", "parameter_database_sha256", "parameter_audit_sha256")):
+                raise PatchSafetyError("Parameter catalog evidence changed during patch")
+        if get_settings() != settings:
+            raise PatchSafetyError("Configuration changed during patch creation")
         manifest = {
+            "companions": companion_records,
+            "companion_discovery_sha256": discovery["discovery_sha256"],
             "schema_version": "1.0",
             "created_at": now_iso(),
             "status": "completed",
@@ -546,11 +571,23 @@ def apply_parameter_patch_request(
                 "hardware_io_called": False,
             },
         }
+        def final_paths(value):
+            if isinstance(value, dict):
+                return {k: final_paths(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [final_paths(v) for v in value]
+            if isinstance(value, str) and (value == str(run_dir) or value.startswith(str(run_dir) + os.sep)):
+                return str(final_dir) + value[len(str(run_dir)):]
+            return value
+        manifest = final_paths(manifest)
         manifest_path = run_dir / "structured_parameter_patch.json"
         with manifest_path.open("x", encoding="utf-8", newline="\n") as stream:
             json.dump(manifest, stream, ensure_ascii=False, indent=2)
             stream.write("\n")
         result = {
+            "companions_preserved": True,
+            "detail_diff": {"parameter_changes": changes, "unexpected_changes": [], "same_static_topology": graph_unchanged},
+            "parameter_catalog_snapshot_ids": sorted({op["schema_evidence"]["parameter_catalog_snapshot_id"] for op in normalized["operations"] if op["schema_evidence"].get("parameter_catalog_snapshot_id")}),
             "status": "completed",
             "run_directory": str(run_dir),
             "source_project": str(source),
@@ -568,14 +605,19 @@ def apply_parameter_patch_request(
             "compile_called": False,
             "runtime_or_hardware_called": False,
         }
+        result = final_paths(result)
+        final_dir.parent.mkdir(parents=True, exist_ok=True)
+        if not is_within(final_dir, output_root) or final_dir.exists():
+            raise PatchSafetyError("Publication destination changed or already exists")
+        run_dir.rename(final_dir)
+        published = True
         return result
-    except Exception:
-        if run_dir.exists():
+    finally:
+        if not published and run_dir.exists():
             resolved = run_dir.resolve()
-            if not is_within(resolved, output_root):
-                raise PatchSafetyError("refusing cleanup outside patch output root")
+            if not is_within(resolved, staging_root):
+                raise PatchSafetyError("refusing cleanup outside patch staging root")
             shutil.rmtree(resolved)
-        raise
 
 
 def build_single_parameter_request(
@@ -590,6 +632,7 @@ def build_single_parameter_request(
     project_label: str | None = None,
     rscad_version: str = "2.7.3",
     expected_source_sha256: str | None = None,
+    parameter_catalog_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     source, _ = resolve_rtfx_path(source_project)
     observed_source_sha256 = sha256_file(source)
@@ -601,6 +644,7 @@ def build_single_parameter_request(
         "source_sha256": observed_source_sha256,
         "rscad_version": rscad_version,
         "project_label": project_label or source.stem,
+        "parameter_catalog_snapshot_id": parameter_catalog_snapshot_id,
         "operations": [
             {
                 "op": "set_parameter",

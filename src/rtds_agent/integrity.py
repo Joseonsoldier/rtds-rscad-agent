@@ -12,12 +12,12 @@ def verify_release() -> dict:
         raise PermissionError("Release integrity manifest is missing; live execution disabled")
     manifest = json.loads(path.read_text(encoding="utf-8"))
     expected = manifest.get("files", {})
-    actual_paths = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() and p.suffix in {".py", ".json"} and p != path}
+    actual_paths = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() and p.suffix in {".py", ".json", ".md"} and p != path}
     if set(expected) != actual_paths:
         raise PermissionError("Release file inventory differs from manifest")
     for name, digest in expected.items():
         target = (root / name).resolve()
         if not target.is_relative_to(root) or sha256_file(target) != digest:
-            raise PermissionError(f"Release code/schema hash mismatch: {name}")
+            raise PermissionError(f"Release code/schema/skill hash mismatch: {name}")
     return {"status": "passed", "files": len(expected), "manifest_sha256": sha256_json(manifest),
             "scope": "local accidental-change detection; not a signature or protection against a malicious local administrator"}

@@ -295,7 +295,7 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
             raise ExpressionError(f"unknown identifier {node.id}")
         return env[node.id]
     if isinstance(node, ast.BoolOp):
-        values = [_eval_ast(value, env) for value in node.values]
+        values = (_eval_ast(value, env) for value in node.values)
         return all(values) if isinstance(node.op, ast.And) else any(values)
     if isinstance(node, ast.UnaryOp):
         value = _eval_ast(node.operand, env)
@@ -442,7 +442,10 @@ def parse_active_nodes(
             frame = stack.pop()
             active = frame["parent_active"]
             continue
-        if not active or stripped.startswith("#"):
+        if stripped.startswith("#"):
+            warnings.append(f"directive_unsupported:{stripped}")
+            continue
+        if not active:
             continue
 
         tokens = stripped.split()
@@ -488,6 +491,8 @@ def parse_active_nodes(
                 "raw": stripped,
             }
         )
+    if stack:
+        warnings.append("unclosed_node_conditions")
     # Some definitions intentionally repeat a node with alternate name metadata.
     unique: dict[tuple[Any, ...], dict[str, Any]] = {}
     for node in nodes:

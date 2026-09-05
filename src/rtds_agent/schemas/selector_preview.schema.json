@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hash-bound selector impact preview and unexecuted trial",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_project",
+    "source_sha256",
+    "snapshot_id",
+    "component_id",
+    "context",
+    "component_type",
+    "parameter",
+    "expected_old_value",
+    "new_value"
+  ],
+  "properties": {
+    "source_project": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "component_id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "context": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000\\r\\n]+$"
+    },
+    "component_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000\\r\\n]+$"
+    },
+    "parameter": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000\\r\\n]+$"
+    },
+    "expected_old_value": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000\\r\\n]+$"
+    },
+    "new_value": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000\\r\\n]+$"
+    }
+  },
+  "$id": "https://local.rtds-agent/schemas/selector-preview-1.0.json"
+}

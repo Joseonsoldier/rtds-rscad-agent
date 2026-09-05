@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/result-assessment-request-1.0.json",
+  "title": "Offline assessment of hash-bound supplied JSON sample data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "specification",
+    "specification_sha256"
+  ],
+  "properties": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_path",
+        "data_sha256",
+        "input_project",
+        "input_project_sha256",
+        "run_id",
+        "attempt_id"
+      ],
+      "properties": {
+        "data_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "data_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "input_project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "input_project_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_path",
+        "data_sha256",
+        "input_project",
+        "input_project_sha256",
+        "run_id",
+        "attempt_id"
+      ],
+      "properties": {
+        "data_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "data_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "input_project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "input_project_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "specification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "requirements"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "requirements": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "requirement_id",
+              "kind",
+              "channel_id",
+              "units",
+              "sign_convention",
+              "time_unit",
+              "time_basis",
+              "start_time",
+              "end_time",
+              "provenance"
+            ],
+            "properties": {
+              "requirement_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "kind": {
+                "enum": [
+                  "min_max",
+                  "range",
+                  "settling_band",
+                  "reference_error"
+                ]
+              },
+              "channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "units": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "sign_convention": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "time_unit": {
+                "const": "s"
+              },
+              "time_basis": {
+                "enum": [
+                  "simulator_time",
+                  "wall_clock"
+                ]
+              },
+              "start_time": {
+                "type": "number"
+              },
+              "end_time": {
+                "type": "number"
+              },
+              "lower": {
+                "type": "number"
+              },
+              "upper": {
+                "type": "number"
+              },
+              "settle_after": {
+                "type": "number"
+              },
+              "absolute_tolerance": {
+                "type": "number",
+                "minimum": 0
+              },
+              "relative_tolerance": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rmse_limit": {
+                "type": "number",
+                "minimum": 0
+              },
+              "max_sample_gap_seconds": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "pu_base": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "reference_channel_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "reference"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "user_defined",
+                      "supplied_spec",
+                      "cited_document"
+                    ]
+                  },
+                  "reference": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "range",
+                        "settling_band"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "lower",
+                    "upper"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "settling_band"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "settle_after"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "reference_error"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "absolute_tolerance",
+                    "relative_tolerance"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "specification_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

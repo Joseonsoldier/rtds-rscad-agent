@@ -25,4 +25,4 @@ where = ["src"]
 include = ["rtds_agent*"]
 
 [tool.setuptools.package-data]
-rtds_agent = ["schemas/*.json", "release_manifest.json"]
+rtds_agent = ["schemas/*.json", "release_manifest.json", "skills/*/SKILL.md", "skills/*/references/*.md"]

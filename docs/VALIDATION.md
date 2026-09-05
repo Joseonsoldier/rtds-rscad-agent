@@ -1,37 +1,120 @@
 # Public alpha validation
 
-Validation date: 2026-09-04. Target: Windows, Python 3.12.9, RSCAD FX 2.7.3 / vendor API 1.1.
+Validation date: 2026-09-05. Actual environment: Windows, Python 3.12.9. Supported configuration remains RSCAD FX 2.7.3 / vendor API 1.1. The subsequent local SDK trial returned RSCAD version 2.7, without an exact patch; 2.7.3 remains a support target rather than an observed version. Package version and dependency constraints were not changed.
 
-## Local checks
+## Main delivery validation (2026-09-05)
 
-- **85 synthetic unit/fake-driver tests** cover the retained Compile/Runtime core and public setup, local indexing, definition provenance, isolated edits, path boundaries, inactive policy, rack allow-lists, consumed grants and stale requests.
-- A separate virtual environment was populated from the declared package dependencies. The built wheel was installed without importing from the source tree, and the suite, demo and actual STDIO smoke test were repeated.
-- The STDIO client discovered **25 tools**, read an inactive default policy and confirmed a Compile request was rejected before live calls.
-- A static audit of the installed vendor API passed **24 checks**. The audit parsed local source files; it did not import the vendor API, connect, query racks, compile or start Runtime.
-- Source and distribution scans check for common key/token patterns, developer-specific bindings, binaries, proprietary project/document artifacts and generated local data. Wheel and sdist metadata are checked with Twine.
-- The release manifest covers packaged code and schemas. It does not contain a personal authorization or certify a simulation.
+The owner authorized normal main pushes after completed validation. Before first delivery, staged whitespace inspection found extra EOF blank lines in static_comparison.py and test_mcp_contract.py. Only those blank lines were removed; the single affected source hash was reviewed and refreshed. Project-snapshot regression passed 18 tests in 10.650 s. Final full suite passed: 252 run, 250 passed, 2 existing optional-host/OS-symlink skips, no failures/errors, 98.459 s, exit 0. Actual STDIO41 passed, including extension scenarios and inactive-policy denials, with no live RSCAD calls. Manifest52 and source scanner97 passed. Local models, validation evidence, ACL backup and active settings are excluded from Git. Earlier wheel/sdist results below belong to their earlier bytes; no new distribution was built for this source commit.
+
+## Latest GUI repair follow-up
+
+User-authorized, UAC-approved root-only WRITE_DAC repair passed (icacls exit 0). Same-task node_repl/sky/window enumeration and foreground RSCAD screenshot/accessibility passed. Exact isolated saved script_example GUI open/tab/Draft observation/close passed; pre-existing Untitled retained. All 70 protected hashes and saved trial hash match. No rack/Compile/Runtime action. No production code or contract change; unit tests below were not rerun for this documentation-only repair. See [GUI_TOOL_RECOVERY.md](GUI_TOOL_RECOVERY.md) for capture limitations.
+
+Repair follow-up release checks: manifest 52 matches, source scanner 97 files with zero issues, both exit 0. Git whitespace check passed after removing an extra trailing blank line. These checks used the existing Python environment through scoped execution approval; a default-sandbox venv launcher attempt could not start its base interpreter and is not counted as a test pass.
+
+## Earlier local RSCAD follow-up
+
+The user authorized local launch and isolated model open/read/save-as/reopen, and prohibited rack operations and Runtime execution. Actual results are detailed in [LOCAL_RSCAD_QUALIFICATION.md](LOCAL_RSCAD_QUALIFICATION.md).
+
+| Check | Actual result |
+|---|---|
+| Native unchanged-model round trips | 2/2 passed, final runner exit 0. Microgrid1 Draft Kp/Ki Init 3.0/1.0 and script_example AG Type INTEGER unchanged after native save/reopen. Four successful non-forced case closes, SDK disconnect completed. |
+| Scoped SDK audit | 86 requests: four opens, two save-as, four closes; no rack/Compile/Runtime/parameter-write request. Python socket calls stayed on loopback. Separate Java background traffic was not captured. |
+| Structure and companions | Microgrid1 complete subsystem text preserved (2,537 component records), but GROUP without UUID prevents full production-parser qualification. script_example retains 76 component records and normalized topology; save adds seven installed defaults and upgrades the DFX/RTX serialization. All ten sibling copies remain unchanged. |
+| Protected files | All 70 original/SDK/document/definition/data hashes match; source snapshots and working models remain identical to originals. Saved hashes separately recorded. |
+| EXT regression | 25 passed, no skips/failures/errors; 16.029 s, exit 0. |
+| Full regression | 252 run, 250 passed, 2 skipped, no failures/errors; 61.526 s, exit 0. Existing optional host-discovery and OS symlink skips. |
+| Actual STDIO | 41 tools; complete synthetic scenario and native image delivery passed. Three live actions denied, 14 forbidden tools absent; exit 0. This STDIO run made no actual RSCAD call. |
+| Release source checks | Manifest matches 52 files; scanner 96 files, zero issues; git diff --check clean. Production code/schema/skill bytes unchanged; no manifest regeneration. |
+| GUI project identity at that checkpoint | Initially blocked (subsequent scoped trial passed above): computer-use initialization failed twice, including reset/retry, with sandbox setup refresh error. Process title observed, SDK case paths verified; no screenshot, accessibility or project/window binding obtained. |
+| Compile / rack / Runtime | Not executed. The inspected SDK and local help do not establish a rack-free native Compile path. |
+
+Initial one-off logger framing failure and native Kp# to Kp assertion failure are retained separately; neither is counted as a passing attempt. After correcting only the validation script, the final two-case run passed. No production code, execution policy, grants or installed SDK were changed. This follow-up updates five documentation files and local ignored scripts/evidence. No new wheel/sdist was built or published; artifact results below belong to the earlier checkpoint.
+
+## Earlier offline EXT-01 / EXT-02 follow-up
+
+The following results supersede the earlier WP completion counts retained below. All commands used the existing Windows/Python 3.12.9 environment and isolated product settings.
+
+| Check | Actual result |
+|---|---|
+| `python -m unittest discover -s tests -p test_extensions.py -v` | 25 passed, 0 failures/errors/skips, 14.852 s, exit 0. |
+| Full suite after reviewed manifest refresh | 252 run, 250 passed, 2 skipped, 0 failures/errors, 123.476 s, exit 0. Same two optional-host/OS-symlink skips as the earlier checkpoint. |
+| Actual `tools/mcp_smoke.py` | 41 named/schema/annotation contracts; old Kp/Ki scenario plus selector preview, invalid trial rejection, unchanged isolated copy and stored Runtime inventory passed, exit 0. Three live requests denied, 14 forbidden tools absent. |
+| Installed SDK/document source inspection | API 1.1 and all ten investigated declaration groups found; existing Runtime AST audit 24/24 passed. No SDK import, app invocation, connection or rack access. |
+| Local original protection | 59 SDK/document/example/definition file hashes unchanged. Trial source_snapshot and working bytes equal the original; candidate absent. |
+| Actual saved model analysis | Draft UUID 45 Type INTEGER to REAL changes active output identity/type and affects an existing net; no edit applied. RTX inventory 20 records, partial due to tagged/legacy duplicate IDs; no live target inferred. |
+| Release/source/dependencies/demo | Manifest 52 entries match; source scan 95 files, zero issues; pip check and synthetic demo passed; exit 0. |
+
+The new tests cover stale inputs/definitions, exact selector options, unsupported/unterminated conditions, connected-port impact, nested/duplicate/unknown Runtime records, parser-bound pagination, no-write reads, copy failure cleanup, configuration/companion changes, original preservation, socket/process/vendor-import tripwires and existing workflow registry compatibility. Early STDIO integration failures (bare dict return annotation and absent schema ID) were resolved before these final checks.
+
+Final extension distribution verification used `.validation/ext-20260905/release`; earlier artifacts were preserved. Build (sdist then wheel-from-sdist), Twine on both artifacts and source/distribution scan all passed, exit 0; 256 entries scanned, zero issues. `tools/wheel_check.py` passed in a fresh venv outside the checkout: installed import origin, pip check, 52 integrity entries, schemas, six skill resources/dry-run/export, synthetic demo and actual STDIO41 with the extension scenario. Source checkout import and live RSCAD calls were false. Tested wheel SHA-256: `de43e257e45c6fb21c7ffb302a99c424acd2c2fef56b712674651ba768f598e4`; manifest SHA-256: `825c8e0ea4732231e69b13b658812fba90deb67628d88418c083369461c8b744`.
+
+After recording these results, the sdist is rebuilt with final docs; the tested wheel remains unchanged. The final file comparison binds both artifacts to the same 52 manifest entries and confirms final docs in the sdist. Final metadata/scanner results and hashes are retained in the local extension validation directory. No publication, user configuration or policy change occurred.
+
+No native structure-application adapter, clone/insert/wire execution, GUI/session capture or live target-discovery qualification is claimed. Exact unexecuted targets and actions are specified in [EXTENSION_QUALIFICATION.md](EXTENSION_QUALIFICATION.md); private concrete paths are in the local ignored trial report. SDK source inspection is distinct from real application execution.
+
+## Earlier WP-00 through WP-11 software checkpoint
+
+| Check | Actual result |
+|---|---|
+| Baseline full unittest suite | 85 run, 85 passed, 0 skipped, 0 failures/errors; 11.201 s; exit 0. |
+| Final `python -m unittest discover -s tests -v` after reviewed manifest refresh | 227 run, 225 passed, 2 skipped, 0 failures/errors; 55.126 s; exit 0. |
+| Final actual `python tools/mcp_smoke.py` | STDIO37; 6 detailed normal calls, 7 expected error calls, 14 forbidden calls rejected, 3 live action requests blocked; full synthetic scenario passed, exit 0. |
+| `python -m rtds_agent demo` | synthetic_mock_only, live/network calls false, policy unchanged, engineering_verdict not_evaluated; exit 0. |
+| `python -m pip check` | No broken requirements; exit 0. |
+| `python tools/release_manifest.py --check` | 48 matching packaged code/schema/skill files; exit 0. |
+| `python tools/release_check.py` | 89 source files checked, zero issues; exit 0. |
+| Media subset | 15 tests passed, no skips; actual authored PDF rendered with installed Poppler 26.07.0 and PNG received/decoded through STDIO. |
+| Optional installed-host skill discovery | Codex 0.153.3 app-server skills/list found six enabled repo-scope exported skills with no errors. No task/LLM request, SDK connection or global host change. |
+| Skill authoring validation | All six SKILL.md files passed the skill-creator quick validator; temporary validation dependency removed. |
+| `git diff --check` | No whitespace errors; exit 0. |
+
+The two default-suite skips are intentional opt-in installed Codex discovery and an OS-denied symbolic-link fixture (error 22). Windows junction boundary tests passed. A separate opt-in skill run exercised real discovery: 16 run, 15 passed, one OS symlink skip. These are distinct runs, not 243 unique passing tests.
+
+The STDIO scenario uses authored synthetic definitions, a two-gain project, a companion file, supplied before/after waveforms, and an authored PDF. It proves local transport/contracts, catalog persistence, isolated editing, detailed comparison, original preservation, image delivery and deterministic numerical evaluation. Inactive policy denied execution. It does not prove a causal response to Kp/Ki edits, a vendor-format round trip, a live compile/run, or engineering correctness.
+
+Fake-driver tests independently cover backend initialization/orchestration/persistence failures, grant consumption, exact Runtime targets and readback/restore/stop/cleanup. Expected error calls and injected failures are passing negative tests, not an actual RSCAD outage. No test-only bypass or fake-success flag is exposed in production.
+
+During final review, two independently reproduced patch boundary issues were fixed and their original reproductions rerun successfully: transient source edits no longer contaminate the verified output, and changed installation definitions cannot bypass required companion discovery. Final tests include these cases. Earlier focused test failures during implementation were resolved before the final manifest and regression run; they are not omitted from a still-failing final gate.
+
+## Earlier WP distribution checks
+
+- `python -m build --outdir .validation/release-20260905`: sdist and wheel-from-sdist built successfully, exit 0. The final sdist was rebuilt after recording results/documentation corrections; packaged application code, schemas and skills did not change.
+- Artifacts: `rtds_rscad_agent-0.1.0a1-py3-none-any.whl` and `rtds_rscad_agent-0.1.0a1.tar.gz`. Twine: both passed, exit 0. Source/distribution scan: 240 entries, zero issues, exit 0. These checks are repeated on the final documentation-only sdist.
+- `python tools/wheel_check.py <exact-wheel-path>`: passed, exit 0. A fresh venv outside the checkout installed the built wheel and constrained dependencies; actual import was `Lib/site-packages/rtds_agent/__init__.py` in that venv. Source checkout import was false. `pip check`, all 48 integrity entries, schema access, six skills, dry-run/export, synthetic demo and real STDIO37/full scenario passed. The installed transport test also received/decoded the native PDF image.
+- Tested wheel SHA-256: `5594c37ce66ede084e3eb51ab3b412e68e2fd2a7b0b4d8910a1ee231ab42d37e`. Its portable manifest SHA-256 is `0e2031a8a7b9ee5872c1189cf26c35f422a612e2f00d8bf3d9a63e51c32d4e92`. Final artifact hashes are also retained beside the local outputs; no circular sdist self-hash is embedded here.
+- The final wheel and documentation-updated sdist are compared entry-by-entry against the same 48-file release manifest. No wheel reinstall is needed for documentation-only sdist changes; the tested wheel itself is unchanged.
+
+The independent skill procedure review covered three virtual requests (two-gain edit/supplied data without live authorization; current failed attempt versus old success with duplicate contexts; unavailable manual renderer). It checked skill selection, ordering and stopping/uncertainty conditions against the actual contracts. It is separate from installed-host discovery and from unperformed model-driven Codex task evaluation.
 
 ## Reproduce
 
-From a clean Python 3.12 environment:
+Use a clean Windows Python 3.12 environment. Tests/smoke/wheel checks create isolated temporary settings and do not use operator credentials or a rack.
 
 ```powershell
-python -m pip install -c constraints-windows-py312.txt ".[dev]"
+python -m pip install -c constraints-windows-py312.txt -e ".[dev]"
 python -m unittest discover -s tests -v
 python tools/mcp_smoke.py
-rtds-agent demo
+python -m rtds_agent demo
+python -m pip check
 python tools/release_manifest.py --check
 python tools/release_check.py
-python -m build
-python -m twine check dist/*
+python -m build --outdir .validation/release-20260905
+python -m twine check .validation/release-20260905/rtds_rscad_agent-0.1.0a1-py3-none-any.whl .validation/release-20260905/rtds_rscad_agent-0.1.0a1.tar.gz
+python tools/release_check.py --artifacts .validation/release-20260905/rtds_rscad_agent-0.1.0a1-py3-none-any.whl .validation/release-20260905/rtds_rscad_agent-0.1.0a1.tar.gz
+python tools/wheel_check.py .validation/release-20260905/rtds_rscad_agent-0.1.0a1-py3-none-any.whl
 ```
 
-Inspect both built artifacts with `tools/release_check.py --artifacts` followed by their paths. For a package-install test, clear PYTHONPATH and install the wheel in a new environment before rerunning tests. The CI workflow runs the same synthetic checks on a GitHub-hosted Windows runner; this document records local checks, not a claim that remote CI has already run.
+Choose a fresh output directory if that one already contains artifacts. Normal `python -m build` builds an sdist, then a wheel from that sdist. `wheel_check.py` creates a new venv outside the checkout, clears PYTHONPATH/PYTHONHOME/virtualenv/cloud/RSCAD settings, uses isolated Python, verifies installed import origin and integrity, reads schemas/skills, performs skill dry-run/export, runs demo/pip check and repeats the actual STDIO scenario. Dependency installation may use the package index; `--wheelhouse PATH` restricts it to supplied local wheels. No paid model calls are required by CI.
 
-## Not covered
+Optional host discovery can be run with `RTDS_TEST_CODEX_DISCOVERY=1` and `python -m unittest discover -s tests -p test_skill_catalog.py -v`. It only starts a local app-server and reads skills/list in an isolated temporary repository. It is not a skill task evaluation.
 
-No actual Compile or Runtime was performed for this public alpha qualification. Cloud search/upload was not exercised against an account. No commercial document/SDK/model was included in the distribution. No other RSCAD or Python API version has been qualified. A virtual-environment installation test is not a test on every user's Windows configuration.
+## Limits and retained evidence
 
-The synthetic tests ported from the prototype exclude three methods coupled to private experiment files. Public tests add fresh setup and workflow checks; the old prototype's larger regression count and scientific verdicts are not reused. An operator must qualify the portable release on an isolated licensed simulator, verify actual signal identities and control semantics, and review cleanup evidence before broader use.
+No real RSCAD/SDK connection, rack query, Compile, Runtime, FSAT, control or external I/O test was performed. The earlier WP checkpoint did not rerun the installed API audit. The EXT follow-up above subsequently ran its 24 source checks without importing or connecting the SDK; these are static evidence only. A configured version or available executable never becomes observed live qualification.
 
-The source scanner is a conservative pattern and file-type check, not a guarantee of absence of all secrets or a legal opinion about redistribution rights. Review every added source/fixture and the final Git diff before publishing.
+Codex model image ingestion and model-driven skill task evaluation were not performed. Cloud search/upload, remote CI and other Windows/RSCAD/API configurations were not tested. Numerical assessment supports the documented bounded JSON adapter only; native Runtime capture/CSV ingestion and vendor-log grammar parsing remain unsupported. Empty partial diagnostic logs and inadequate sample evidence cannot produce an engineering pass.
+
+Local raw logs are retained in the git-ignored `.validation/` directory; repository documentation intentionally omits private installation/operator paths. The source/artifact scanner checks conservative patterns/types and is not a comprehensive secret detector or legal certification. No licensed manual/model/definition/SDK, credential, active configuration or execution record is intentionally shipped. The release manifest is not a publisher signature or experiment approval.
+
+See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for WP status and precise EXT-01/02/03 qualification prerequisites, [MIGRATION.md](MIGRATION.md) for compatibility, and [SAFETY.md](SAFETY.md) for the unchanged operator recovery procedure.

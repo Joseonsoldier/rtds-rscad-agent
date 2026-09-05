@@ -23,6 +23,7 @@ def main(argv=None) -> int:
     init.add_argument("--source-root", type=Path, action="append")
     init.add_argument("--document-root", type=Path, action="append")
     init.add_argument("--vector-store-id", default="")
+    sub.add_parser("extensions", help="Read installed extension API declarations; no connection")
     sub.add_parser("doctor", help="Static checks; no RSCAD connection")
     sub.add_parser("mcp-config", help="Print a Codex TOML entry")
     mcp = sub.add_parser("mcp")
@@ -32,6 +33,7 @@ def main(argv=None) -> int:
     ks.add_parser("index")
     params = ks.add_parser("parameters")
     params.add_argument("--project", required=True)
+    ks.add_parser("migrate-parameters", help="Explicitly copy verified legacy parameter evidence into an immutable snapshot")
     upload = ks.add_parser("upload")
     upload.add_argument("paths", nargs="+")
     upload.add_argument("--allow-upload", action="store_true")
@@ -45,6 +47,14 @@ def main(argv=None) -> int:
     enable.add_argument("--racks", nargs="+", type=int, required=True)
     enable.add_argument("--operator", required=True)
     enable.add_argument("--acknowledge-simulation-control", action="store_true")
+    skills = sub.add_parser("skills", help="List or explicitly export the bundled skill catalog")
+    ss = skills.add_subparsers(dest="action", required=True)
+    ss.add_parser("list", help="List packaged skills and resource hashes")
+    export = ss.add_parser("export", help="Export to an explicit directory without overwriting")
+    export.add_argument("--destination", type=Path, required=True)
+    export.add_argument("--dry-run", action="store_true")
+    from .skill_catalog import SKILL_NAMES
+    export.add_argument("--skill", choices=SKILL_NAMES, action="append", dest="skill_names")
     sub.add_parser("demo", help="Synthetic mock workflow; no key or rack")
     args = parser.parse_args(argv)
     try:
@@ -63,6 +73,9 @@ def main(argv=None) -> int:
                 stream.write("\n")
             settings.projects_root.mkdir(parents=True, exist_ok=True)
             _print({"config": str(path), "execution": "inactive until operator opt-in"})
+        elif args.command == "extensions":
+            from .extension_support import inspect_extension_support
+            _print(inspect_extension_support())
         elif args.command == "doctor":
             from .policy import read_policy
             from .integrity import verify_release
@@ -72,12 +85,13 @@ def main(argv=None) -> int:
                       "configuration": str(config_path()), "knowledge": get_knowledge_status(),
                       "poppler_available": bool(shutil.which("pdftoppm")), "policy": read_policy(settings),
                       "release_integrity": verify_release(), "live_calls_made": False}
-            try:
-                from .execution import inspect_installation
-                audit = inspect_installation()
+            from .capabilities import get_capabilities
+            result["capabilities"] = get_capabilities()
+            audit = result["capabilities"]["runtime_api_inspection"]
+            if audit["status"] == "passed":
                 result["rscad_api"] = {"status": audit["status"], "checks": audit["checks"]}
-            except (ValueError, OSError, RuntimeError) as exc:
-                result["rscad_api"] = {"status": "not_ready", "reason": str(exc)}
+            else:
+                result["rscad_api"] = {"status": "not_ready", "reason": audit.get("reason", audit["status"])}
             _print(result)
         elif args.command == "mcp-config":
             print('[mcp_servers.rtds_agent]')
@@ -95,6 +109,9 @@ def main(argv=None) -> int:
                 _print(index_documents())
             elif args.action == "parameters":
                 _print(index_parameters(args.project))
+            elif args.action == "migrate-parameters":
+                from .core.parameter_catalog import migrate_legacy
+                _print(migrate_legacy())
             else:
                 result = upload_documents(args.paths, allow_upload=args.allow_upload)
                 _print(result)
@@ -110,6 +127,12 @@ def main(argv=None) -> int:
                 with execution_lock(settings):
                     _print(configure_policy(settings, args.actions if args.action == "enable" else [],
                                             args.racks if args.action == "enable" else [], args.operator))
+        elif args.command == "skills":
+            from .skill_catalog import list_skills, export_skills
+            if args.action == "list":
+                _print(list_skills())
+            else:
+                _print(export_skills(args.destination, dry_run=args.dry_run, names=args.skill_names))
         elif args.command == "demo":
             from .demo import run_demo
             _print(run_demo())

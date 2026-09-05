@@ -1,4 +1,5 @@
 from __future__ import annotations
+import test_environment  # isolate config and credentials before application imports
 import json
 import subprocess
 import sys
