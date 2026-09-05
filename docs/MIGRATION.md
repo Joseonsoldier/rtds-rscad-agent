@@ -38,7 +38,7 @@ Assessments are independent local artifacts. They do not add an engineering pass
 
 ## Skills, distributions and release integrity
 
-Six instruction-only skills ship as package resources and can be explicitly exported with `rtds-agent skills export --destination PATH --dry-run`, followed by the same command without `--dry-run`. Export refuses existing skill directories and symlink/junction/path traversal targets. It does not choose a global location or modify host configuration. Use an empty chosen destination or separately review existing skills; there is no overwrite flag.
+Seven instruction-only skills ship as package resources and can be explicitly exported with `rtds-agent skills export --destination PATH --dry-run`, followed by the same command without `--dry-run`. Export refuses existing skill directories and symlink/junction/path traversal targets. It does not choose a global location or modify host configuration. Use an empty chosen destination or separately review existing skills; there is no overwrite flag.
 
 Release integrity now includes bundled Markdown skills as well as code and schemas. A missing, changed, or unexpected packaged skill fails integrity. Regenerate the release manifest only after reviewing a legitimate release change, then rerun the release and installed-wheel checks. This is accidental-change detection, not a publisher signature or a mechanism to re-authorize stale live work. Existing workflow/grant bindings remain subject to their original checks; prepare a new grounded workflow when evidence no longer matches.
 
@@ -52,3 +52,7 @@ Four additive local tools are documented in [TOOL_CONTRACTS.md](TOOL_CONTRACTS.m
 ## Observed local native-save compatibility
 
 The later local RSCAD 2.7 trial preserved Microgrid1 circuit text and script_example static topology, but native save changed DFX/RTX serialization and added seven definition defaults to the older script example. Kp#/Ki# names resolve to Kp/Ki in the SDK. Re-read the actual saved files and regenerate snapshots; do not assume archive-byte equality, copy old approvals, or equate successful reopen with Compile/Runtime qualification. Existing policies and public API contracts are unchanged. See [the measured round-trip differences](LOCAL_RSCAD_QUALIFICATION.md).
+
+## Documentation discovery addition
+
+Two local read-only MCP names and a seventh optional packaged skill are additive. Existing local index files need no migration. Clients may ignore new provenance fields; source/hash/page/text and old parameter/catalog/project fields are preserved. Existing six exported skills are not overwritten automatically; export the new skill explicitly, and review any desired updates to an existing export. API/catalog/skill hashes change as reviewed release content. Default inactive policies, existing grants, and saved workflow evidence are never refreshed or enabled by discovery. See UNKNOWN_RESOLUTION.md for source and version limits.

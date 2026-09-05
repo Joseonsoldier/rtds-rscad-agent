@@ -86,7 +86,7 @@ There are 1-64 channels and at most 100,000 samples per channel. Times must be f
 
 ## Offline extension investigation and trials
 
-Four additive tools bring the public contract to 41 tools. Existing numeric edits and live tools retain their contracts.
+The earlier four extension tools remain available; API discovery now brings the full public contract to 43 tools. Existing numeric edits and live tools retain their contracts.
 
 | Tool | Input/output and side effects |
 |---|---|
@@ -96,3 +96,9 @@ Four additive tools bring the public contract to 41 tools. Existing numeric edit
 | `inspect_runtime_layout(project_path, snapshot_id=None, offset=0, limit=100)` | Read only, max 500 records per page, 10,000 records/32 nesting levels/16 MiB RTX. Returns stored headers and references with unknown live values/units. Missing layout is unsupported; duplicate/unknown records are partial. Its snapshot_id includes the layout parser and differs from the project_snapshot_id also returned; paginate using the layout tool's snapshot. It is not live target or GUI discovery. |
 
 [Extension findings and exact unexecuted stages](EXTENSION_QUALIFICATION.md) distinguish confirmed API declarations from working, qualified integration. Structure application, clipboard clone, native case save and screenshot tools are not exposed. A prepared trial is not permission to connect or run.
+
+## API discovery and evidence additions
+
+Two additive read-only tools, search_rscad_api(query, top_k=10, expected_api_version=None, snapshot_id=None) and lookup_rscad_api(symbol, expected_api_version=None, snapshot_id=None), expose bounded static installed-source declarations. Search yields found/unresolved and candidates; lookup yields found/ambiguous/unresolved and never selects an arbitrary ambiguous target. Source hashes, lines, signature/docstring, snapshot and SDK version are returned. No vendor import or live call occurs. [Bounds, coverage, version interpretation and exact usage](UNKNOWN_RESOLUTION.md) are part of this contract.
+
+Existing local search/page outputs add source type, evidence level, document/chunk/version/relevance metadata without changing their database schema or required inputs. Parameter lookups and project snapshot outputs add provenance labels; stored/default and configured/observed distinctions remain. Vector Store results are explicitly supplementary and never installed API verification. Existing result fields and execution safety contracts remain intact. The public registry contains 43 tools.

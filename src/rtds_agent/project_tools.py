@@ -99,7 +99,9 @@ def _pagination(total: int, limit: int, offset: int, snapshot_id: str | None) ->
 
 
 def _snapshot_metadata(document: dict[str, Any]) -> dict[str, Any]:
-    return {"snapshot_id": document["snapshot_id"], "snapshot": document["snapshot"]}
+    return {"snapshot_id": document["snapshot_id"], "snapshot": document["snapshot"],
+            "source_type": "current_project", "evidence_level": "derived",
+            "evidence_scope": "static parse; parameter_origins distinguish stored values from definition defaults"}
 
 
 def _type_counts(document: dict[str, Any]) -> dict[str, int]:

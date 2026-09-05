@@ -98,7 +98,7 @@ An assessment's numerical status is separate from `engineering_verdict: not_eval
 
 ## Optional task skills
 
-The package includes six instruction-only skills: `rscad-understand-model`, `rscad-edit-model`, `rscad-diagnose-compile`, `rtds-run-experiment`, `rtds-validate-results`, and `rtds-ground-with-manuals`. They use the actual public tools and keep unsupported operations explicit.
+The package includes seven instruction-only skills: `rscad-understand-model`, `rscad-edit-model`, `rscad-diagnose-compile`, `rtds-run-experiment`, `rtds-validate-results`, `rtds-ground-with-manuals`, and `rtds-read-documentation`. They use the actual public tools and keep unsupported operations explicit. Unknown-source routing and source reliability are explained in [UNKNOWN_RESOLUTION.md](UNKNOWN_RESOLUTION.md). The subsequent discovery follow-up separately verified all seven skills in local Codex; the six-skill records below describe the earlier checkpoint.
 
 ```powershell
 rtds-agent skills list

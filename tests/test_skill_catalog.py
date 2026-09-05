@@ -30,10 +30,10 @@ class SkillCatalogTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
 
-    def test_six_packaged_skills_frontmatter_links_and_hashes(self):
+    def test_seven_packaged_skills_frontmatter_links_and_hashes(self):
         catalog = skill_catalog.list_skills()
         expected = {"rscad-understand-model", "rscad-edit-model", "rscad-diagnose-compile",
-                    "rtds-run-experiment", "rtds-validate-results", "rtds-ground-with-manuals"}
+                    "rtds-run-experiment", "rtds-validate-results", "rtds-ground-with-manuals", "rtds-read-documentation"}
         self.assertEqual({entry["name"] for entry in catalog["skills"]}, expected)
         self.assertFalse(catalog["host_configuration_changed"])
         for entry in catalog["skills"]:
@@ -96,7 +96,7 @@ class SkillCatalogTests(unittest.TestCase):
                     self.assertFalse(target.exists())
                 if expected == 1:
                     self.assertEqual(payload["error"], "FileExistsError")
-        self.assertEqual(len(list(target.glob("*/SKILL.md"))), 6)
+        self.assertEqual(len(list(target.glob("*/SKILL.md"))), 7)
 
     def test_release_integrity_protects_bundled_skill_text(self):
         import rtds_agent.integrity as integrity
@@ -314,7 +314,7 @@ class SkillCatalogTests(unittest.TestCase):
         completed = subprocess.run([sys.executable, "-I", "-c", script, str(bundle), str(self.root / "zip-export")],
                                    cwd=self.root, capture_output=True, text=True, timeout=30, check=True)
         result = json.loads(completed.stdout)
-        self.assertEqual(result["count"], 6)
+        self.assertEqual(result["count"], 7)
         self.assertEqual(result["export"]["status"], "exported")
 
 

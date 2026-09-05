@@ -35,6 +35,10 @@ Settings default to `%LOCALAPPDATA%\rtds-agent\config.json`. Set `RTDS_AGENT_CON
 
 Paste the TOML printed by `mcp-config` into your MCP host's configuration without replacing other server entries. For Codex, see the [official MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). Restart the MCP connection after changing configuration. The server supports local STDIO only.
 
+## Resolve unknown information
+
+Prefer current project evidence, installed definitions/API, exact local manual context, then explicitly optional supplementary Vector Store search. The new read-only search_rscad_api and lookup_rscad_api tools inspect installed source without importing the SDK. Missing evidence remains unresolved. A Vector Store is not an authoritative installed API catalog. See [discovery paths and limits](docs/UNKNOWN_RESOLUTION.md).
+
 ## Optional OpenAI search
 
 Local search needs no OpenAI key. To use cloud search, pass `OPENAI_API_KEY` and `OPENAI_VECTOR_STORE_ID` through your MCP host environment. Use a key authorized for the project containing that store. A store ID alone does not grant access. See [OpenAI project permissions](https://developers.openai.com/api/docs/guides/rbac).
@@ -55,7 +59,7 @@ Use project snapshots to navigate hierarchy, components, stored parameters, and 
 
 For optional structural/GUI investigation, `rtds-agent extensions` reads installed API declarations without connecting. New tools preview TOGGLE node impacts, prepare unchanged isolated trial copies, and inventory saved Runtime headers. They do not apply live structural edits or verify a GUI target. See [extension scope and pending qualification](docs/EXTENSION_QUALIFICATION.md).
 
-Six task skills are bundled as installed package resources. To export into a chosen repository directory:
+Seven task skills are bundled as installed package resources. To export into a chosen repository directory:
 
 ```powershell
 rtds-agent skills list

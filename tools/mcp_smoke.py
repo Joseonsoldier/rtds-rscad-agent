@@ -16,6 +16,7 @@ from mcp.client.stdio import stdio_client
 # Deliberately independent of mcp_server.READ/LOCAL_WRITE/LIVE. New tools require a
 # conscious public-contract update; a matching count cannot conceal a missing tool.
 READ_TOOLS = frozenset({
+    "search_rscad_api", "lookup_rscad_api",
     "inspect_extension_support", "preview_selector_change", "inspect_runtime_layout",
     "get_execution_diagnostics", "get_capabilities", "evaluate_results", "read_result_samples", "get_knowledge_status", "search_rtds_local", "get_manual_page", "get_manual_section",
     "lookup_parameter", "list_rscad_projects", "inspect_rscad_project",
@@ -85,6 +86,10 @@ def synthetic_project(root):
     sources = root / "sources"
     definitions.mkdir(parents=True)
     sources.mkdir()
+    sdk = vendor / "python/internal interpreter/Lib/site-packages/rtds"
+    sdk.mkdir(parents=True)
+    (sdk / "__init__.py").write_text('__version__ = "1.1"\n', encoding="utf-8")
+    (sdk / "authored.py").write_text('def signal(name: str) -> str:\n    """Synthetic runtime signal."""\n    raise AssertionError("Do not execute")\n', encoding="utf-8")
     (definitions / "synthetic_gain").write_text(
         'PARAMETERS:\n Gain "Synthetic gain" "pu" REAL 1 0 10\nNODES:\n', encoding="utf-8")
     project = sources / "synthetic.rtfx"
@@ -230,6 +235,13 @@ async def smoke():
                 await session.initialize()
                 tools = await session.list_tools()
                 assert_contract(tools.tools)
+                discovered = await session.call_tool("search_rscad_api", {"query": "runtime signal", "expected_api_version": "1.1"})
+                assert not discovered.is_error and discovered.structured_content["status"] == "found"
+                api_result = await session.call_tool("lookup_rscad_api", {"symbol": "rtds.authored.signal", "snapshot_id": discovered.structured_content["snapshot_id"]})
+                assert not api_result.is_error and api_result.structured_content["result"]["signature"] == "signal(name: str) -> str"
+                missing = await session.call_tool("lookup_rscad_api", {"symbol": "rtds.authored.imaginary_simulink_method"})
+                assert not missing.is_error and missing.structured_content["status"] == "unresolved"
+                assert missing.structured_content["sdk_imported"] is False
                 for name, arguments in detail_calls(project).items():
                     result = await session.call_tool(name, arguments)
                     assert not result.is_error, (name, result)

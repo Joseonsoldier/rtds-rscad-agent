@@ -224,7 +224,9 @@ def lookup(component_type: str, parameter: str, rscad_version: str, snapshot_id:
         raise ToolSafetyError("Ambiguous parameter definition evidence; supply parameter_catalog_snapshot_id")
     row, audit, audit_path = matches[-1]
     _definition(row)
-    return {**row, "parameter_catalog_snapshot_id": audit.get("parameter_catalog_snapshot_id"),
+    return {**row, "source_type": "installed_definition", "evidence_level": "direct",
+            "version_match": "compatible_unknown",
+            "parameter_catalog_snapshot_id": audit.get("parameter_catalog_snapshot_id"),
             "parameter_database_sha256": audit["database"]["sha256"],
             "parameter_audit_path": str(audit_path), "parameter_audit_sha256": sha256_file(audit_path),
             "library_identity": audit.get("library_identity"),

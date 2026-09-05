@@ -10,7 +10,7 @@ Run relevant tests, then the full suite and [release checks](docs/VALIDATION.md)
 
 ## Task skills
 
-The six instruction-only skills are packaged under [src/rtds_agent/skills](src/rtds_agent/skills), with names and descriptions available through `rtds-agent skills list`. Read the matching `SKILL.md` when the user's actual task calls for its workflow:
+The seven instruction-only skills are packaged under [src/rtds_agent/skills](src/rtds_agent/skills), with names and descriptions available through `rtds-agent skills list`. Read the matching `SKILL.md` when the user's actual task calls for its workflow:
 
 - [Understand a model](src/rtds_agent/skills/rscad-understand-model/SKILL.md)
 - [Edit numeric parameters](src/rtds_agent/skills/rscad-edit-model/SKILL.md)
@@ -18,6 +18,7 @@ The six instruction-only skills are packaged under [src/rtds_agent/skills](src/r
 - [Run an authorized experiment](src/rtds_agent/skills/rtds-run-experiment/SKILL.md)
 - [Validate supplied results](src/rtds_agent/skills/rtds-validate-results/SKILL.md)
 - [Ground with manuals](src/rtds_agent/skills/rtds-ground-with-manuals/SKILL.md)
+- [Resolve unknowns and read documentation](src/rtds_agent/skills/rtds-read-documentation/SKILL.md)
 
 Packaged resources are not automatically installed in the host. [Explicit export and discovery](docs/WORKFLOWS.md#optional-task-skills) never modify host configuration. User instructions take precedence over skill guidance; task authorization does not expand live execution permission.
 

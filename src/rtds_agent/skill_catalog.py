@@ -19,6 +19,7 @@ SKILL_NAMES = (
     "rtds-run-experiment",
     "rtds-validate-results",
     "rtds-ground-with-manuals",
+    "rtds-read-documentation",
 )
 _SAFE_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 

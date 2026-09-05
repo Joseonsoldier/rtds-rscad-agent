@@ -2,6 +2,26 @@
 
 Validation date: 2026-09-05. Actual environment: Windows, Python 3.12.9. Supported configuration remains RSCAD FX 2.7.3 / vendor API 1.1. The subsequent local SDK trial returned RSCAD version 2.7, without an exact patch; 2.7.3 remains a support target rather than an observed version. Package version and dependency constraints were not changed.
 
+## Unknown resolution and documentation discovery (2026-09-05)
+
+Clean starting commit cf7821d; previous WP/EXT implementations reused. Added only installed API discovery, additive provenance/context metadata and the seventh packaged documentation skill. Code/schema/skill changes were reviewed before regenerating 55 hashes. No execution policy, existing grant, SDK or original-model mutation was made.
+
+| Check | Measured result |
+|---|---|
+| New API tests | 16 passed, 3.483 s: found/missing/ambiguous symbols, signatures, version mismatch, no import/network/process, source mutation, links, limits and partial coverage. |
+| Documentation recipes | 12 passed, 4.789 s: current project, definition, installed API, exact manual context, explicitly mocked Vector Store fallback, all-source misses, hash/page/chunk provenance, publisher/version distinctions and stale/mixed sources. These are explicit tool recipes, not model-driven skill behavior tests. |
+| Full regression | 280 run, 278 passed, 2 skipped, 109.307 s, no failures/errors, exit 0. Existing optional host-discovery and OS symlink skips. |
+| Actual MCP STDIO | 43 named/schema/annotation contracts; installed-source search/exact lookup/imaginary-symbol unresolved; previous synthetic edit/assessment/image/extension cases passed, exit 0. Three live actions denied; 14 forbidden tools absent; no real RSCAD calls. |
+| Skill checks | quick_validate passed in UTF-8 mode. Packaged/exported skill tests passed; an explicit additional installed Codex discovery run found all seven enabled repository skills with no discovery errors (16 tests: 15 passed, one OS-link skip, 5.319 s). No global export or model request. |
+| Actual installed-source probe | 24 SDK Python files; version 1.1; four runtime-signal search matches; exact RSCADFX.get_case signature found, invented symbol unresolved. All 70 protected files unchanged. No SDK import, app launch, socket, Compile, Runtime or rack call. |
+| Source release gates | Manifest55 matched; source scanner103 found zero issues, exit 0. |
+| Final distribution | python -m build produced sdist and wheel in the ignored discovery final-dist directory. Twine passed both; source/artifact scanner275 found zero issues, all exit 0. |
+| Installed wheel | tools/wheel_check.py passed in a fresh venv outside the checkout: constrained install, pip check, installed import origin, integrity55, seven packaged/exported skills, no-write dry-run, synthetic demo and actual STDIO43; source_checkout_imported=false, live_rscad_calls=false. |
+
+Final review also changed empty API/cloud result evidence_level to unknown and added assertions; focused and full tests above were rerun against the final source. The earlier full pass was 117.146 s. Local distribution code/schema/skill hashes match the delivered source; distribution files predate only the final documentation result entries and are not published by this source push. The initial documentation test run incorrectly assumed its shared fixture lived outside installed DOC and tried recreating DOC. Those fixture mistakes were corrected; a separate user-document-root test now verifies it is not classified as official. The skill validator initially lacked PyYAML and used Windows legacy encoding: PyYAML 6.0.3 was installed only under ignored validation data, and PYTHONUTF8=1 enabled the successful check. Product dependencies remain unchanged.
+
+Local raw evidence is under ignored .validation/discovery-20260905. Actual source inspection is distinct from invoking vendor APIs. No live cloud request, model-driven skill task, RSCAD/Runtime/rack qualification, engineering acceptance or other-version integration was performed for this addition. Scope and compatibility are in [UNKNOWN_RESOLUTION.md](UNKNOWN_RESOLUTION.md).
+
 ## Main delivery validation (2026-09-05)
 
 The owner authorized normal main pushes after completed validation. Before first delivery, staged whitespace inspection found extra EOF blank lines in static_comparison.py and test_mcp_contract.py. Only those blank lines were removed; the single affected source hash was reviewed and refreshed. Project-snapshot regression passed 18 tests in 10.650 s. Final full suite passed: 252 run, 250 passed, 2 existing optional-host/OS-symlink skips, no failures/errors, 98.459 s, exit 0. Actual STDIO41 passed, including extension scenarios and inactive-policy denials, with no live RSCAD calls. Manifest52 and source scanner97 passed. Local models, validation evidence, ACL backup and active settings are excluded from Git. Earlier wheel/sdist results below belong to their earlier bytes; no new distribution was built for this source commit.
