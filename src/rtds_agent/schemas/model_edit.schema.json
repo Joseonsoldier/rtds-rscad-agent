@@ -60,6 +60,15 @@
           {
             "type": "object",
             "additionalProperties": false,
+            "required": ["op", "strategy"],
+            "properties": {
+              "op": {"const": "rebuild_draft"},
+              "strategy": {"enum": ["insert", "clipboard"]}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
             "required": [
               "op",
               "component_id",

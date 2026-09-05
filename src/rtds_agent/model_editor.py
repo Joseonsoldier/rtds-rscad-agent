@@ -34,6 +34,9 @@ def validate_edit(value):
     validate(value, EDIT_SCHEMA)
     if value["mode"] == "apply" and "preview_id" not in value:
         raise ToolSafetyError("Apply requires the exact reviewed preview_id")
+    if any(op["op"] == "rebuild_draft" for op in value["operations"]):
+        if len(value["operations"]) != 1 or value.get("backend") not in {"native", "auto"}:
+            raise ToolSafetyError("Rebuild requires one sole operation and an explicit native/auto backend")
     return value
 
 

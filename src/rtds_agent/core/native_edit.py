@@ -16,10 +16,13 @@ from .state_machine import sha256_json
 
 OPERATIONS = frozenset({"set_parameter", "set_selector", "set_string", "rename_component", "move_component"})
 DECLARATIONS = {
-    "rscadfx.py": {"RSCADFX": ["connect", "disconnect", "get_version", "open_case", "get_case"]},
+    "rscadfx.py": {"RSCADFX": ["connect", "disconnect", "get_version", "open_case", "get_case", "new_case", "_new_case"]},
     "case.py": {"Case": ["file", "save", "_save_as", "close"], "State": ["run_state", "modified"]},
     "draft.py": {"Draft": ["get_object"]},
     "component.py": {"DraftComponent": ["component_type", "get_parameter", "set_parameter", "location", "orientation", "mirrored"]},
+    "component_compatible.py": {"ComponentCompatible": ["_insert_component", "create_wire", "_create_wire", "select_area", "copy", "_paste"]},
+    "subtab.py": {"Subtab": ["num_subpages", "get_subpage"]},
+    "case_settings.py": {"CaseSettings": ["timestep", "title", "realtime"]},
 }
 
 
@@ -31,6 +34,8 @@ def inspect_native_sdk(settings):
                 "supported_operations": sorted(OPERATIONS), "integration_qualified": False,
                 "adapter_sha256": sha256_file(Path(__file__)),
                 "worker_sha256": sha256_file(Path(__file__).with_name("native_edit_worker.py"))}
+    evidence["reconstruction_sources"] = {name:sha256_file(Path(__file__).with_name(name)) for name in ("native_rebuild.py", "native_rebuild_adapter.py")}
+    evidence["reconstruction_strategies"] = ["insert", "clipboard"]
     if not settings.rscad_home or not root.is_dir():
         evidence["missing"].append("installed_sdk")
     else:

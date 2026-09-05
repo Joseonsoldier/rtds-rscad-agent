@@ -1,6 +1,6 @@
 # Model changes, prepared results, and bounded experiments
 
-For the new native editing path, follow [preview, isolated edit, exact reopen and recovery](NATIVE_EDITING.md). Default static behavior is unchanged; native creation/grouped editing and auto apply remain unsupported. Do not promote the private tutorial scripts or synthetic test policies into operator authorizations.
+For native editing or a source-derived `rebuild_draft`, follow [preview/plan, isolated creation, mapped comparison, exact reopen and recovery](NATIVE_EDITING.md). Default static behavior is unchanged; auto apply remains refused. Reconstruction has synthetic qualification and unresolved live new-case identity/cleanup. A recovery marker blocks further native apply/Compile/Runtime until operator review; do not reconnect using an old case ID. Do not promote private tutorial scripts or synthetic policies into operator authorizations.
 
 The MCP server publishes the explicit [tool contracts](TOOL_CONTRACTS.md), with separate local read, local output, and live-action annotations. Document/source reads, project inspection, numeric-copy edits and run preparation are separate from live execution. Unlike the private prototype, a new user creates a fresh workflow instead of importing someone else's accepted experiment.
 

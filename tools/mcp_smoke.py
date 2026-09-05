@@ -244,6 +244,18 @@ async def engineering_calls(session,root,sources,project):
     assert denied_auto.is_error
     native=await call("edit_rscad_model",{"request":{**request,"backend":"native"}})
     assert native["backend"]=="native" and native["live_calls_made"] is False and native["integration_qualified"] is False
+    reconstruction_source=sources/"synthetic-reconstruction.rtfx"
+    with zipfile.ZipFile(project) as original,zipfile.ZipFile(reconstruction_source,"w") as candidate:
+        for name in original.namelist():
+            if name.endswith(".dfx"): candidate.writestr(name,original.read(name))
+        candidate.writestr("synthetic.rtx",'VIEW-START: VIEW-ID: "1"\nVIEW-END:\n')
+    reconstruction_overview=await call("inspect_rscad_project",{"project_path":str(reconstruction_source)})
+    reconstruction_request={**request,"backend":"native","source_project":str(reconstruction_source),
+        "source_sha256":digest(reconstruction_source),"snapshot_id":reconstruction_overview["snapshot_id"],
+        "operations":[{"op":"rebuild_draft","strategy":"clipboard"}]}
+    reconstruction=await call("edit_rscad_model",{"request":reconstruction_request})
+    assert reconstruction["reconstruction_plan"]["runtime_records"]==0 and reconstruction["candidate_sha256"] is None
+    assert reconstruction["live_calls_made"] is False
     edited=await call("edit_rscad_model",{"request":{**request,"mode":"apply","preview_id":preview["preview_id"]}})
     assert digest(project)==request["source_sha256"] and edited["integration_qualified"] is False
     ir=await call("inspect_rscad_project",{"project_path":edited["working_project"],"representation":"ir"})
@@ -269,7 +281,7 @@ async def engineering_calls(session,root,sources,project):
     denied=await session.call_tool("run_experiment_suite",{"request":{**request,"mode":"execute","suite_id":plan["suite_id"],
         "executions":[{"run_id":run_id,"action":"compile","workflow_sha256":digest(Path(row["workflow_path"]))}]}})
     assert denied.is_error
-    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
 
 
 async def smoke():

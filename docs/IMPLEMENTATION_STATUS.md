@@ -1,5 +1,17 @@
 # Implementation status
 
+## Native closed-loop checkpoint 2 — software implemented; local recovery required
+
+Baseline `fc2580e`. WP-N01/N02 now implement source-derived `rebuild_draft` with flat insertion/wire construction or GROUP/hierarchy clipboard reconstruction. The public preview/apply transaction retains component policy, source/snapshot/definition/companion/SDK hashes, isolated staging, saved comparison, exact reopen and atomic publication. Added explicit UUID/context mapping, per-context translation, world wire endpoints and GROUP membership/metadata checks. Saved Runtime records and opaque payloads are refused. Auto apply remains disabled.
+
+New synthetic tests exercise both construction strategies, public GROUP publication, policy/auto restrictions, changed topology/membership, ambiguity, repeated hierarchy names, sentinel handling, post-mutation/creation/close failures and recovery blocking. Full regression: 350 run, 348 passed, two existing skips, no failures/errors, 137.381 s. STDIO49/core10/engineering29, nine skill validators, manifest86, build/Twine/scan394 and a fresh external-venv wheel installation passed. Exact distribution results are in [VALIDATION.md](VALIDATION.md).
+
+**Local result: incomplete, recovery required.** One Voltage Divider trial read the private source and closed it, then stopped after `new_case` returned an unexpected file identity. No insert/wire/paste/save or Compile followed; no candidate exists. The 197-RPC journal records unconfirmed new-case cleanup and rejected disconnect ping. All 56 protected hashes and the input copy remain unchanged. Recovery markers were retained in trial/configured data; additional live actions were stopped. Observed-file journaling and recovery disconnect ping handling are fixed in software and synthetically tested, but no live retry was performed. See [exact evidence and recovery limits](NATIVE_EDITING.md#checkpoint-2-local-trial-and-recovery-limitation).
+
+Read-only checks on historical CH5/CH6 normalized-reference/generated files passed with the new comparator: 77/135 components and one GROUP each. This is saved-file comparison, not new native/Compile qualification. No real component/execution policy was created or enabled. Runtime/rack/load-flow remains unexecuted.
+
+Changed files: `core/native_rebuild.py`, `core/native_rebuild_adapter.py`, existing native editor/worker and request schema; capability/skill/release manifests; `tests/test_native_rebuild.py` and STDIO smoke; README/AGENTS and native/status/contract/workflow/migration/v2/validation documentation. Default static requests, tool counts 49/10/29 and nine skills remain compatible; cached schemas and preview IDs must be refreshed. WP-N01/N02 live DoD remains incomplete. WP-N03–N11 remain pending in the required dependency sequence.
+
 ## Native closed-loop checkpoint 1 — in progress
 
 New work order reviewed against baseline `352ae0b`. This is the first implementation checkpoint, not completion of the full work order. [Native scope, transactions and evidence](NATIVE_EDITING.md) distinguish public synthetic tests from task-scoped installed SDK trials.

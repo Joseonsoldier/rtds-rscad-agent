@@ -21,6 +21,34 @@ from .core.structured_patch import archive_snapshot, write_patched_archive
 from .core.topology_parser import parse_rtfx_topology
 from .core.model_ir import semantic_diff
 from .model_check import check_document
+from .core.native_rebuild import reconstruction_plan, compare_reconstruction
+
+
+def rebuild_preview(request, source, before, settings):
+    from .core.component_policy import authorize
+    from .core.companion_dependencies import discover_companion_dependencies, require_complete
+    from .model_editor import _definitions
+    if sha256_file(source) != request["source_sha256"]: raise ToolSafetyError("Reconstruction source hash mismatch")
+    policy = read_component_policy(source)
+    if policy["sha256"] != request["policy_sha256"]: raise ToolSafetyError("Reconstruction component policy hash mismatch")
+    if before["warnings"] or before["coverage"]["definition_coverage"] != 1:
+        raise ToolSafetyError("Reconstruction requires resolved definitions and complete parsed nodes")
+    strategy = request["operations"][0]["strategy"]
+    for row in before["components"]:
+        authorize(policy,row["component_type"])
+        if strategy == "insert" and row["component_type"] not in {"WIRE","BUS"}:
+            for parameter in row["parameters"]: authorize(policy,row["component_type"],parameter)
+    if before.get("groups"): authorize(policy,"GROUP")
+    _definitions(before)
+    discovery = discover_companion_dependencies(source,settings.definition_root,search_root=source.parent)
+    require_complete(discovery)
+    payload = {"request":{k:v for k,v in request.items() if k not in {"mode","preview_id"}},
+        "reconstruction_plan":reconstruction_plan(source,before,strategy),
+        "definition_evidence":before["definition_evidence"],"companion_discovery_sha256":discovery["discovery_sha256"],
+        "candidate_sha256":None,"model_check":check_document(before)}
+    if payload["model_check"]["status"] == "errors_found": raise ToolSafetyError("Source reconstruction model check failed")
+    return {"status":"previewed",**payload,"preview_id":sha256_json(payload),"source_modified":False,
+            "live_calls_made":False,"integration_qualified":False}
 
 
 def native_edit(request, static_editor):
@@ -28,10 +56,11 @@ def native_edit(request, static_editor):
     # Static validation remains authoritative for bounds, policy and expected values.
     preview_request = {k:v for k,v in request.items() if k not in {"backend", "preview_id"}}
     preview_request["mode"] = "preview"
-    expected = static_editor(preview_request)
     source, _, before = _document(request["source_project"], request["snapshot_id"])
+    rebuilding = request["operations"][0]["op"] == "rebuild_draft"
+    expected = rebuild_preview(request,source,before,settings) if rebuilding else static_editor(preview_request)
     sdk = inspect_native_sdk(settings)
-    supported = (not before.get("groups") and
+    supported = rebuilding or (not before.get("groups") and
                  all(c["context"] == "subsystem:0" and c["component_type"] != "HIERARCHY" for c in before["components"]) and
                  all(op["op"] in OPERATIONS and op["context"] == "subsystem:0" for op in request["operations"]))
     selection = {"requested_backend": request["backend"], "backend": "native" if request["backend"] == "native" else "static",
@@ -40,7 +69,7 @@ def native_edit(request, static_editor):
                  "auto_reason": "No operation-scoped native construction/Compile qualification is installed" if request["backend"] == "auto" else None}
     result = {**expected, **selection, "static_preview_id": expected["preview_id"]}
     result["preview_id"] = sha256_json({"static_preview_id": expected["preview_id"], **selection})
-    result["qualification"] = "preview_only; native existing flat Draft edits are a bounded adapter scope"
+    result["qualification"] = "preview_only; native Draft reconstruction and existing flat edits require saved verification"
     if request["mode"] == "preview": return result
     if request["preview_id"] != result["preview_id"]: raise ToolSafetyError("Native reviewed preview changed")
     if request["backend"] == "auto": raise ToolSafetyError("Auto fallback is static preview only; explicitly review a supported backend")
@@ -83,10 +112,12 @@ def native_edit(request, static_editor):
                 raise ToolSafetyError("Native source copy hash mismatch")
             archive = archive_snapshot(snapshot)
             with zipfile.ZipFile(snapshot) as z: data = z.read(archive["dfx_member"])
-            changed = edit_dfx(data, request["operations"], definitions, policy, has_other_members=len(archive["members"]) > 1)
-            reference = stage / "expected" / source.name
-            write_patched_archive(snapshot, reference, archive["dfx_member"], changed)
-            if sha256_file(reference) != expected["candidate_sha256"]: raise ToolSafetyError("Native static preview changed before dispatch")
+            reference = snapshot
+            if not rebuilding:
+                changed = edit_dfx(data, request["operations"], definitions, policy, has_other_members=len(archive["members"]) > 1)
+                reference = stage / "expected" / source.name
+                write_patched_archive(snapshot, reference, archive["dfx_member"], changed)
+                if sha256_file(reference) != expected["candidate_sha256"]: raise ToolSafetyError("Native static preview changed before dispatch")
             if inspect_native_sdk(settings) != sdk or read_component_policy(source) != policy or get_settings() != settings:
                 raise ToolSafetyError("Native settings/policy/SDK changed before dispatch")
             _document(str(source), request["snapshot_id"])
@@ -108,9 +139,12 @@ def native_edit(request, static_editor):
                 raise ToolSafetyError("Native candidate differs from reopened evidence")
             expected_doc = parse_rtfx_topology(reference, settings.definition_root).document
             after = parse_rtfx_topology(out, settings.definition_root).document
-            comparison = semantic_diff(expected_doc, after)
-            if comparison["added"] or comparison["removed"] or comparison["changed"] or not comparison["same_static_topology"]:
-                raise ToolSafetyError("Native save differs from the reviewed static semantics")
+            if rebuilding:
+                comparison = compare_reconstruction(expected_doc,after)
+            else:
+                comparison = semantic_diff(expected_doc, after)
+                if comparison["added"] or comparison["removed"] or comparison["changed"] or not comparison["same_static_topology"]:
+                    raise ToolSafetyError("Native save differs from the reviewed static semantics")
             if expected_doc["source"]["settings"] != after["source"]["settings"]:
                 raise ToolSafetyError("Native save changed unrequested settings")
             saved = archive_snapshot(out)
@@ -138,7 +172,8 @@ def native_edit(request, static_editor):
                           working={"path": str(final / "working" / source.name), "sha256": sha256_file(out)},
                           candidate_sha256=sha256_file(out), native_evidence=journal, model_check=check,
                           semantic_diff=semantic_diff(before, after), live_calls_made=True,
-                          qualification="native edit/save/reopen verified; construction/Compile integration remains unqualified")
+                          qualification="native Draft save/reopen verified; automatic selection and Compile integration remain unqualified")
+            if rebuilding: result["reconstruction"] = comparison
             manifest = stage / "structural_model_edit.json"
             manifest.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
             digest = sha256_file(manifest)

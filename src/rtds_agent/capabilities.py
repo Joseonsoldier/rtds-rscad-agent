@@ -169,12 +169,12 @@ def get_capabilities() -> dict[str, Any]:
     live_dependencies = host_supported and executable and api_available
     features = {
         "native_draft_editing": _feature(implemented=True, available=live_dependencies,
-            reasons=["Explicit native backend supports existing flat Draft parameter/location edits with a reviewed project policy preview",
+            reasons=["Explicit native backend supports existing flat Draft edits and source-derived insert/clipboard reconstruction with a reviewed project policy preview",
                      "Uses isolated input, a fixed SDK worker, readback, exact save/close/reopen comparison and a durable recovery journal",
-                     "Auto remains static preview only; native new-case construction, insert/clone/wire operations and Compile integration are not qualified"]),
+                     "Reconstruction requires an empty saved Runtime, one subsystem and verified UUID/GROUP mapping; live new-case identity/cleanup and Compile integration remain unqualified; auto apply is refused"]),
         "group_inspection": _feature(implemented=True, available=settings is not None,
             reasons=["GROUP containers, nested membership and anchor bounds are separate from UUID-bearing components",
-                     "Context/ordinal group IDs are snapshot identities, not SDK IDs; grouped mutation remains unsupported"]),
+                     "Context/ordinal group IDs are snapshot identities, not SDK IDs; clipboard reconstruction has synthetic qualification; static grouped mutation remains unsupported"]),
         "static_structural_editing": _feature(implemented=True, available=settings is not None and definitions_available,
             reasons=["Bounded offline record/template adapter only; project policy, source/snapshot/preview hashes and model checks required", "Native structural editing, opaque-reference removal, and general DFX generation remain unqualified"]),
         "component_definition_catalog": _feature(implemented=True, available=definitions_available,

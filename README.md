@@ -2,7 +2,7 @@
 
 Local MCP tools for RSCAD inspection, installed component/API discovery, isolated numeric and structural candidates, static model checks, saved-result metrics, and guarded sequential experiments.
 
-The [first native editing checkpoint](docs/NATIVE_EDITING.md) adds explicit native parameter/location editing of isolated flat Draft copies and GROUP inspection. Automatic native construction and the Runtime closed loop remain pending; default static behavior is preserved.
+The [native editing checkpoints](docs/NATIVE_EDITING.md) add existing flat Draft edits and source-derived new-case insertion/wiring or GROUP clipboard reconstruction, with explicit UUID mapping and protected publication. Reconstruction passes synthetic tests; the latest local new-case trial stopped on unexpected file identity with cleanup unconfirmed. Live reconstruction, automatic selection and the Runtime closed loop remain unqualified. Default static behavior is preserved.
 
 **Early alpha — not an official RTDS Technologies product.** Live operation targets Windows, RSCAD FX 2.7.3, vendor Python API 1.1 and Python 3.12. You must supply your own licensed RSCAD installation and permitted rack access. This repository includes no RTDS software, manuals, MLIB, vendor example projects, API keys, active authorizations, or historical experiment results.
 

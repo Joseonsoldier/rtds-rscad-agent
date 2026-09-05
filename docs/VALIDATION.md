@@ -1,5 +1,15 @@
 # Public alpha validation
 
+## Native reconstruction checkpoint 2 (2026-09-05)
+
+Baseline `fc2580e`. Fixed native reconstruction and public preview/apply are tested with authored synthetic fixtures. Focused native regression: 33 tests passed (16 new reconstruction tests), 8.228 s; subsequent close-retry hardening is included in the final full suite below. Real SDK evidence is separate: one new-case trial stopped before insertion/save on unexpected file identity; cleanup unconfirmed, 56 protected hashes unchanged. No new Compile, Runtime or rack operation followed. Historical CH5/CH6 saved-file comparisons passed with explicit UUID/GROUP mapping. [Native evidence and limitations](NATIVE_EDITING.md#checkpoint-2-local-trial-and-recovery-limitation) records the unresolved recovery requirement.
+
+Final full regression: **350 run, 348 passed, 2 skipped, 0 failures/errors, 137.381 s**, exit 0. Skips remain optional installed-host discovery and unavailable OS symlink privilege; the junction boundary test passed. The suite includes 16 new reconstruction tests and the existing 334 tests.
+
+Actual STDIO full49/core10/engineering29 passed, including source-derived reconstruction preview with no candidate/SDK calls, old native preview, static apply and auto-apply denial. All nine skill validators passed; `pip check` found no broken requirements. Manifest86 matched reviewed sources; source scan147 found zero issues and `git diff --check` passed. Private artifacts/logs remain in ignored `.validation/native-rebuild-20260905`; no native success is inferred from synthetic or historical tests.
+
+Build produced an sdist and wheel-from-sdist; Twine passed both. Source/wheel/sdist scan394 found zero issues. A fresh venv outside the checkout installed the exact wheel and passed constrained dependencies, pip check, installed import/integrity86, nine skill resources/dry-run/export, synthetic demo and real STDIO49/core10/engineering29 with reconstruction preview. `source_checkout_imported=false` and `live_rscad_calls=false`. Tested wheel SHA-256: `d3182ef0e4c7bf9293b4db9e507c994e3c8aaacc441fcd0a87c59b8a7ab1bd4f`; manifest SHA-256: `c116e21969155487e62a3b494c8c7cf5c512f7dd0dae936762d2e4ae5e8a4287`. The sdist is refreshed with these final documentation entries and compared against the same 86 manifest entries; the tested wheel remains unchanged.
+
 ## Native closed-loop checkpoint 1 (2026-09-05)
 
 Baseline `352ae0b`; bounded native existing-component editing and GROUP inspection, with remaining WP-N01–N11 work explicitly tracked in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). Full construction/Runtime integration remains unqualified.

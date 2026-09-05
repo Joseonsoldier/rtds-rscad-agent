@@ -1,6 +1,6 @@
 {
   "name": "rscad-edit-model",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "required_tools": [
     "apply_parameter_patch_batch",
     "lookup_parameter"

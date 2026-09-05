@@ -35,6 +35,8 @@ def main():
 
 def run_isolated_sdk(settings, inp, out, operations, journal, sdk):
     """Internal adapter entry for the worker and explicitly authorized local trials."""
+    if (settings.data_dir / "native_recovery_required.json").exists():
+        raise ToolSafetyError("Native recovery marker blocks SDK dispatch")
     if inspect_native_sdk(settings) != sdk or not sdk["available"]:
         raise ToolSafetyError("SDK evidence changed before native import")
     sys.dont_write_bytecode = True
@@ -53,7 +55,8 @@ def run_isolated_sdk(settings, inp, out, operations, journal, sdk):
     setup.setup_host, setup.setup_port = "127.0.0.1", 0
     setup.in_existing, setup.timeout = True, 20
     original_send = Communicator.send_message
-    ids = {op["component_id"] for op in operations}
+    rebuilding = len(operations) == 1 and operations[0]["op"] == "rebuild_draft"
+    ids = {op["component_id"] for op in operations if "component_id" in op}
 
     def guarded(self, message):
         if message == b"\n": return original_send(self, message)
@@ -86,6 +89,9 @@ def run_isolated_sdk(settings, inp, out, operations, journal, sdk):
                         if isinstance(op, dict) and op.get("component_id") == int(component[1]):
                             if method == "setParameter": allowed = args == [op.get("parameter"), op.get("new_value")]
                             if method == "setLocation": allowed = args == [op.get("location")]
+        if rebuilding:
+            from .native_rebuild_adapter import allow_rebuild_rpc
+            allowed = allow_rebuild_rpc(path,method,args,journal,inp,out)
         journal.value.setdefault("rpc_calls", []).append({"path": path, "method": method, "arguments": args, "allowed": allowed})
         journal.flush()
         if not allowed:
@@ -96,7 +102,11 @@ def run_isolated_sdk(settings, inp, out, operations, journal, sdk):
     # This process alone wraps transport; no installed SDK source is changed.
     Communicator.send_message = guarded
     try:
-        edit_case(fx.remote_connection(), inp, out, operations, journal)
+        if rebuilding:
+            from .native_rebuild_adapter import rebuild_case
+            rebuild_case(fx.remote_connection(),inp,out,operations[0]["strategy"],journal,settings.definition_root)
+        else:
+            edit_case(fx.remote_connection(), inp, out, operations, journal)
         if inspect_native_sdk(settings) != sdk: raise ToolSafetyError("SDK changed during native edit")
     except Exception:
         return 1
