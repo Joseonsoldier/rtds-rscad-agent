@@ -7,6 +7,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import zipfile
+import tempfile
+import time
 
 import test_engineering_editor as fixture
 from rtds_agent.core.native_edit import NativeJournal
@@ -24,10 +26,16 @@ class Component:
     def component_type(self): return self.row['component_type']
     @property
     def parameters(self): return list(self.row['parameters'])
-    def get_parameter(self,name): return self.row['parameters'][name]
+    def get_parameter(self,name):
+        value=self.row['parameters'][name]
+        return value.replace('#','') if name=='Name' and self.case.app.fail=='hidden_name' else value
     def set_parameter(self,name,value): self.row['parameters'][name]=value;self.case.state.modified=True
     @property
-    def location(self): return self.row['location']
+    def location(self):
+        for group in self.case.groups:
+            if any(m.get('uuid')==self.unique_id for m in group['members']):
+                return [self.row['location'][i]-group['location'][i] for i in (0,1)]
+        return self.row['location']
     @property
     def orientation(self): return self.row['orientation']
     @orientation.setter
@@ -42,6 +50,7 @@ class Canvas:
     identifier=1
     def __init__(self,case): self.case=case
     def get_path(self): return self.case.get_path()+'.draft.subpage:1'
+    def __iter__(self): return iter([Component(self.case,r) for r in self.case.rows])
     def select_area(self,lo,hi): pass
     def copy(self): self.case.app.clipboard=copy.deepcopy((self.case.rows,self.case.groups))
     def _paste(self,location,identifier):
@@ -53,6 +62,7 @@ class Canvas:
     def _insert_component(self,kind,x,y,identifier):
         uid=10+len(self.case.rows)
         row=parse_dfx_entities(fixture.block(kind,uid,{'Gain':'0','Name':'default','Mode':'Off'},[x,y]))[0][0]
+        if self.case.app.fail=='hidden_name':row['parameters']['Name']='gain#'
         self.case.rows.append(row);self.case.state.modified=True
         return uid
     def create_wire(self,phase,coordinates):
@@ -77,7 +87,7 @@ class Case:
         text='DRAFT 1\nSUBSYSTEM-START:\n'
         for row in self.rows:
             grouped=self.groups and row['uuid']==self.groups[0]['members'][0]['uuid']
-            if grouped:text+='COMPONENT_TYPE=GROUP\n0 0 0 0 0\n'
+            if grouped:text+='COMPONENT_TYPE=GROUP\n'+' '.join(map(str,[*self.groups[0]['location'],0,0,0]))+'\n'
             text+=fixture.block(row['component_type'],row['uuid'],row['parameters'],row['location'])
             if grouped:text+='GROUP-END:\n'
         text+='SUBSYSTEM-END:\n'
@@ -104,6 +114,11 @@ class App:
         return c
     def new_case(self):
         c=Case(self);self.cases.append(c)
+        temporary=Path(tempfile.gettempdir())/f'tempCaseFile{time.time_ns()}.rtfx'
+        with zipfile.ZipFile(temporary,'w') as z:
+            z.writestr(temporary.stem+'.dfx','DRAFT 1\nSUBSYSTEM-START:\nSUBSYSTEM-END:\n')
+            z.writestr(temporary.stem+'.rtx','VIEW-START: VIEW-ID: "1"\nVIEW-END:\n')
+        c.file=str(temporary)
         if self.fail=='existing_file':c.file=str(self.source)
         if self.fail=='new_response':raise RuntimeError('New case exists but response lost')
         if self.fail=='invalid_new':return None
@@ -115,6 +130,9 @@ class RebuildTests(unittest.TestCase):
     def setUp(self):
         fixture.EngineeringEditorTests.setUp(self)
         self.write()
+        self.temp_root=self.data/'native_temp';self.temp_root.mkdir(parents=True)
+        self.temp_patch=patch('rtds_agent.core.native_temp.tempfile.gettempdir',return_value=str(self.temp_root))
+        self.temp_patch.start();self.addCleanup(self.temp_patch.stop)
     def write(self,extra=False):
         with zipfile.ZipFile(self.project,'w') as z:
             z.writestr('synthetic.dfx',self.dfx);z.writestr('synthetic.rtx','VIEW-START: VIEW-ID: "1"\nVIEW-END:\n')
@@ -132,6 +150,26 @@ class RebuildTests(unittest.TestCase):
         r={'location':[432,112],'orientation':90,'mirrored':False,'parameters':{'x1':'-32','y1':'0','x2':'32','y2':'0'}}
         self.assertEqual(wire_points(r),[[432,80],[432,144]])
         r['mirrored']=True;self.assertEqual(wire_points(r),[[432,144],[432,80]])
+    def test_fresh_temporary_file_proof_rejects_preexisting_and_nonempty(self):
+        from rtds_agent.core.native_temp import capture_temp_inventory,verify_new_temp
+        inventory=capture_temp_inventory();c=App(self.project).new_case();returned=time.time_ns()
+        proof=verify_new_temp(c.file,inventory,returned)
+        self.assertFalse(proof['existed_before_call']);self.assertTrue(proof['empty_saved_draft'])
+        with self.assertRaisesRegex(ValueError,'provenance'):verify_new_temp(c.file,capture_temp_inventory(),time.time_ns())
+        with self.assertRaisesRegex(ValueError,'creation time'):verify_new_temp(c.file,inventory,inventory['started_ns']-1)
+        with self.assertRaisesRegex(ValueError,'provenance'):verify_new_temp(str(self.project),inventory,returned)
+        with zipfile.ZipFile(c.file,'a') as z:z.writestr('opaque.bin','unknown')
+        with self.assertRaisesRegex(ValueError,'members'):verify_new_temp(c.file,inventory,returned)
+    def test_temporary_file_links_and_records_are_rejected(self):
+        from rtds_agent.core.native_temp import capture_temp_inventory,verify_new_temp
+        inventory=capture_temp_inventory();c=App(self.project).new_case();returned=time.time_ns();p=Path(c.file)
+        with patch.object(Path,'is_symlink',return_value=True):
+            with self.assertRaisesRegex(ValueError,'provenance'):verify_new_temp(c.file,inventory,returned)
+        # Preserve file creation time while replacing its member data.
+        with zipfile.ZipFile(p,'w') as z:
+            z.writestr(p.stem+'.dfx','COMPONENT_TYPE=GROUP\n0 0 0 0 0\nGROUP-END:\n')
+            z.writestr(p.stem+'.rtx','')
+        with self.assertRaisesRegex(ValueError,'not empty'):verify_new_temp(c.file,inventory,returned)
     def test_insert_and_clipboard_roundtrip(self):
         for strategy in ('insert','clipboard'):
             with self.subTest(strategy=strategy):
@@ -141,12 +179,29 @@ class RebuildTests(unittest.TestCase):
                 self.assertEqual(result['reconstruction']['component_count'],2)
                 self.assertTrue(all(c.closed for c in app.cases));self.assertEqual(len(app.cases),3)
                 if strategy=='insert':self.assertEqual(result['reconstruction']['uuid_mapping'][0]['candidate_id'],10)
+    def test_expanded_name_readback_does_not_hide_stored_placeholder(self):
+        folder,journal,app=self.run_adapter('insert','hidden_name')
+        result=rebuild_case(app,self.project,folder/'result.rtfx','insert',journal,self.defs)
+        self.assertEqual(result['status'],'verified_edit')
+        self.assertEqual(app.cases[-1].rows[0]['parameters']['Name'],'gain')
+        self.assertTrue(any(r.get('arguments',{}).get('args')==['Name','gain'] for r in journal.value['native_calls'] if isinstance(r.get('arguments'),dict)))
     def test_group_roundtrip_and_no_sentinel_handle(self):
         self.grouped();folder,journal,app=self.run_adapter('clipboard')
         result=rebuild_case(app,self.project,folder/'result.rtfx','clipboard',journal,self.defs)
         self.assertEqual(result['paste_result']['group_sentinels'],1)
         self.assertTrue(result['paste_result']['structure_verified']);self.assertNotIn(-1,journal.value['read_ids'])
         with self.assertRaisesRegex(ValueError,'flat'): reconstruction_plan(self.project,self.document(),'insert')
+    def test_group_relative_readback_binds_source_and_rejects_movement(self):
+        self.grouped();self.dfx=self.dfx.replace('GROUP\n0 0 0 0 0','GROUP\n256 128 0 0 0');self.write()
+        folder,journal,app=self.run_adapter('clipboard')
+        result=rebuild_case(app,self.project,folder/'result.rtfx','clipboard',journal,self.defs)
+        self.assertEqual(result['status'],'verified_edit')
+        row=result['reopened_placements'][0]
+        self.assertEqual(row['basis'],'source_group_local');self.assertEqual(row['actual']['location'],[-256,-128])
+        folder,journal,app=self.run_adapter('clipboard','reopen')
+        with self.assertRaisesRegex(ValueError,'readback'):rebuild_case(app,self.project,folder/'result.rtfx','clipboard',journal,self.defs)
+        self.assertFalse(journal.value['reopened_placements'][0]['matches'])
+        self.assertTrue(journal.value['cleanup_verified'])
     def test_mutation_failures_and_unknown_creation_require_recovery(self):
         for fail in ('paste','new_response','invalid_new','close_new','existing_file'):
             with self.subTest(fail=fail):
@@ -173,6 +228,21 @@ class RebuildTests(unittest.TestCase):
             with zipfile.ZipFile(self.project,'w') as z:
                 for n,v in members.items():z.writestr(n,v)
             with self.assertRaisesRegex(ValueError,'discard'):reconstruction_plan(self.project,self.document(),'clipboard')
+    def test_only_empty_canvas_dimensions_are_preserved_with_native_evidence(self):
+        from rtds_agent.core.native_rebuild import preserve_empty_runtime
+        folder,journal,_=self.run_adapter('clipboard')
+        out=folder/'out.rtfx'
+        rtx='RSCAD 2.7\nGRAPHICS:\n    CANVAS_WIDTH: 940\n    CANVAS_HEIGHT: 707\n    DEFAULT_ZOOM: 100\n'
+        def archive(p,layout):
+            with zipfile.ZipFile(p,'w') as z:z.writestr('synthetic.dfx',self.dfx);z.writestr('synthetic.rtx',layout)
+        archive(self.project,rtx);archive(out,rtx.replace('940','1071'))
+        native_hash=sha256_file(out)
+        result=preserve_empty_runtime(self.project,out,journal)
+        self.assertEqual(result['status'],'preserved_source_empty_runtime')
+        self.assertEqual(sha256_file(folder/'native_saved_archive.rtfx'),native_hash)
+        with zipfile.ZipFile(out) as z:self.assertEqual(z.read('synthetic.rtx').decode(),rtx)
+        archive(out,rtx.replace('ZOOM: 100','ZOOM: 200'))
+        with self.assertRaisesRegex(ValueError,'not limited'):preserve_empty_runtime(self.project,out,journal)
     def test_public_preview_apply_and_group_policy(self):
         self.grouped();sdk={'available':True,'evidence_id':'synthetic'}
         def worker(command,**kwargs):

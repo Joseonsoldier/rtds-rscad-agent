@@ -1,20 +1,38 @@
 # Implementation status
 
-## Explicit recovery follow-up — completed
+## Native closed-loop checkpoint 3 — local reconstruction and Compile verified
+
+Baseline `1a9d54e`, 2026-09-06. Implemented the provenance-bound new temporary-case guard, exact stored NAME insertion, preservation of source empty-RTX bytes after native close, and source-bound GROUP-local placement readback. Existing original/snapshot/definition/companion/policy/SDK hashes, durable recovery journals and explicit cleanup remain enforced. Auto apply stays disabled; execution policy and grants are unchanged.
+
+| Current local test | Actual result |
+|---|---|
+| Voltage Divider, API insertion/wires | 6 records; saved semantics/settings/topology/non-DFX and exact reopen passed. 680 RPCs; 56 protected hashes unchanged. |
+| CH5 indmac, API clipboard | 77 records + one GROUP; saved comparison and exact reopen passed. 542 RPCs; 59 protected hashes unchanged. |
+| CH6 gen1, API clipboard | 135 records + one GROUP; saved comparison and exact reopen passed. 879 RPCs; 70 protected hashes unchanged. |
+| Separate local Compile | All three returned True once per isolated candidate; fresh success logs, empty error logs, matching 107,329 / 283,499 / 292,269-byte binaries. Candidate/Compile-input hashes equal. 18 allowed RPCs each; 52/46/47 protected hashes unchanged. |
+| Cleanup | All successful construction and Compile trials confirmed non-forced close and disconnect. Intermediate failed construction trials also confirmed cleanup; no new recovery marker required. |
+
+Public policy-bound live apply was not executed: the actual projects have no operator-authored component policy, which the agent did not create. The same internal adapter was exercised under task permission; synthetic tests cover public apply. CH5/CH6 results qualify native clipboard reconstruction of the existing generated inputs, not component-by-component synthesis of all tutorials. Static model-check warnings remain, and Compile is not dynamic/electrical acceptance.
+
+Final software checks passed: native38; full355 (353 passed, two existing skips; 147.500 s); actual STDIO49/core10/engineering29; nine skill validators; manifest87; pip check; source scan148; wheel/sdist build and Twine; combined scan397. The exact wheel also passed fresh outside-checkout installation, integrity87, skills/demo and STDIO with no live SDK call. Distribution evidence is recorded separately in [VALIDATION.md](VALIDATION.md).
+
+WP-N01/N02 have the bounded local construction checkpoint above; their complete DoD, automatic backend qualification, broader hierarchy/version coverage and public live apply remain unverified. WP-N03 Runtime IR/API discovery is the next development step. WP-N03–N11 remain pending. No GUI automation, rack query/reservation/connection, Runtime run/control/capture or load-flow execution occurred. The detailed changed-file behavior, failed attempts, candidate hashes and compatibility limits are in [NATIVE_EDITING.md](NATIVE_EDITING.md#checkpoint-3--local-construction-and-compile-2026-09-06); final software/release results are recorded in [VALIDATION.md](VALIDATION.md).
+
+## Earlier explicit recovery follow-up — completed
 
 After the user's explicit request to verify and clean up, the failed checkpoint-2 trial was recovered through the local API. Installed Java implementation inspection established that `new_case()` creates an existing temporary RTFX backing file; the adapter's existing-file rejection caused the incident. The exact temporary file was identified by its unique path and creation time inside the failed attempt, with a disk-empty Draft and matching trial process/launch evidence. No old session ID was used as a lookup target.
 
 The current connection resolved that exact backing path, confirmed stopped/unmodified state and zero Draft components, saved an isolated recovery copy, then completed `close(False)` and `disconnect(False)`. Exact source/recovery paths were absent from the connection registry after close. All 19 recovery RPCs were allowlisted; 53 protected hashes, including the other startup temporary case, stayed unchanged. Both incident-specific recovery markers were archived and removed after verification under this explicit cleanup authorization. No execution policy, grant or unrelated case was changed. No Compile, Runtime, rack query or model-building retry occurred.
 
-The earlier failure remains a failed attempt. This recovery is not reconstruction/Compile qualification. Before a new construction trial, the new-case guard still needs a provenance-bound temporary-file acceptance rule; broad acceptance of pre-existing files is not justified. Public source/schema/skill bytes are unchanged from `e7911e6`. Details are in [native recovery evidence](NATIVE_EDITING.md#explicit-recovery-follow-up).
+The earlier failure remains a failed attempt. That recovery was not reconstruction/Compile qualification. At the recovery checkpoint, the new-case guard still needed a provenance-bound temporary-file acceptance rule and public source/schema/skill bytes were unchanged from `e7911e6`. Checkpoint 3 above subsequently implements and tests that correction. Details are in [native recovery evidence](NATIVE_EDITING.md#explicit-recovery-follow-up).
 
-## Native closed-loop checkpoint 2 — software implemented; local recovery required
+## Earlier checkpoint 2 — software implemented; incident subsequently recovered
 
 Baseline `fc2580e`. WP-N01/N02 now implement source-derived `rebuild_draft` with flat insertion/wire construction or GROUP/hierarchy clipboard reconstruction. The public preview/apply transaction retains component policy, source/snapshot/definition/companion/SDK hashes, isolated staging, saved comparison, exact reopen and atomic publication. Added explicit UUID/context mapping, per-context translation, world wire endpoints and GROUP membership/metadata checks. Saved Runtime records and opaque payloads are refused. Auto apply remains disabled.
 
 New synthetic tests exercise both construction strategies, public GROUP publication, policy/auto restrictions, changed topology/membership, ambiguity, repeated hierarchy names, sentinel handling, post-mutation/creation/close failures and recovery blocking. Full regression: 350 run, 348 passed, two existing skips, no failures/errors, 137.381 s. STDIO49/core10/engineering29, nine skill validators, manifest86, build/Twine/scan394 and a fresh external-venv wheel installation passed. Exact distribution results are in [VALIDATION.md](VALIDATION.md).
 
-**Local result: incomplete, recovery required.** One Voltage Divider trial read the private source and closed it, then stopped after `new_case` returned an unexpected file identity. No insert/wire/paste/save or Compile followed; no candidate exists. The 197-RPC journal records unconfirmed new-case cleanup and rejected disconnect ping. All 56 protected hashes and the input copy remain unchanged. Recovery markers were retained in trial/configured data; additional live actions were stopped. Observed-file journaling and recovery disconnect ping handling are fixed in software and synthetically tested, but no live retry was performed. See [exact evidence and recovery limits](NATIVE_EDITING.md#checkpoint-2-local-trial-and-recovery-limitation).
+**Local result at checkpoint 2: incomplete, recovery required (subsequently resolved above).** One Voltage Divider trial read the private source and closed it, then stopped after `new_case` returned an unexpected file identity. No insert/wire/paste/save or Compile followed; that attempt has no candidate. The 197-RPC journal records unconfirmed new-case cleanup and rejected disconnect ping. All 56 protected hashes and the input copy remained unchanged. Recovery markers were retained in trial/configured data; additional live actions were stopped. Observed-file journaling and recovery disconnect ping handling were fixed in software and synthetically tested; no live retry occurred at that checkpoint. See [exact evidence and recovery limits](NATIVE_EDITING.md#checkpoint-2-local-trial-and-recovery-limitation).
 
 Read-only checks on historical CH5/CH6 normalized-reference/generated files passed with the new comparator: 77/135 components and one GROUP each. This is saved-file comparison, not new native/Compile qualification. No real component/execution policy was created or enabled. Runtime/rack/load-flow remains unexecuted.
 

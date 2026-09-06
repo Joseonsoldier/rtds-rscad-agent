@@ -2,12 +2,14 @@
 from pathlib import Path
 import math
 import re
+import time
 
 from ..safety import ToolSafetyError, sha256_file
 from .native_edit import paste_ids, values_equal
-from .native_rebuild import reconstruction_plan, compare_reconstruction
-from .topology_parser import parse_rtfx_topology
+from .native_rebuild import reconstruction_plan, compare_reconstruction, preserve_empty_runtime
+from .topology_parser import parse_rtfx_topology, parse_parameter_schema
 from .structured_patch import archive_snapshot
+from .native_temp import capture_temp_inventory, verify_new_temp
 
 
 def allow_rebuild_rpc(path, method, args, journal, inp, out):
@@ -31,6 +33,8 @@ def allow_rebuild_rpc(path, method, args, journal, inp, out):
         if method == "numSubpages": return not args
         if method == "getSubpage": return args == [0]
         if method == "getComponent": return len(args)==1 and type(args[0]) is int and args[0] in journal.value.get("read_ids",[])
+    if suffix == journal.value.get("empty_page_suffix"):
+        return method == "getComponentByIndex" and args == [journal.value["empty_page_id"],0]
     comp = re.fullmatch(r"\.draft\.comp_id:(\d+)",suffix)
     if comp and int(comp[1]) in journal.value.get("read_ids",[]):
         if method in {"getComponentType","getLocation","getOrientation","getMirrored","getParameters"}: return not args
@@ -43,6 +47,9 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
     if inp == out or out.exists(): raise ToolSafetyError("Native reconstruction output must be new")
     before = parse_rtfx_topology(inp,definition_root).document
     plan = reconstruction_plan(inp,before,strategy)
+    from ..model_editor import _definitions
+    name_fields = {kind:{name for name,spec in parse_parameter_schema(text).items() if spec["data_type"] == "NAME"}
+                   for kind,text in _definitions(before).items()} if strategy == "insert" else {}
     protected = sha256_file(inp)
     case = None
     expected_file = None
@@ -63,7 +70,7 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
         except Exception:
             journal.lost_identity(); raise
 
-    def own(value, expected=None):
+    def own(value, expected=None, temp_inventory=None, returned_ns=None):
         nonlocal case,expected_file,closed
         if value is None or type(value.caseid) is not int or value.caseid < 0:
             journal.lost_identity(); raise ToolSafetyError("Unconfirmed native case creation/open")
@@ -75,11 +82,15 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
         journal.flush()
         if not isinstance(observed,str):
             journal.lost_identity(); raise ToolSafetyError("Unsupported native file identity type")
-        if expected is None and observed and Path(observed).exists():
-            journal.lost_identity(); raise ToolSafetyError("New case unexpectedly refers to an existing file")
+        if expected is None:
+            try:
+                journal.value["new_case_provenance"] = verify_new_temp(observed,temp_inventory,returned_ns)
+                journal.flush()
+            except Exception:
+                journal.lost_identity(); raise
         expected_file = str(expected) if expected is not None else observed
         journal.value["case_history"][-1]["expected_file"] = expected_file
-        identity(clean=expected is not None)
+        identity(clean=True)
 
     def close():
         nonlocal case,closed
@@ -105,6 +116,9 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
             raise ToolSafetyError("Native reconstruction component identity mismatch")
         return c
 
+    def placement(c):
+        return {"location":list(c.location),"orientation":c.orientation,"mirrored":c.mirrored}
+
     try:
         connected = True; journal.call("connect",app.connect)
         journal.value["observed_rscad_version"] = app.get_version()
@@ -115,7 +129,18 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
         if case.draft.num_subpages() != 1: raise ToolSafetyError("Only one native Draft subpage supported")
         settings = {name:getattr(case.settings,name) for name in ("timestep","title","realtime")}
         values = {}
+        grouped_values = {}
         if strategy == "clipboard":
+            # GROUP children are stored in Draft coordinates, but the installed
+            # API returns coordinates relative to the group. Bind the source's
+            # observed placement instead of inventing a coordinate transform.
+            grouped = {(m["context"],m["uuid"]) for g in before.get("groups",[]) for m in g["members"] if m["kind"] == "component"}
+            for row in before["components"]:
+                key = (row["context"],row["uuid"])
+                if key in grouped:
+                    grouped_values[key] = placement(component(row))
+            journal.value["grouped_source_readbacks"] = [{"context":k[0],"id":k[1],**v} for k,v in grouped_values.items()]
+            journal.flush()
             page = case.draft.get_subpage(index=0)
             lo,hi = plan["selection"]
             call("select_area",page,"selectArea",[lo,hi,page.identifier],lambda:page.select_area(tuple(lo),tuple(hi)))
@@ -132,9 +157,19 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
                        (type(v) is float and not math.isfinite(v)) for v in values[row["uuid"]].values()):
                     raise ToolSafetyError("Unsupported native source parameter value")
         close()
-        own(call("new_case",app,"newCase",[],app.new_case))
+        inventory = capture_temp_inventory()
+        journal.value["new_case_inventory"] = inventory; journal.flush()
+        created = call("new_case",app,"newCase",[],app.new_case)
+        returned_ns = time.time_ns()
+        own(created,temp_inventory=inventory,returned_ns=returned_ns)
         if case.draft.num_subpages() != 1: raise ToolSafetyError("Unexpected new-case Draft subpages")
         target = case.draft.get_subpage(index=0)
+        journal.value.update(empty_page_suffix=".draft.subpage:"+str(target.identifier),empty_page_id=target.identifier)
+        try:
+            next(iter(target))
+            raise ToolSafetyError("New native Draft is not empty")
+        except StopIteration:
+            journal.value["new_case_provenance"]["empty_live_draft"] = True; journal.flush()
         if strategy == "clipboard":
             journal.value["permitted_rpc"] = [target.get_path(),"paste",[plan["paste_location"],target.identifier]]
             try: journal.value["paste_result"] = paste_ids(target,plan["paste_location"],journal)
@@ -153,8 +188,12 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
                 for name,value in values[row["uuid"]].items():
                     old = c.get_parameter(name)
                     numeric = type(value) in {float,int}
-                    if not values_equal(old,value,numeric):
-                        call("set_parameter",c,"setParameter",[name,value],lambda:c.set_parameter(name,value))
+                    # Native getters expand NAME '#' placeholders. An apparently
+                    # equal getter must not hide different stored naming semantics.
+                    stored_name = name in name_fields.get(row["component_type"],set())
+                    write_value = row["parameters"][name] if stored_name else value
+                    if stored_name or not values_equal(old,value,numeric):
+                        call("set_parameter",c,"setParameter",[name,write_value],lambda:c.set_parameter(name,write_value))
                     actual = c.get_parameter(name)
                     matched = values_equal(actual,value,numeric)
                     journal.value["readbacks"].append({"source_id":row["uuid"],"component_id":uid,"field":name,"matches":matched})
@@ -174,8 +213,11 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
         expected_file = str(out); identity(clean=True)
         digest = sha256_file(out)
         close()
+        journal.value['empty_runtime_preservation']=preserve_empty_runtime(inp,out,journal)
+        digest = sha256_file(out)
         after = parse_rtfx_topology(out,definition_root).document
         comparison = compare_reconstruction(before,after)
+        source_keys = {(m["candidate_context"],m["candidate_id"]):(m["source_context"],m["source_id"]) for m in comparison["uuid_mapping"]}
         # New-case save must retain empty Runtime and every non-DFX byte exactly.
         a,b = archive_snapshot(inp),archive_snapshot(out)
         if set(a["members"]) != set(b["members"]) or a["archive_comment_sha256"] != b["archive_comment_sha256"]:
@@ -186,7 +228,12 @@ def rebuild_case(app, inp, out, strategy, journal, definition_root):
         # Every saved UUID is resolved once, including GROUP children; never -1.
         for row in after["components"]:
             c = component(row)
-            if list(c.location)!=row["location"] or c.orientation!=row["orientation"] or c.mirrored!=row["mirrored"]:
+            key = source_keys[(row["context"],row["uuid"])]
+            expected = grouped_values.get(key,{k:row[k] for k in ("location","orientation","mirrored")})
+            actual = placement(c)
+            journal.value.setdefault("reopened_placements",[]).append({"context":row["context"],"id":row["uuid"],"basis":"source_group_local" if key in grouped_values else "saved_draft","expected":expected,"actual":actual,"matches":actual==expected})
+            journal.flush()
+            if actual != expected:
                 raise ToolSafetyError("Reopened reconstructed component readback mismatch")
         identity(clean=True)
         if sha256_file(out)!=digest or sha256_file(inp)!=protected: raise ToolSafetyError("Reconstruction source/reopen bytes changed")

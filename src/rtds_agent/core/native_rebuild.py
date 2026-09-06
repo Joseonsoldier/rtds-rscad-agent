@@ -9,6 +9,9 @@ from collections import Counter, defaultdict
 import copy
 from pathlib import Path
 import zipfile
+import re
+import os
+import shutil
 
 from ..safety import ToolSafetyError, sha256_file
 from .state_machine import sha256_json
@@ -58,9 +61,60 @@ def reconstruction_plan(source, document, strategy):
     plan = {"strategy": strategy, "component_count": len(rows), "group_count": len(document.get("groups", [])),
             "selection": [lo, hi], "paste_location": center, "wires": wires,
             "source_sha256": sha256_file(Path(source)), "runtime_records": 0,
+            "empty_runtime_preservation":"exact source bytes after native close; only canvas dimensions may differ",
             "qualification": "parsed Draft subset; exact saved verification required"}
     plan["plan_id"] = sha256_json(plan)
     return plan
+
+
+def preserve_empty_runtime(source, candidate, journal):
+    """Reconcile only observed empty-canvas size changes after confirmed SDK close.
+
+    Keep raw native bytes as evidence. Copy the source RTX, never synthesize it;
+    all other member bytes and metadata must already agree. Reopen follows.
+    """
+    from .structured_patch import archive_snapshot
+    from ..runtime_layout import parse_runtime_layout
+    source,candidate=Path(source),Path(candidate)
+    a,b=archive_snapshot(source),archive_snapshot(candidate)
+    if set(a['members'])!=set(b['members']) or a['archive_comment_sha256']!=b['archive_comment_sha256']:
+        raise ToolSafetyError('Native archive member set/comment differs')
+    changed=[n for n in a['members'] if n!=a['dfx_member'] and a['member_sha256'][n]!=b['member_sha256'][n]]
+    if not changed: return {'status':'already_exact','members_replaced':[]}
+    if len(changed)!=1 or not changed[0].lower().endswith('.rtx'):
+        raise ToolSafetyError('Unreviewed non-DFX archive changes')
+    name=changed[0]
+    with zipfile.ZipFile(source) as z:original=z.read(name)
+    with zipfile.ZipFile(candidate) as z:native=z.read(name)
+    def without_dimensions(raw):
+        if len(raw)>1024*1024:raise ToolSafetyError('Empty Runtime metadata exceeds bounds')
+        text=raw.decode('utf-8-sig')
+        parsed=parse_runtime_layout(text)
+        if parsed['records'] or parsed['warnings'] or 'COMPONENT:' in text:
+            raise ToolSafetyError('Cannot reconcile populated Runtime layout')
+        for key in ('CANVAS_WIDTH','CANVAS_HEIGHT'):
+            text,count=re.subn(r'(?m)^(\s*'+key+r':\s*)[0-9]+[ \t]*$',r'\g<1><dimension>',text)
+            if count!=1:raise ToolSafetyError('Ambiguous empty Runtime canvas metadata')
+        return text
+    if without_dimensions(original)!=without_dimensions(native):
+        raise ToolSafetyError('Runtime change is not limited to empty canvas dimensions')
+    evidence=journal.path.parent/'native_saved_archive.rtfx'
+    temporary=candidate.with_suffix('.rtfx.metadata-pending')
+    if evidence.exists() or temporary.exists():raise ToolSafetyError('Metadata reconciliation attempt already exists')
+    old_digest=sha256_file(candidate)
+    def replace():
+        shutil.copy2(candidate,evidence)
+        if sha256_file(evidence)!=old_digest:raise ToolSafetyError('Raw native evidence changed')
+        with zipfile.ZipFile(candidate) as incoming,zipfile.ZipFile(temporary,'x') as outgoing:
+            outgoing.comment=incoming.comment
+            for info in incoming.infolist():outgoing.writestr(info,original if info.filename==name else incoming.read(info))
+        saved=archive_snapshot(temporary)
+        if saved['member_sha256']!={**b['member_sha256'],name:a['member_sha256'][name]} or sha256_file(candidate)!=old_digest:
+            raise ToolSafetyError('Metadata reconciliation changed native Draft bytes')
+        os.replace(temporary,candidate)
+    journal.call('preserve_empty_runtime',replace,mutation=True,arguments={'member':name,'source_member_sha256':a['member_sha256'][name]})
+    return {'status':'preserved_source_empty_runtime','members_replaced':[name],
+            'raw_native_sha256':old_digest,'candidate_sha256':sha256_file(candidate),'dfx_bytes_unchanged':True}
 
 
 def compare_reconstruction(before, after):

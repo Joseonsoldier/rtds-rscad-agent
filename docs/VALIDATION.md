@@ -1,5 +1,19 @@
 # Public alpha validation
 
+## Native reconstruction checkpoint 3 (2026-09-06)
+
+Baseline `1a9d54e`. Source review covers the new temporary-file verifier, SDK evidence binding, stored NAME insertion, post-close empty RTX preservation and source-bound GROUP readback. The edit skill is 1.2.1; public schemas, profile counts, default static behavior and inactive execution policy are unchanged.
+
+Focused reconstruction regression: 21 tests passed, 6.050 s, exit 0. After final source/skill review and manifest refresh, all native tests passed: 38 tests, 17.096 s. Five new tests cover fresh/old/link/nonempty temporary files, hidden NAME placeholders, empty-canvas-only reconciliation and GROUP-local readback with movement rejection. Existing creation/paste/close failure and policy/public transaction tests remain.
+
+Final full regression: **355 run, 353 passed, 2 skipped, 0 failures/errors, 147.500 s**, exit 0. The two existing skips are opt-in installed-host discovery and unavailable OS symlink privilege; Windows junction checks passed. Actual STDIO full49/core10/engineering29 passed with inactive-policy denials and no real SDK calls. All nine skill validators passed, `pip check` found no broken requirements, manifest87 matched, source scan148 reported zero issues and `git diff --check` passed. Wheel and sdist build/Twine passed; source/wheel/sdist scan397 found zero issues.
+
+The exact wheel passed installation in a fresh venv outside the checkout: constrained dependencies, pip check, installed import/integrity87, nine packaged/exported skills, dry-run, synthetic demo and actual STDIO49/core10/engineering29. `source_checkout_imported=false`, `live_rscad_calls=false`. Tested wheel SHA-256: `643f978116c395a6caac2f75430feeb7d2b1dbda52c1024b1b4577d15176e113`. Integrity-reported manifest digest: `0e377aaae09e3cc4051b4a2286146acc9ddf5fce5310cec2ddb82ecd5660768b`. The sdist is refreshed with these final documentation entries; the tested wheel stays unchanged. Final artifact comparison checks all 87 manifest entries against source/wheel/sdist and exact final documentation in the sdist; Twine and the scanner are repeated for the refreshed sdist.
+
+Three separately instrumented local reconstruction/save/reopen trials and three one-shot isolated Compile trials passed. Native RPC counts were 680/542/879; Compile RPC counts were 18 each, all allowed. All protected hashes and candidate/Compile input hashes matched. Fresh success logs, empty error logs and nonempty matching output/build binaries were verified offline. All case closes and disconnects were confirmed. RSCAD reported 2.7, compiler logs RTDSPC 6.7.3. The detailed scope and retained failed attempts are in [NATIVE_EDITING.md](NATIVE_EDITING.md#checkpoint-3--local-construction-and-compile-2026-09-06).
+
+These are task-scoped internal adapter/Compile results. The public policy-bound live transaction, auto selection, Runtime/rack/load-flow, arbitrary hierarchy/versions and engineering acceptance remain unqualified. Static checks retained warnings and no errors in their checked scope. Raw models, journals, Java source inspection, logs and receipt/hash review remain ignored under `.validation/native-newcase-20260906`.
+
 ## User-directed local recovery follow-up (2026-09-05)
 
 Recovery-only SDK validation passed: 19/19 allowlisted RPCs, exact temporary-path identity (no old case-ID lookup), stopped/unmodified state, empty Draft, isolated recovery save, verified `close(False)` and `disconnect(False)`, and absence of both exact trial paths from the connection registry. All 53 protected hashes passed, including the original/input, SDK and other startup temporary case. Two incident-specific markers were archived and removed under the user's explicit cleanup authorization. Installed Java implementation inspection identified the temporary-backing-file behavior and temporary-case close restriction. No vendor implementation text is distributed.

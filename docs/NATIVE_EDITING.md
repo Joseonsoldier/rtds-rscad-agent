@@ -1,6 +1,38 @@
-# Native closed-loop checkpoint 1
+# Native closed-loop checkpoints
 
 This checkpoint implements a bounded native editor and GROUP inspection. It is **not completion of WP-N01 through WP-N11**, nor qualification of a native construction/Runtime closed loop. Existing v1/v2 tools and execution safeguards remain.
+
+## Checkpoint 3 — local construction and Compile (2026-09-06)
+
+Baseline `1a9d54e`. The earlier cleanup incident was already resolved. This follow-up fixes fresh new-case ownership, stored NAME insertion, empty Runtime metadata preservation and GROUP-local API readback. Three explicitly authorized local adapter trials passed; each candidate was then copied separately for one local Compile. No GUI automation, rack query/reservation/connection, Runtime execution/capture/control or load-flow call was made. The transport guard allowlisted every RPC; Python sockets stayed on loopback. Java background networking was not measured.
+
+| Model / strategy | Saved comparison and exact reopen | Construction RPCs / protected hashes | Separate Compile / binary size |
+|---|---|---|---|
+| Voltage Divider / insert | 6 records, both BUS wire geometries, parameters/settings/topology and non-DFX preservation passed | 680 / 56, all unchanged | True, 1.063 s / 107,329 bytes |
+| CH5 indmac / clipboard | 77 records and one GROUP passed, including source-bound group-local placement | 542 / 59, all unchanged | True, 1.203 s / 283,499 bytes |
+| CH6 gen1 / clipboard | 135 records and one GROUP passed, including source-bound group-local placement | 879 / 70, all unchanged | True, 0.610 s / 292,269 bytes |
+
+All three native attempts completed confirmed save/close/reopen/close/disconnect. All three Compile attempts completed close/disconnect with 18 allowed RPCs each; their 52/46/47 protected hashes were unchanged. Fresh compiler logs contained success text, error logs were empty, and build/output binaries matched. Candidate and Compile-input hashes matched. Static model checks reported no errors in their checked scope and retained 1/30/14 potential dangling/unconnected-port warnings respectively; no electrical/dynamic acceptance is claimed. RSCAD reported 2.7; fresh compiler logs reported RTDSPC 6.7.3. Stored rack 1 and the compiler's local configuration-file read are not rack-query evidence.
+
+Candidate SHA-256 values, in table order:
+
+- `3ffff608f1d429e04795e48768708d4869e3b0937f426aac9fed4a7bbb35f2a6`
+- `078ad8c7076db6e79c4e116467019d5c70fd8fb194dc2563a16566864f157a69`
+- `f9d0974e27fb0b8aae26cc490a8350bdf9b9f6f637416db18330199f087a9ffb`
+
+The internal adapter was used under the standing task permission; the real projects lack an operator-authored component policy. No policy was manufactured. Consequently these results do not qualify the public policy-bound live apply transaction or install auto-backend qualification. They qualify only these source-derived operations on these local inputs. Grouped CH5/CH6 construction used native clipboard, not component-by-component insertion. Hierarchy/nested/rotated GROUP live reconstruction and arbitrary models remain unverified. Runtime-bearing tutorials are outside this reconstruction scope.
+
+### Observed differences and bounded corrections
+
+The new-case verifier inventories the exact unlinked Python temporary directory before `new_case`, then requires a new matching file created between call start and return. It checks regular-file identity/stable hash, bounded exact DFX/RTX archive members and empty saved content, then verifies exact stopped/unmodified native identity and an empty live Draft. Old temporary files, arbitrary existing models, links, stale creation times, unexpected members and nonempty records are refused. A Java temporary directory differing from the captured directory is unsupported. Installed SDK/Java inspection established this behavior; no vendor implementation is shipped.
+
+Native NAME getters hide `#` placeholders. Insertion now writes the exact source spelling for definition-declared NAME parameters even if getter values compare equal. The saved comparison still rejects any changed parameter. The first local insertion failed this gate safely after close; its 597 allowed RPCs and all protected hashes remain recorded as a failed attempt.
+
+Native save changed only `CANVAS_WIDTH`/`CANVAS_HEIGHT` in the empty RTX. The second insertion passed Draft comparison but failed non-DFX preservation, with 631 allowed RPCs and confirmed cleanup. The adapter now retains a raw native archive, confirms native close, copies the exact source RTX bytes only when those two numeric fields are the sole difference, then checks unchanged native DFX and every other member before exact reopen. This is an explicit post-close archive preservation step, not Runtime authoring or a claim that every archive byte was serialized by the SDK. Populated Runtime, changed zoom/other metadata and opaque payloads remain rejected.
+
+The first CH5 reconstruction passed saved comparison but failed GROUP-child reopen placement (333 allowed RPCs; cleanup and 59 protected hashes passed). A separate read-only exact-path probe showed the same behavior in source and candidate: stored absolute child positions are returned by the API relative to the GROUP. Source and candidate hashes remained unchanged. Clipboard now binds the original observed group-local placement and compares the mapped candidate readback to it, in addition to the full saved GROUP/UUID/context comparison. It does not guess a coordinate transform or treat a mismatch as a pass.
+
+Each corrected construction used a new attempt directory after verified cleanup. Failed attempts are retained and never resumed. Two Compile harness preparation errors (unconfigured definition root and omitted model copy) occurred before any SDK import/connection; fixed isolated setup preceded the three one-shot Compile calls. No current trial required a new recovery marker. All private models, Java inspection output, journals, logs and offline artifact review remain excluded under `.validation/native-newcase-20260906`.
 
 ## Public editor
 
@@ -14,7 +46,7 @@ Checkpoint 2 adds one sole operation `{"op":"rebuild_draft","strategy":"insert"}
 
 Insertion reconstructs flat source components using reviewed SDK declarations and source-observed parameter values, then creates one-/three-phase wires using world endpoints (including stored rotation/mirroring). Policy must allow all component types and all stored insertion parameters. Clipboard reconstruction selects the bounded source area, copies the selection, closes the clean source and creates a new case before paste. Policy must allow GROUP as well as each component type. Grouped/hierarchy reconstruction does not use the SDK iterator, which omits grouped children.
 
-Both paths verify saved content, settings and topology before reopening. UUIDs are mapped within the exact corresponding parent context; hierarchy names are never globally collapsed. One translation per context is allowed. Wire endpoints/styles and GROUP membership/metadata/bounds must match under the mapping. Identical co-located ambiguous records are refused. Reopen resolves each saved UUID and reads placement/type; insertion also verifies live parameter readbacks. This proves the parsed Draft subset only; it is not arbitrary model generation, full undocumented DFX preservation or electrical equivalence.
+Both paths verify saved content, settings and topology before reopening. UUIDs are mapped within the exact corresponding parent context; hierarchy names are never globally collapsed. One translation per context is allowed. Wire endpoints/styles and GROUP membership/metadata/bounds must match under the mapping. Identical co-located ambiguous records are refused. Reopen resolves each saved UUID and reads placement/type; GROUP children use source-observed group-local placement, and insertion also verifies live parameter readbacks. This proves the parsed Draft subset only; it is not arbitrary model generation, full undocumented DFX preservation or electrical equivalence.
 
 `auto` returns a static preview for existing operations or a read-only reconstruction plan, and refuses apply. No operation-scoped construction/Compile qualification is installed. Per-attempt `integration_qualified` remains false. A successful bounded edit is not the complete native construction DoD.
 
@@ -34,7 +66,7 @@ GROUP containers have no vendor UUID in the observed format. They are separate e
 
 IR includes `groups`. Semantic comparison adds group-added/removed/member-changed/moved/structure-changed results. `compare_project_versions` provides bounded group-change pagination. Group IDs use context and local GROUP ordinal: insertion/reordering may change them, and they must never be used as persistent SDK IDs.
 
-The internal paste adapter records native `-1` GROUP sentinels without calling `get_object(-1)`. It initially returns `structure_verified:false`; reconstruction changes that only after saved GROUP/member comparison and exact reopen pass. The public reconstruction transaction is synthetically tested; new live paste through this adapter remains unverified. Static/numeric mutation of grouped records remains rejected.
+The internal paste adapter records native `-1` GROUP sentinels without calling `get_object(-1)`. It initially returns `structure_verified:false`; reconstruction changes that only after saved GROUP/member comparison and exact reopen pass. The public reconstruction transaction is synthetically tested; task-scoped live CH5/CH6 paste passed in checkpoint 3. Static/numeric mutation of grouped records remains rejected.
 
 ## Measured local evidence
 
@@ -48,9 +80,9 @@ Private models, SDK sources, logs and receipts remain under ignored `.validation
 
 ## Remaining dependency order
 
-WP-N01/N02 software now includes new-case construction, insertion/wires/clipboard, UUID/context mapping and the public policy-bound transaction. Synthetic normal/failure/recovery tests pass. Live new-case identity/cleanup and subsequent reconstruction/save/reopen/Compile qualification remain incomplete; auto selection stays disabled.
+WP-N01/N02 software includes new-case construction, insertion/wires/clipboard, UUID/context mapping and the public policy-bound transaction. Synthetic normal/failure/recovery tests pass. Task-scoped new-case identity, reconstruction/save/reopen/cleanup and separate Compile passed for the three checkpoint-3 models. Public live apply, operation-scoped automatic qualification and broader hierarchy/version coverage remain incomplete; auto selection stays disabled.
 
-After those pass, proceed to WP-N03 Runtime IR/binding and confirmed authoring APIs, WP-N04 native capture integration, WP-N05 simulator-time event evidence and WP-N06 load-flow/initialization. Their software work and source investigation are pending in this checkpoint. Runtime/rack execution remains unauthorized. WP-N07–N11 (component knowledge, rulepacks, native failure corpus, line/cable authoring and model-driven evaluation) remain pending behind the specified prerequisites. No synthetic scorer run is described as a model-driven evaluation.
+The next software/source-investigation step is WP-N03 Runtime IR/binding and confirmed authoring APIs, followed by WP-N04 native capture integration, WP-N05 simulator-time event evidence and WP-N06 load-flow/initialization. Their implementation remains pending in this checkpoint. Runtime/rack execution remains unauthorized. WP-N07–N11 (component knowledge, rulepacks, native failure corpus, line/cable authoring and model-driven evaluation) remain pending behind the specified prerequisites. No synthetic scorer run is described as a model-driven evaluation.
 
 ## Checkpoint 2 local trial and recovery limitation
 
@@ -72,4 +104,4 @@ The unique temporary file created within the failed attempt was matched to the t
 
 All 19 recovery RPCs were allowed. The 53 protected hashes remained unchanged. Recovery artifact SHA-256: `064f1f91f33a3fd37ba5895715efacb239926b7a46aba6ffbcfbf2cea6290a53`. Both markers for this specific incident were archived and removed only after successful verification and the user's explicit cleanup request. No policy was activated, forced close or model-building retry was used, and no Compile/Runtime/rack call occurred. Raw evidence and marker archives remain private under `.validation/native-rebuild-20260905/recovery_01`.
 
-The production new-case guard is unchanged in this documentation-only follow-up. Its future correction must prove that the temporary backing file was freshly created by the current owned call, with exact identity and initial-content checks; permitting arbitrary existing files would weaken source protection. Recovery does not make the previous attempt successful or qualify the new reconstruction protocol.
+At the time of that documentation-only recovery follow-up, the production new-case guard was unchanged. Checkpoint 3 above subsequently implements the required provenance/initial-content checks. Recovery itself does not make the previous failed attempt successful.

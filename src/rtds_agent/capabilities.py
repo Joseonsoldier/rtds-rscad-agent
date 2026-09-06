@@ -171,7 +171,7 @@ def get_capabilities() -> dict[str, Any]:
         "native_draft_editing": _feature(implemented=True, available=live_dependencies,
             reasons=["Explicit native backend supports existing flat Draft edits and source-derived insert/clipboard reconstruction with a reviewed project policy preview",
                      "Uses isolated input, a fixed SDK worker, readback, exact save/close/reopen comparison and a durable recovery journal",
-                     "Reconstruction requires an empty saved Runtime, one subsystem and verified UUID/GROUP mapping; live new-case identity/cleanup and Compile integration remain unqualified; auto apply is refused"]),
+                     "Reconstruction requires fresh temporary-file provenance, an empty saved Runtime, one subsystem and verified UUID/GROUP mapping; task-scoped local trials do not qualify this host or public live apply; auto apply is refused"]),
         "group_inspection": _feature(implemented=True, available=settings is not None,
             reasons=["GROUP containers, nested membership and anchor bounds are separate from UUID-bearing components",
                      "Context/ordinal group IDs are snapshot identities, not SDK IDs; clipboard reconstruction has synthetic qualification; static grouped mutation remains unsupported"]),
