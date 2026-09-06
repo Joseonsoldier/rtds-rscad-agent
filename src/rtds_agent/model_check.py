@@ -9,6 +9,7 @@ from .input_contracts import validate
 from .core.topology_parser import parse_parameter_schema
 from .core.structured_patch import validate_new_value
 from .initialization import InitializationRequest, inspect_initialization
+from .rulepacks import RulePackRequest, inspect_rulepacks, validate_rulepacks
 
 FIELD = {"type": "object", "additionalProperties": False, "required": ["context", "component_id", "parameter", "units"],
          "properties": {"context": {"type": "string", "minLength": 1}, "component_id": {"type": "integer", "minimum": 0},
@@ -140,11 +141,31 @@ def check_document(document, electrical_rules=None):
 
 def check_rscad_model(project_path: str, snapshot_id: str | None = None,
                       electrical_rules: ElectricalRules | None = None,
-                      initialization: InitializationRequest | None = None) -> dict[str, Any]:
-    """Check static rules and optional declared/supplied initialization evidence without live calls."""
+                      initialization: InitializationRequest | None = None,
+                      rulepacks: RulePackRequest | None = None) -> dict[str, Any]:
+    """Check static rules, optional grounded domain criteria and initialization evidence without live calls."""
+    if rulepacks is not None:
+        validate_rulepacks(rulepacks)
     _, _, document = _document(project_path, snapshot_id)
     result = check_document(document, electrical_rules)
     if initialization is not None:
         result['initialization'] = inspect_initialization(project_path, document['snapshot_id'], initialization)
+    if rulepacks is not None:
+        checked = inspect_rulepacks(document, rulepacks)
+        result['rulepacks'] = checked
+        for rule in checked['rules']:
+            if rule['status'] == 'passed':
+                continue
+            result['findings'].append({'finding': 'domain_criterion_' + rule['status'],
+                'severity': rule['severity'] if rule['status'] == 'failed' else 'warning',
+                'affected_component': None, 'evidence': {'pack_id': rule['pack_id'], 'rule_id': rule['rule_id'],
+                    'assessment_sha256': checked['assessment_sha256'], 'source': rule['source'], 'scope': rule['scope'],
+                    'confidence': rule['confidence'], 'reason': rule['reason']},
+                'likely_cause': 'Declared criterion violated' if rule['status'] == 'failed' else 'Required source binding or calculation is unresolved',
+                'suggested_fix': 'Review the cited design intent and exact bindings; no automatic correction', 'autofix_available': False})
+        if any(row['severity'] == 'error' for row in result['findings']):
+            result['status'] = 'errors_found'
+        elif checked['status'] != 'no_violations_in_declared_scope':
+            result['status'] = checked['status']
     _document(project_path, document["snapshot_id"])
     return {**result, "snapshot_id": document["snapshot_id"], "source": document["source"]}

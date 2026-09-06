@@ -26,6 +26,8 @@ def main(argv=None) -> int:
     sub.add_parser("extensions", help="Read installed extension API declarations; no connection")
     sub.add_parser("doctor", help="Static checks; no RSCAD connection")
     sub.add_parser("mcp-config", help="Print a Codex TOML entry")
+    rulepacks = sub.add_parser('rulepacks', help='Read optional domain criterion templates; no model or native operation')
+    rulepacks.add_argument('action', choices=['list'])
     mcp = sub.add_parser("mcp")
     mcp.add_argument("action", choices=["serve"])
     mcp.add_argument("--profile", choices=["core", "engineering", "full"], default="full")
@@ -162,6 +164,9 @@ def main(argv=None) -> int:
                 _print(list_skills())
             else:
                 _print(export_skills(args.destination, dry_run=args.dry_run, names=args.skill_names))
+        elif args.command == 'rulepacks':
+            from .core.power_system_rules import rulepack_catalog
+            _print(rulepack_catalog())
         elif args.command == "demo":
             from .demo import run_demo
             _print(run_demo())

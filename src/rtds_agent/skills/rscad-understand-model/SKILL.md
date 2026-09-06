@@ -5,6 +5,8 @@ description: Understand an RSCAD project using static hierarchy, component, para
 
 # Understand an RSCAD model
 
+Optionally pass explicit, grounded `rulepacks` to `check_rscad_model` for schema-bound mathematical checks. Preserve the project hash, exact source/current conditions, component identities and declared criteria. Rulepack findings provide no physical acceptance, live authority or automatic correction.
+
 ## Use when
 
 Explain an unfamiliar project or locate the exact controller, parameters, and signal path relevant to a question.

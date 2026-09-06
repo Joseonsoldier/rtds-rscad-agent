@@ -1,5 +1,7 @@
 # RTDS/RSCAD Agent
 
+WP-N08 adds optional source-bound numerical design criteria to `check_rscad_model(..., rulepacks=None)`. The [power-system rulepacks guide](docs/POWER_SYSTEM_RULEPACKS.md) describes explicit quantity/unit/base and selector bindings, provenance, conservative unresolved results and `rtds-agent rulepacks list`. These read-only checks do not establish engineering applicability or native acceptance.
+
 WP-N04 adds opt-in native SDK signal arrays with source-bound channel metadata, current run/attempt/hash receipts and ordered recovery through existing execution gates. Read-only preparation and saved receipt conversion reuse `capture_rtds_results`. Synthetic integration and installed source inspection do not qualify live capture, freshness, atomicity or simulator-time events. See [native capture scope](docs/NATIVE_CAPTURE.md).
 
 Local MCP tools for RSCAD inspection, installed component/API discovery, isolated numeric and structural candidates, static model checks, saved-result metrics, and guarded sequential experiments.

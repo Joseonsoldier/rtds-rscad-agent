@@ -381,8 +381,35 @@ COMPONENT-END:
     refused_lf=await session.call_tool('prepare_simulation_run',{'workflow_path':legacy['workflow_path']})
     assert refused_lf.is_error and 'frequency, not timeout' in str(refused_lf)
     assert not list(Path(legacy['workflow_path']).parent.glob('runtime-request-*.json'))
+    rule_definition=root/'synthetic_install'/'MLIB'/'COMPONENTS'/'authored_rule_device'
+    rule_definition.write_text('PARAMETERS:\n R "Authored resistance" "Ohm" REAL 0 -10 10\n Mode "Mode" "Off;On" TOGGLE 1\nNODES:\n',encoding='utf-8')
+    rule_model=sources/'authored-rule-device.rtfx'
+    with zipfile.ZipFile(rule_model,'w') as archive:
+        archive.writestr('authored.dfx','DRAFT 1\nSUBSYSTEM-START:\nCOMPONENT_TYPE=authored_rule_device\n0 0 0 0 2\nPARAMETERS-START:\nR: 0\nMode: On\nPARAMETERS-END:\nUUID: 201\nSUBSYSTEM-END:\n')
+    domain_request={'schema_version':'1.0','input_project_sha256':digest(rule_model),'packs':[{
+        'pack_id':'authored-transformer','domain':'transformer','bindings':[{'binding_id':'r','context':'subsystem:0',
+            'component_id':201,'component_type':'authored_rule_device','definition_sha256':digest(rule_definition),
+            'parameter':'R','expected_value':'0','origin':'stored','quantity':'resistance','units':'Ohm',
+            'basis':'Authored physical resistance reference','pu_base':None,'selectors':[{'parameter':'Mode','expected_value':'On'}]}],
+        'rules':[{'rule_id':'nonnegative-r','check':'nonnegative_resistance','inputs':{'value':'r'},'limits':{},
+            'source':[{'source_path':str(rule_definition),'source_sha256':digest(rule_definition),'locator':'Authored numeric declaration'}],
+            'scope':'Authored fixture; no universal transformer requirement','severity':'warning',
+            'confidence':{'level':'low','rationale':'Synthetic transport test'},'assumptions':[]}]}]}
+    readonly_before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    checked_rules=(await call('check_rscad_model',{'project_path':str(rule_model),'rulepacks':domain_request}))['rulepacks']
+    assert checked_rules['counts']['passed']==1 and checked_rules['source_hashes_verified'] is True
+    assert checked_rules['execution_authorized'] is False and checked_rules['integration_qualified'] is False
+    bad_selector=json.loads(json.dumps(domain_request))
+    bad_selector['packs'][0]['bindings'][0]['selectors'][0]['expected_value']='Off'
+    uncertain=await call('check_rscad_model',{'project_path':str(rule_model),'rulepacks':bad_selector})
+    assert uncertain['rulepacks']['counts']['inconclusive']==1 and uncertain['status']=='inconclusive'
+    bad_provenance=json.loads(json.dumps(domain_request))
+    bad_provenance['packs'][0]['rules'][0]['source'][0]['source_sha256']='0'*64
+    assert (await session.call_tool('check_rscad_model',{'project_path':str(rule_model),'rulepacks':bad_provenance})).is_error
+    assert readonly_before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
     return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True,"native_timing_plan_and_supplied_assessment":True,"native_timing_grant_refused":True,
-            "initialization_preconditions_and_supplied_evidence":True,"legacy_loadflow_grant_refused":True}
+            "initialization_preconditions_and_supplied_evidence":True,"legacy_loadflow_grant_refused":True,
+            "domain_rules_zero_resistance":True,"domain_rules_selector_inconclusive":True,"domain_rules_bad_provenance_refused":True}
 
 
 async def smoke():
