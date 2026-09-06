@@ -8,7 +8,7 @@ WP-N06A adds optional read-only `check_rscad_model(..., initialization=None)` pl
 
 The subsequent [native checkpoints](NATIVE_EDITING.md) add a bounded existing-component SDK backend, GROUP inspection and source-derived insertion/wiring or GROUP clipboard reconstruction with explicit UUID/context mapping. Reconstruction is synthetically tested; its local new-case trial stopped on file identity with cleanup unconfirmed. This supersedes the earlier software-unavailable statements below. Live construction, Runtime and full closed-loop qualification remain pending.
 
-The v2.0 work order is implemented as bounded software extensions to the existing workflows. Full MCP now has 49 tools: all previous 43 plus six engineering entry points. No dependency, supported FX target, execution policy or existing grant is migrated automatically. Native structural qualification, native Compile-log grammar, actual Runtime/rack experiments and general DFX generation remain separate, uncompleted qualifications.
+The v2.0 work order is implemented as bounded software extensions to the existing workflows. That checkpoint introduced 49 tools: the previous 43 plus six engineering entry points. WP-N07 subsequently added the component-knowledge query, bringing the current full profile to 50. No dependency, supported FX target, execution policy or existing grant is migrated automatically. Native structural qualification, native Compile-log grammar, actual Runtime/rack experiments and general DFX generation remain separate, uncompleted qualifications.
 
 ## Component discovery and project policy
 
@@ -100,7 +100,9 @@ Traces map document path/hash/page → requirement ID/statement → declared eve
 
 ## Tool profiles, skills and evaluation
 
-Default `rtds-agent mcp serve` keeps all 49 tools. Optional `--profile core` exposes 10 workflow entry points; `--profile engineering` exposes 29 including discovery, schemas, comparisons and grant preparation. Profiles change advertisement only, never policy or runtime authority. Core is intentionally compact; switch to engineering/full for prerequisite discovery not advertised there.
+The additive [WP-N11 evaluation track](MODEL_EVALUATION.md) runs Codex/MCP on authored fixtures and verifies host/server reply pairing. It does not change the legacy benchmark below or qualify the native/Runtime closed loop. Seven of its ten model tasks remain unsupported by this checkpoint.
+
+Default `rtds-agent mcp serve` exposes all 50 current tools. Optional `--profile core` exposes 10 workflow entry points; `--profile engineering` exposes 30 including discovery, component knowledge, schemas, comparisons and grant preparation. Profiles change advertisement only, never policy or runtime authority. Core is intentionally compact; switch to engineering/full for prerequisite discovery not advertised there.
 
 All nine packaged skills carry versioned `manifest.json` metadata: required/optional tools, capabilities, minimum API context, safety class, tags and examples. The two additions are `rtds-derive-test-requirements` and `rtds-verify-grid-code`. They remain instruction-only, explicitly exported without overwriting or changing host configuration.
 

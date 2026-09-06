@@ -1,5 +1,7 @@
 # Compatibility and migration
 
+WP-N11 adds source-distribution evaluation scripts and a separate ten-task contract, with no production package API/dependency changes. Legacy `evals/tasks.json` and `tools/run_evals.py` remain compatible. The explicit model runner requires a fresh output directory and reviewed Windows/Codex CLI version. Instrumented MCP results are evaluation records, not production schema changes. See [model evaluation](MODEL_EVALUATION.md).
+
 WP-N10C adds two internal modules for exact line-token plans/projection and a separately authorized SDK-observed hybrid adapter. It adds no public tool, CLI command, dependency, policy action or backend choice. Existing native-save preservation and empty-Runtime reconciliation remain unchanged. The hybrid result explicitly reports `native_serialized_output=false`; it cannot be consumed as lossless native output or public integration qualification. See [line-binding scope](LINE_AUTHORING.md#internal-hybrid-line-binding).
 
 The shared isolated archive writer now preserves a source ZIP member's zero external attributes, which Python previously replaced with default Unix permissions. Rebuilt candidate container hashes can therefore differ from earlier builds for those inputs; original files remain untouched. Validation still rejects unrequested metadata changes.

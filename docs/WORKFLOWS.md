@@ -108,6 +108,8 @@ An assessment's numerical status is separate from `engineering_verdict: not_eval
 
 ## Optional task skills
 
+Model-driven development checks use the explicit [WP-N11 evaluation runner](MODEL_EVALUATION.md). They use separate synthetic fixtures and do not install skills, change user settings or grant live execution permission.
+
 The package includes nine instruction-only skills: `rscad-understand-model`, `rscad-edit-model`, `rscad-diagnose-compile`, `rtds-run-experiment`, `rtds-validate-results`, `rtds-ground-with-manuals`, `rtds-read-documentation`, `rtds-derive-test-requirements`, and `rtds-verify-grid-code`. Versioned JSON manifests describe their tool/capability requirements. They use actual public tools and keep unsupported operations explicit. Unknown-source routing is explained in [UNKNOWN_RESOLUTION.md](UNKNOWN_RESOLUTION.md); new engineering flows are in [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md). The earlier seven/six-skill discovery records below are historical checkpoints, not new model-driven qualification.
 
 ```powershell

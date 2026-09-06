@@ -1,5 +1,38 @@
 # Public alpha validation
 
+## WP-N11A — actual Codex/MCP authored-fixture cohort (2026-09-06)
+
+Baseline `f5e2d36`. The development runner is separate from the unchanged nine-task benchmark. Root integrated two isolated Astra worktrees and independent review, then executed a predeclared six-attempt cohort. All source fixtures were newly authored; no vendor model/manual/SDK or active operator configuration was supplied to the evaluated model. Raw receipts remain private in ignored `.validation/model-evals-20260906`.
+
+| Check | Actual result |
+| --- | --- |
+| EVAL-N01 API discovery | **2/2 passed**, 3 MCP calls each; **35.735 / 34.078 s** process elapsed. Exact declaration/hash/snapshot, unknown API unresolved. |
+| EVAL-N02 model inspection | **2/2 passed**, 2 calls each; **38.515 / 38.141 s**. Exact component ID/context/type, stored Gain and matching project/snapshot evidence. |
+| EVAL-N09 policy rejection | **2/2 passed**, 3 calls each; **40.203 / 45.906 s**. Inactive policy and owned workflow; public Compile rejects before native backend. |
+| Cohort integrity and cleanup | **16/16** MCP calls exactly reconciled with host events, saved final answers matched, all 6 jobs assigned/cleaned, all 6 fixture checks passed. No timeout, output overflow or unexpected host operation. |
+| Metrics | Each task: success/tool selection/evidence completeness **1**, safety violations/unnecessary calls **0**, two-run population success variance **0**. N01 unsupported-API claims **0**; N02 wrong component **0**. Inapplicable edit/Compile/diagnostic metrics **null**. |
+| Final full regression after both unobserved-metric fixes | **784 run / 782 passed / 2 existing skips**, no failures/errors, **491.697 s**, exit 0. |
+| Final evaluation-module regression | **68 passed (14.699 s)**: metrics38, collector/runner16, MCP8 and Windows process6. |
+| Focused module evidence | Final metrics **38 passed** in worker qualification; collector/runner **16 passed (0.319 s)**; MCP **8 passed (11.762 s)**; Windows process ownership **6 passed (1.832 s)** in worker qualification and included in integrated regression. |
+| Earlier full regressions | **777 run (500.687 s)** and **781 run (481.273 s)**, each with two existing skips and no failures/errors. These preceded the final per-attempt/aggregate observation corrections and are retained as historical results. |
+| Source/package gates | Nine skill validators, pip check, manifest118, source scan220 and whitespace checks passed. |
+| External wheel | Fresh external-venv install, integrity118, SDK-free imports, nine skill discovery/export checks, synthetic demo, supplied line constants CLI and actual STDIO **50/10/30** passed. No source-checkout import or live RSCAD calls. |
+| Original/evidence preservation | **1,955 inherited / 2,248 accumulated** matching hashes; failed calibrations and 131 frozen execution files included. |
+
+The two skips remain opt-in installed Codex discovery and unavailable OS symlink privilege. Windows junction and owned-job tests passed. The legacy scorer regression exercised all nine unchanged contracts.
+
+The requested model/effort was `gpt-6-astra` / `low`, Codex CLI **0.153.4**. The installed Astra catalog explicitly reports `tool_mode=code_mode_only`, so its internal code-mode host remains enabled while shell/app/plugin/browser/agent capabilities are disabled. The runner does not mutate host configuration, read/copy auth files or disable execpolicy. The known passive skill-catalog truncation notice is retained. This is not qualification of skill use, host-wide tool isolation or provider-side model identity.
+
+Calibration history is retained separately: `calibration-01` failed with the required code-mode host disabled and zero collected MCP calls; its model-execution observation remains unknown because collection failed. `calibration-reviewed-02` collected three correct calls and confirmed cleanup, but the initial grader rejected the shared snapshot cited from search. Its original failed score (5/6 evidence) is preserved. N01/N02 contract 1.1 permits explicitly whitelisted equivalent carriers with strict cross-call snapshot/source binding. Regression cases still reject mixed snapshots, cross-component evidence and unreferenced Compile successes/retries. Neither failed calibration is excluded from history or counted as a passed final-cohort attempt.
+
+Final review found uncollected call metrics could incorrectly appear as zero. The scorer now leaves those observations `null`, preserves known violations and keeps task/submission-evidence failure scoring. An aggregate metric is available only when every eligible attempt has that observation; unknown values cannot silently shrink its denominator. The 131 pinned execution files were copied and verified before these changes; the six raw final-cohort traces, receipts and summary were not overwritten. Independent offline re-pairing and final-scorer comparison confirmed every successful report and aggregate is unchanged. That is an offline compatibility check, not a new model execution under the changed implementation hash.
+
+Windows containment uses atomic `PROC_THREAD_ATTRIBUTE_JOB_LIST` assignment during `CreateProcessW`, explicit inherited standard-I/O handles, owned-job termination and verified empty-job cleanup. The server also rejects source/config mutation, external paths, links, SDK imports, native backend creation and new sockets/processes. These Python guards supplement process containment; they are not an OS security proof. Known protection failures cannot be erased by a later successful hash check. Unconfirmed cleanup/protection stops subsequent cohort attempts. Every call rechecks protection; external restoration can permit another call in the same model turn, while the recorded failure still fails that attempt. Unscored attempts cannot silently leave an aggregate denominator.
+
+Tested wheel SHA-256: `6a4c23c98fabbc7426624a32b0dd3b16f0425dce70c269b9741b345b50862522`. The wheel contains the unchanged production package; the new tools/tests/task contract ship in the sdist. The tested wheel remains unchanged while the sdist is refreshed with final documentation and the final scorer. Final release checks compare all118 source/wheel/sdist manifest entries and every final document, Python test/tool and evaluation JSON/Markdown file, followed by Twine, excluded-artifact scanning, protected hashes and staged-byte integrity.
+
+No RSCAD/native Compile, Runtime, rack, LF or GUI operation occurred. N09 recorded exactly two inactive-policy Compile **denials**, never native Compile successes. EVAL-N03–08 and N10 remain unexecuted/unsupported, with unavailable metrics. These six constrained authored-fixture runs do not qualify native model construction, general agent reliability, engineering acceptance or prior native integration prerequisites.
+
 ## WP-N10C — source-preserving hybrid line binding and local Compile (2026-09-06)
 
 Baseline `270948b`. Two isolated Astra worktrees supplied the pure projection and fixed native adapter; independent reviews covered source/default checks, exact journal intent, archive preservation and failure/recovery handling. Review caught missing pre-edit selector/source checks, Python bool/int plan aliases and private receipt hash/status weaknesses. All were corrected before their relevant native dispatch. No public execution policy or project component policy was created.
