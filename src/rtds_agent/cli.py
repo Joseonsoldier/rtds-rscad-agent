@@ -33,6 +33,15 @@ def main(argv=None) -> int:
     ds.add_parser('list', help='List bounded observed parser formats and taxonomy')
     corpus = ds.add_parser('corpus', help='Check an existing source-bound parser corpus without writing')
     corpus.add_argument('manifest')
+    lines = sub.add_parser('lines', help='Inspect or preview observed line input files; no solver or writes')
+    ls = lines.add_subparsers(dest='action', required=True)
+    ls.add_parser('list', help='List bounded input profiles and unresolved authoring steps')
+    line_inspect = ls.add_parser('inspect', help='Inspect one explicitly hashed input')
+    line_inspect.add_argument('source')
+    line_inspect.add_argument('--sha256', required=True)
+    line_inspect.add_argument('--profile', default='tline_rlc_3phase_ohmic_v1')
+    line_preview = ls.add_parser('preview', help='Preview an existing source-bound request without writing a candidate')
+    line_preview.add_argument('request')
     mcp = sub.add_parser("mcp")
     mcp.add_argument("action", choices=["serve"])
     mcp.add_argument("--profile", choices=["core", "engineering", "full"], default="full")
@@ -181,6 +190,18 @@ def main(argv=None) -> int:
                 result = inspect_compile_corpus(args.manifest)
                 _print(result)
                 return 0 if result['status'] == 'passed' else 1
+        elif args.command == 'lines':
+            if args.action == 'list':
+                from .core.line_authoring import line_authoring_catalog
+                _print(line_authoring_catalog())
+            elif args.action == 'inspect':
+                from .line_authoring import inspect_line_authoring_input
+                result = inspect_line_authoring_input(args.source, args.sha256, args.profile)
+                _print(result)
+                return 0 if result['status'] == 'supported' else 1
+            else:
+                from .line_authoring import preview_line_authoring_request
+                _print(preview_line_authoring_request(args.request))
         elif args.command == "demo":
             from .demo import run_demo
             _print(run_demo())

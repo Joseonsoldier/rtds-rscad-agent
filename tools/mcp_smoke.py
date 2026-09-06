@@ -443,6 +443,43 @@ COMPONENT-END:
             "native_compile_diagnostics_read_only":True,"native_log_tamper_refused":True,"empty_log_retains_operational_failure":True}
 
 
+def line_cli_checks(root, sources, env):
+    """Exercise packaged read-only input preview with an authored scalar file."""
+    source = sources / 'authored-scalar.tli'
+    request_file = sources / 'authored-line-preview.json'
+    sections = {'Line Summary': {'Line Length': 75, 'Steady State Frequency': 50},
+                'Line Constants Ground Data': {'GroundResistivity': 120},
+                'RLC Options': {'Data Entry Format': 0,
+                    'Positive Sequence Series Resistance': 0.03, 'Positive Sequence Series Ind Reactance': 0.4,
+                    'Positive Sequence Series Cap Reactance': 0.2, 'Zero Sequence Series Resistance': 0.2,
+                    'Zero Sequence Series Ind Reactance': 1.1, 'Zero Sequence Series Cap Reactance': 0.3,
+                    'Number of Phases': 3}}
+    source.write_text(''.join(name + ':\n  {\n' + ''.join(f'  {key} = {value}\n' for key, value in rows.items())
+                              + '  }\n' for name, rows in sections.items()), encoding='utf-8')
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    request_file.write_text(json.dumps({'schema_version': '1.0', 'profile_id': 'tline_rlc_3phase_ohmic_v1',
+        'source': {'path': str(source), 'sha256': digest},
+        'assumptions': {'ideally_transposed': True, 'frequency_independent_bergeron': True},
+        'changes': [{'field': 'line_length_km', 'expected': 75, 'value': 80}],
+        'provenance': [{'source_path': str(source), 'source_sha256': digest, 'locator': 'authored fixture'}]}), encoding='utf-8')
+    before = {p: p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    for args in (['list'], ['inspect', str(source), '--sha256', digest], ['preview', str(request_file)]):
+        run = subprocess.run([sys.executable, '-m', 'rtds_agent', 'lines', *args], env=env,
+                             capture_output=True, text=True, encoding='utf-8', timeout=30, check=True)
+        report = json.loads(run.stdout)
+        assert report['execution_authorized'] is False and report['integration_qualified'] is False
+        if args[0] == 'preview':
+            assert report['status'] == 'preview_only' and report['files_written'] == 0
+            assert report['candidate']['persisted'] is False and report['candidate']['sha256'] != digest
+    assert before == {p: p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    source.write_bytes(source.read_bytes() + b'\n')
+    stale = subprocess.run([sys.executable, '-m', 'rtds_agent', 'lines', 'preview', str(request_file)],
+                           env=env, capture_output=True, text=True, encoding='utf-8', timeout=30)
+    assert stale.returncode == 1 and json.loads(stale.stdout)['error'] == 'ToolSafetyError'
+    return {'cli_list_inspect_preview': True, 'no_files_written': True, 'stale_input_refused': True,
+            'solver_called': False, 'compile_called': False}
+
+
 async def smoke():
     with tempfile.TemporaryDirectory(prefix="rtds-mcp-smoke-") as directory:
         root = Path(directory)
@@ -523,6 +560,7 @@ async def smoke():
                 finally:
                     definition.write_bytes(old_definition)
                 scenario['component_knowledge'] = {'cli_build': True, 'read_only_search_get_neighbors': True, 'stale_source_refused': True}
+                scenario['line_authoring'] = line_cli_checks(root, sources, env)
                 summary={"scenario":scenario,"status": "passed", "transport": "stdio", "tool_count": len(tools.tools),
                                   "detail_normal_calls": 6, "detail_error_calls": 7, "forbidden_calls": len(FORBIDDEN_TOOLS),
                          "default_policy": "inactive", "live_actions_blocked": 4, "live_rscad_calls": False}
