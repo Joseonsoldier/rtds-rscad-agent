@@ -15,7 +15,7 @@ from rtds_agent.core.state_machine import sha256_file,sha256_json
 def spec():
     return {'schema_version':'1.0','test_id':'synthetic-lvrt','controls':[{
         'target_id':'fault','purpose':'switch_operation','object_uuid':20,'object_type':'switch','object_name':'fault',
-        'object_group':'Subsystem #1|Controls','object_desc':'fault','attribute':'position','expected_initial_value':0,'units':'position'}],
+        'object_group':'Subsystem #1|Controls','object_desc':'fault','object_subpage':'Controls','attribute':'position','expected_initial_value':0,'units':'position'}],
         'initial_conditions':[], 'events':[{'event_id':'fault_on','kind':'fault','target_id':'fault','value':1,'units':'position','at_seconds':1,'duration_seconds':.5,'clear_value':0}],
         'channels':[{'channel_id':'voltage','signal_path':'Subsystem #1|BUS|V','units':'pu','sign_convention':'positive','pu_base':100}],
         'capture_after_seconds':3,'minimum_samples_per_channel':2,'criteria':{'schema_version':'1.0','requirements':[]},'traceability':[]}
@@ -130,12 +130,12 @@ class ExperimentSuiteTests(unittest.TestCase):
             self.assertEqual(run_experiment_suite(runtime_request)['actions'][0]['status'],'completed')
             self.assertEqual(run_experiment_suite(runtime_request)['actions'][0]['status'],'skipped_completed')
         self.assertEqual([a['call'] for a in backend.call_log],['refresh_racks','compile','refresh_racks','run_runtime'])
-        self.assertEqual([a['status'] for a in json.loads(path.read_text())['approvals']],['consumed','consumed'])
+        self.assertEqual([a['status'] for a in json.loads(path.read_text(encoding='utf-8'))['approvals']],['consumed','consumed'])
 
     def test_interrupted_preparation_and_action_are_not_repeated(self):
         req,prepared=self.prepared()
         path=Path(prepared['suite_path'])
-        saved=json.loads(path.read_text())
+        saved=json.loads(path.read_text(encoding='utf-8'))
         key=next(iter(saved['runs']))
         saved['runs'][key]={'status':'preparing'}
         path.write_text(json.dumps(saved))
@@ -166,7 +166,7 @@ class ExperimentSuiteTests(unittest.TestCase):
             'provenance':{'kind':'user_defined','reference':'authored metrics only'}}]
         req,prepared=self.prepared(req)
         run_id,row=next(iter(prepared['runs'].items()))
-        workflow=json.loads(Path(row['workflow_path']).read_text())
+        workflow=json.loads(Path(row['workflow_path']).read_text(encoding='utf-8'))
         artifact=self.data/'samples.json'
         data={'schema_version':'1.0','input_project_sha256':row['input_project_sha256'],'run_id':workflow['workflow_id'],'attempt_id':'supplied-a',
               'time_unit':'s','time_basis':'simulator_time','channels':[{'channel_id':'voltage','units':'pu','pu_base':100,'sign_convention':'positive','times':[0,1,2,3],'values':[1,.5,.9,1]}]}

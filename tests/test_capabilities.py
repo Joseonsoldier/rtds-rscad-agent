@@ -41,7 +41,12 @@ class State:
     def run_state(self) -> str: pass
 ''',
             "case_settings.py": "class CaseSettings:\n    def starting_rack(self) -> int: pass\n",
-            "component.py": '''class Signal:
+            "component.py": '''class Component:
+    @ConnectedProperty
+    def subpage(self) -> str: pass
+    @ConnectedProperty
+    def subtab(self) -> str: pass
+class Signal:
     def get_time_data(self) -> List[float]: pass
     def get_data(self) -> List[float]: pass
 class IOComponent:
@@ -51,7 +56,7 @@ class IOPositionalComponent:
     @ConnectedProperty(True, True)
     def position(self): pass
 ''',
-            "rtx.py": "# Synthetic source, no vendor code.\n",
+            "rtx.py": "class Runtime:\n    def get_objects(self, comp_type, name): pass\n    def get_object(self, comp_id): pass\n",
             "comms/connection_setup.py": "in_existing: bool = False\nexecutable: Optional[Path] = None\ntimeout: float = 1.0\n",
         }
         for relative, text in sources.items():
@@ -64,6 +69,19 @@ class IOPositionalComponent:
     def report(self):
         with patch.object(capabilities, "verify_release", return_value={"status": "passed", "manifest_sha256": "synthetic-test-evidence"}):
             return capabilities.get_capabilities()
+
+    def test_runtime_lookup_signature_or_scope_mismatch_prevents_static_pass(self):
+        root=self.sdk()
+        from rtds_agent.core.runtime_api_surface import inspect_runtime_api_surface
+        self.assertEqual(inspect_runtime_api_surface(site_packages=self.settings.sdk_root)['rscad_fx_version'],'unknown')
+        target=root/'component.py';original=target.read_text()
+        target.write_text(original.replace('@ConnectedProperty\n','@ConnectedProperty(False)\n'))
+        audit=inspect_runtime_api_surface(site_packages=self.settings.sdk_root)
+        self.assertFalse(audit['checks']['runtime_component_scope_readable'])
+        self.assertEqual(audit['status'],'failed')
+        target.write_text(original)
+        (root/'rtx.py').write_text('class Runtime:\n    def get_objects(self, wrong): pass\n    def get_object(self, comp_id): pass\n')
+        self.assertEqual(inspect_runtime_api_surface(site_packages=self.settings.sdk_root)['status'],'failed')
 
     def test_unconfigured_report_preserves_unknown_observations(self):
         config = self.settings.as_dict()

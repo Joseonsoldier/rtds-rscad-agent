@@ -1,6 +1,6 @@
 {
   "name": "rtds-run-experiment",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "required_tools": [
     "prepare_workflow",
     "get_execution_policy"

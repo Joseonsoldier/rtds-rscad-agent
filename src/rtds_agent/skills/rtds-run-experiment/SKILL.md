@@ -17,6 +17,8 @@ The task needs deployment, rack or hardware I/O configuration, saving a running 
 
 Confirm this task's live authorization, installation capabilities, policy actions/rack, project and dependency hashes, grounded test plan, channels and units, duration, and exact control identities. Runtime controls require expected initial values, readback, restoration, and verified stop/cleanup. Use an existing authorized scope without introducing redundant approval prompts.
 
+Control write entries require the exact live `object_subpage` together with type/name/Runtime ID. Saved VIEW-ID or IR candidates cannot supply that value. The driver requires a unique current typed/name lookup and matching Runtime subtab, page, ID and case/hash, then rechecks scope before each write and restoration. An old plan without subpage must be prepared again from actual target evidence; never alter historical hashes or reuse consumed grants. Binding has synthetic tests and is not live qualification.
+
 ## Tool order
 
 1. Call `get_execution_policy()` and `get_capabilities()`. Prepare unsupported or unauthorized live portions as pending while continuing independent offline analysis.

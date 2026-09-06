@@ -1,5 +1,17 @@
 # Implementation status
 
+## WP-N03 — saved Runtime parser/IR and exact control binding (2026-09-06)
+
+Baseline `bf6f8e3`. Phase A/B is implemented as a bounded saved Runtime subset with pages, visual groups, controls, displays, plot graphs/curves and explicit COMP_ID-only Draft candidates. Legacy duplicates and unknown types remain visible; units, current values and live targets are not inferred. Phase C is unsupported: installed Java Runtime insertion/copy/paste paths do not construct content, despite inherited Python/HTML declarations. No Runtime authoring adapter or RTX writer was added.
+
+Existing Runtime control execution now requires `object_subpage`, unique current type/name lookup, exact Runtime ID/subtab/page and case/hash, rechecked before writes and restoration. Expected value/readback, one-use grants, policy, original protection and cleanup remain in place. Software tests use synthetic handles only. Read-only source/SDK/model-copy inspection performs no real RSCAD connection, Compile, Runtime, rack, GUI or load-flow action. [Runtime contract, compatibility and evidence](RUNTIME_IR.md) documents the distinction.
+
+Changed implementation: `core/runtime_parser.py`, `core/runtime_ir.py`, `runtime_layout.py`, new IR schema; `core/runtime_binding.py`, Runtime backend/API audit and write/suite schemas; native parser hash binding, extension/capability reports; three skill instructions/manifests, synthetic tests and STDIO smoke. Runtime schema ID 1.2 and suite schema ID 1.1 require old control plans to add verified live subpage evidence and be prepared again. Empty-write plans, Python/dependencies, tool counts 49/10/29 and nine skills remain compatible.
+
+Actual final tests: **384 run, 382 passed, 2 existing skips, no failures/errors (144.725 s)**. STDIO49/10/29, nine skill validators, manifest91, source/artifact scan415 and fresh external-venv wheel installation passed. Read-only public IR qualification passed ten isolated installed-model copies with all 37 protected hashes unchanged; two empty layouts are available, eight nonempty layouts remain partial. No live operation was performed. An initial four-test cp949 decoding failure was fixed by explicit UTF-8 reads in test code and is retained in the validation history.
+
+WP-N03 A/B software completion does not satisfy overlay/live-control qualification. WP-N04 acquisition is the next software stage; WP-N04–N11 remain pending. Full Native Closed-Loop work-order completion is not claimed. Final actual regression, installed-copy and distribution results are recorded in [VALIDATION.md](VALIDATION.md).
+
 ## Native closed-loop checkpoint 3 — local reconstruction and Compile verified
 
 Baseline `1a9d54e`, 2026-09-06. Implemented the provenance-bound new temporary-case guard, exact stored NAME insertion, preservation of source empty-RTX bytes after native close, and source-bound GROUP-local placement readback. Existing original/snapshot/definition/companion/policy/SDK hashes, durable recovery journals and explicit cleanup remain enforced. Auto apply stays disabled; execution policy and grants are unchanged.
@@ -16,7 +28,7 @@ Public policy-bound live apply was not executed: the actual projects have no ope
 
 Final software checks passed: native38; full355 (353 passed, two existing skips; 147.500 s); actual STDIO49/core10/engineering29; nine skill validators; manifest87; pip check; source scan148; wheel/sdist build and Twine; combined scan397. The exact wheel also passed fresh outside-checkout installation, integrity87, skills/demo and STDIO with no live SDK call. Distribution evidence is recorded separately in [VALIDATION.md](VALIDATION.md).
 
-WP-N01/N02 have the bounded local construction checkpoint above; their complete DoD, automatic backend qualification, broader hierarchy/version coverage and public live apply remain unverified. WP-N03 Runtime IR/API discovery is the next development step. WP-N03–N11 remain pending. No GUI automation, rack query/reservation/connection, Runtime run/control/capture or load-flow execution occurred. The detailed changed-file behavior, failed attempts, candidate hashes and compatibility limits are in [NATIVE_EDITING.md](NATIVE_EDITING.md#checkpoint-3--local-construction-and-compile-2026-09-06); final software/release results are recorded in [VALIDATION.md](VALIDATION.md).
+WP-N01/N02 have the bounded local construction checkpoint above; their complete DoD, automatic backend qualification, broader hierarchy/version coverage and public live apply remain unverified. WP-N03 was the next step at checkpoint 3 and is now covered by the newer entry above. No GUI automation, rack query/reservation/connection, Runtime run/control/capture or load-flow execution occurred. The detailed changed-file behavior, failed attempts, candidate hashes and compatibility limits are in [NATIVE_EDITING.md](NATIVE_EDITING.md#checkpoint-3--local-construction-and-compile-2026-09-06); final software/release results are recorded in [VALIDATION.md](VALIDATION.md).
 
 ## Earlier explicit recovery follow-up — completed
 

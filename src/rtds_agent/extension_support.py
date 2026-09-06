@@ -20,6 +20,9 @@ ROUTES = {
     "case_identity": [("rscadfx.py", "RSCADFX", name) for name in ("get_case", "_get_case_named")] + [("case.py", "Case", "file"), ("case.py", "State", "modified"), ("case.py", "State", "run_state")],
     "draft_location_selection": [("component.py", "DraftComponent", name) for name in ("location", "selected")],
     "runtime_objects": [("rtx.py", "Runtime", name) for name in ("get_objects", "get_object", "__get_component")],
+    "runtime_subpages": [("subtab.py", "Subtab", name) for name in ("get_subpage", "add_subpage", "num_subpages")],
+    "runtime_target_scope": [("component.py", "Component", name) for name in ("subtab", "subpage")],
+    "runtime_overlay_wrappers": [("component_compatible.py", "ComponentCompatible", name) for name in ("insert_component", "copy", "paste")],
     "signal_lookup": [("case.py", "Case", "get_signal"), ("rtx.py", "Runtime", "get_signal"), ("rtx.py", "Runtime", "__get_signal")],
     "connection": [("rscadfx.py", "RSCADFX", name) for name in ("connect", "disconnect", "get_version")],
 }
@@ -108,6 +111,8 @@ def inspect_extension_support() -> dict[str, Any]:
             "features": features, "rscad_running_version": "unknown", "sdk_imported": False,
             "live_calls_made": False, "integration_qualified": False,
             "draft_window_capture": {"status": "unsupported", "reason": "No reviewed Draft/window capture binding; PlotSavable.save_data is plot export only"},
+            "runtime_overlay_authoring": {"status":"unsupported","adapter_implemented":False,
+                "reason":"Inherited wrapper declarations do not establish effective Runtime insertion or signal attachment; no qualified authoring adapter or RTX writer"},
             "scope": "installed source declarations only; wrappers may invoke additional remote operations",
             "limitations": ["copy/paste uses shared application clipboard", "location setters can snap to the grid",
                             "file/modified/subpage/selected properties also require a connection",

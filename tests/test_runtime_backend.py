@@ -28,6 +28,7 @@ def runtime_control_spec() -> dict[str, Any]:
     spec = runtime_spec()
     spec['execution_mode'] = 'runtime_control_and_signal_capture'
     spec['runtime_controls']['runtime_parameter_writes'] = [{'action_id': 'lockfree_bus39', 'purpose': 'lockfree_change', 'object_uuid': 603, 'object_type': 'switch', 'object_name': 'LockFree', 'object_group': 'Subsystem #1|Machines|BUS39x1', 'object_desc': 'LockFree', 'attribute': 'position', 'expected_initial_value': 1, 'value': 0, 'apply_after_seconds': 0.0, 'restore_after_capture': True}]
+    spec['runtime_controls']['runtime_parameter_writes'][0]['object_subpage'] = 'Controls'
     return spec
 
 def runtime_lock_release_spec() -> dict[str, Any]:
@@ -124,6 +125,7 @@ class FakeRuntimeInput:
     def __init__(self, *, position: int=0, value: float=0.0) -> None:
         self.position = position
         self.value = value
+        self.unique_id=603;self.subpage='Controls';self.subtab='Runtime'
 
 class FakeLiveRuntime:
 
@@ -132,6 +134,9 @@ class FakeLiveRuntime:
 
     def get_object(self, object_uuid: int) -> FakeRuntimeInput | None:
         return self.objects.get(object_uuid)
+
+    def get_objects(self, object_type: str, name: str):
+        return list(self.objects.values()) if object_type=='switch' and name=='LockFree' else []
 
 class FakeLiveCase:
 

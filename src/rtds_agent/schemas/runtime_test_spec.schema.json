@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.rtds-agent/schemas/runtime-test-spec-1.1.json",
+  "$id": "https://local.rtds-agent/schemas/runtime-test-spec-1.2.json",
   "title": "RSCAD Runtime control and signal-capture test specification",
   "type": "object",
   "required": [
@@ -65,6 +65,7 @@
               "object_name",
               "object_group",
               "object_desc",
+              "object_subpage",
               "attribute",
               "expected_initial_value",
               "value",
@@ -110,6 +111,12 @@
               "object_desc": {
                 "type": "string",
                 "minLength": 1
+              },
+              "object_subpage": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "description": "Exact live Runtime subpage name; never inferred from a saved VIEW-ID."
               },
               "attribute": {
                 "enum": [

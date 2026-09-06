@@ -20,6 +20,8 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from typing import Any, Mapping
+from .runtime_binding import bind_live_control
+from .state_machine import sha256_file
 
 
 class RuntimeContractError(RuntimeError):
@@ -262,6 +264,7 @@ def _canonical_runtime_parameter_writes(value: Any) -> list[dict[str, Any]]:
         "object_name",
         "object_group",
         "object_desc",
+        "object_subpage",
         "attribute",
         "expected_initial_value",
         "value",
@@ -283,6 +286,9 @@ def _canonical_runtime_parameter_writes(value: Any) -> list[dict[str, Any]]:
         object_name = str(item["object_name"]).strip()
         object_group = str(item["object_group"]).strip()
         object_desc = str(item["object_desc"]).strip()
+        object_subpage = item["object_subpage"]
+        if not isinstance(object_subpage,str) or not object_subpage.strip() or len(object_subpage)>256:
+            raise RuntimeContractError("Runtime object_subpage must be an exact non-empty live page name")
         phase = str(item.get("phase", "after_run")).strip()
         if not action_id or action_id in action_ids:
             raise RuntimeContractError("Runtime action_id must be non-empty and unique")
@@ -365,6 +371,7 @@ def _canonical_runtime_parameter_writes(value: Any) -> list[dict[str, Any]]:
                 "object_name": object_name,
                 "object_group": object_group,
                 "object_desc": object_desc,
+                "object_subpage": object_subpage,
                 "attribute": attribute,
                 "expected_initial_value": expected,
                 "value": new_value,
@@ -391,36 +398,26 @@ def runtime_input_objects(working_copy: str | Path) -> dict[int, dict[str, Any]]
         names = [name for name in archive.namelist() if name.lower().endswith(".rtx")]
         if len(names) != 1:
             raise RuntimeContractError("RTFX must contain exactly one Runtime layout")
-        text = archive.read(names[0]).decode("utf-8", errors="replace")
+        if archive.getinfo(names[0]).file_size>16*1024*1024 or len(archive.namelist())!=len(set(archive.namelist())):
+            raise RuntimeContractError("Runtime layout is too large or has duplicate members")
+        text = archive.read(names[0]).decode("utf-8-sig")
+    from .runtime_parser import parse_runtime_layout
+    parsed = parse_runtime_layout(text)
     tag_to_type = {tag: name for name, (tag, _) in RUNTIME_INPUT_TYPES.items()}
-    records: dict[int, dict[str, Any]] = {}
-    tags = "|".join(re.escape(tag) for tag in tag_to_type)
-    for match in re.finditer(
-        rf"^COMPONENT: TAGGED_V2\.2_({tags})\s*(.*?)^COMPONENT-END:\s*$",
-        text,
-        flags=re.MULTILINE | re.DOTALL,
-    ):
-        body = match.group(2)
-        fields = {}
-        for key in ("NAME", "GROUP", "DESC", "UUID"):
-            field = re.search(
-                rf"^\s*{key}:\s*(.*?)\s*$", body, flags=re.MULTILINE
-            )
-            if field is None:
-                break
-            fields[key.lower()] = field.group(1).strip()
-        if len(fields) != 4 or not fields["uuid"].isdigit():
+    tag_to_type["PUSHBUTTON"] = "button"
+    records = {}
+    for row in parsed["records"]:
+        if row["kind"] not in tag_to_type:
             continue
-        object_uuid = int(fields["uuid"])
-        if object_uuid in records:
-            raise RuntimeContractError(f"duplicate Runtime input UUID: {object_uuid}")
-        records[object_uuid] = {
-            "object_uuid": object_uuid,
-            "object_type": tag_to_type[match.group(1)],
-            "object_name": fields["name"],
-            "object_group": fields["group"],
-            "object_desc": fields["desc"],
-        }
+        refs = row["signal_references"]
+        if row["identity_status"] != "stored_unique" or len(refs) != 1 or refs[0]["field_ambiguities"]:
+            raise RuntimeContractError("Ambiguous saved Runtime input identity/reference")
+        ref = refs[0]
+        if not row["name"] or not ref["stored_signal_path"]:
+            raise RuntimeContractError("Incomplete saved Runtime input identity")
+        uid = row["component_id"]
+        records[uid] = {"object_uuid":uid,"object_type":tag_to_type[row["kind"]],"object_name":row["name"],
+                        "object_group":ref["group"],"object_desc":ref["description"]}
     return records
 
 def validate_runtime_test_spec(
@@ -829,10 +826,12 @@ class RscadFxRuntimeDriver:
         signal_handles: dict[str, Any] = {}
         meter_handles: dict[str, Any] = {}
         plot_handles: dict[str, Any] = {}
-        control_handles: dict[int, Any] = {}
         original_control_values: dict[tuple[int, str], Any] = {}
         writes = list(runtime_parameter_writes or [])
         try:
+            writes = _canonical_runtime_parameter_writes(writes)
+            binding_sha256 = sha256_file(Path(working_copy)) if writes else None
+            input_records = runtime_input_objects(working_copy) if writes else {}
             app = self._new_connection()
             with redirect_stdout(StringIO()), redirect_stderr(StringIO()):
                 app.connect()
@@ -916,7 +915,6 @@ class RscadFxRuntimeDriver:
                 }
 
             if writes:
-                input_records = runtime_input_objects(working_copy)
                 for action in writes:
                     record = input_records.get(action["object_uuid"])
                     expected_identity = {
@@ -933,15 +931,11 @@ class RscadFxRuntimeDriver:
                         raise RuntimeContractError(
                             f"Runtime input identity mismatch: {action['action_id']}"
                         )
-                    handle = case.runtime.get_object(action["object_uuid"])
-                    if handle is None:
-                        raise RuntimeContractError(
-                            f"Runtime input object is unavailable: {action['object_uuid']}"
-                        )
-                    control_handles[action["object_uuid"]] = handle
+                    handle, binding = bind_live_control(case,working_copy,binding_sha256,action)
+                    result["runtime_controls"].setdefault("bindings",[]).append(binding)
 
             def apply_action(action: dict[str, Any]) -> None:
-                handle = control_handles[action["object_uuid"]]
+                handle, binding = bind_live_control(case,working_copy,binding_sha256,action)
                 attribute = action["attribute"]
                 before = getattr(handle, attribute)
                 if not _same_control_value(
@@ -950,6 +944,8 @@ class RscadFxRuntimeDriver:
                     raise RuntimeContractError(
                         f"Runtime initial value mismatch: {action['action_id']}"
                     )
+                binding["value_verified"] = True
+                result["runtime_controls"].setdefault("write_bindings",[]).append(binding)
                 original_control_values.setdefault(
                     (action["object_uuid"], attribute), before
                 )
@@ -1068,7 +1064,8 @@ class RscadFxRuntimeDriver:
                 ):
                     try:
                         object_uuid, attribute = key
-                        handle = control_handles[object_uuid]
+                        identity = next(a for a in writes if a["object_uuid"]==object_uuid and a["attribute"]==attribute)
+                        handle, _ = bind_live_control(case,working_copy,binding_sha256,identity)
                         setattr(handle, attribute, original_value)
                         restored = getattr(handle, attribute)
                         if not _same_control_value(restored, original_value):

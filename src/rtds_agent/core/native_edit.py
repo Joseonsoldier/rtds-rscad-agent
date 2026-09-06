@@ -34,7 +34,7 @@ def inspect_native_sdk(settings):
                 "supported_operations": sorted(OPERATIONS), "integration_qualified": False,
                 "adapter_sha256": sha256_file(Path(__file__)),
                 "worker_sha256": sha256_file(Path(__file__).with_name("native_edit_worker.py"))}
-    evidence["reconstruction_sources"] = {name:sha256_file(Path(__file__).with_name(name)) for name in ("native_rebuild.py", "native_rebuild_adapter.py", "native_temp.py")}
+    evidence["reconstruction_sources"] = {name:sha256_file(Path(__file__).with_name(name)) for name in ("native_rebuild.py", "native_rebuild_adapter.py", "native_temp.py", "runtime_parser.py")}
     evidence["reconstruction_strategies"] = ["insert", "clipboard"]
     if not settings.rscad_home or not root.is_dir():
         evidence["missing"].append("installed_sdk")

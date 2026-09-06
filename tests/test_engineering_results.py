@@ -32,7 +32,7 @@ class EngineeringResultTests(unittest.TestCase):
     def test_csv_to_canonical_then_evaluate_and_idempotent(self):
         result=self.capture()
         self.assertEqual(capture_rtds_results(self.request),result)
-        data=json.loads(Path(result['source']['data_path']).read_text())
+        data=json.loads(Path(result['source']['data_path']).read_text(encoding='utf-8'))
         self.assertEqual(data['channels'][0]['sample_rate_hz'],1)
         req={'requirement_id':'nadir','kind':'power_metric','metric':'voltage_nadir','metric_options':{},
              'metric_acceptance':{'lower':.4,'upper':1,'units':'pu'},'channel_id':'voltage','units':'pu','pu_base':100,
@@ -67,7 +67,7 @@ class EngineeringResultTests(unittest.TestCase):
         helper=test_diagnostics.DiagnosticTests
         self.prepare=lambda: Path(fixture.PublicReleaseTests.prepare(self))
         workflow,artifact,marker=helper.evidence(self,stage='runtime')
-        manifest=json.loads(workflow.read_text())
+        manifest=json.loads(workflow.read_text(encoding='utf-8'))
         compiled=workflow.parent/'authored-compile.json'
         compiled.write_text(json.dumps({'schema_version':'1.0','backend':'ProductionRscadBackend','action':'compile','hashes':{
             'source_before':manifest['project']['source_sha256'],'working_before':manifest['project']['working_sha256']}}))

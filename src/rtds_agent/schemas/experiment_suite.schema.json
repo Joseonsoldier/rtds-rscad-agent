@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.rtds-agent/schemas/experiment-suite-1.0.json",
+  "$id": "https://local.rtds-agent/schemas/experiment-suite-1.1.json",
   "title": "Sequential, hash-bound experiment suite",
   "type": "object",
   "additionalProperties": false,
@@ -111,6 +111,12 @@
                 "type": "string",
                 "minLength": 1
               },
+              "object_subpage": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "description": "Exact live Runtime subpage name."
+              },
               "attribute": {
                 "enum": [
                   "position",
@@ -137,6 +143,7 @@
               "object_name",
               "object_group",
               "object_desc",
+              "object_subpage",
               "attribute",
               "expected_initial_value",
               "target_id",

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.rtds-agent/schemas/runtime-ir-1.0.json",
+  "title": "Saved Runtime semantic subset; no live target or authoring approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "representation", "snapshot_id", "source", "pages", "groups", "controls", "displays", "plots", "signal_references", "unknown_records", "live_target_verified", "authoring_supported", "warnings", "status", "limitations", "ir_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "representation": {"const": "saved_runtime_semantic_subset"},
+    "snapshot_id": {"$ref": "#/$defs/hash"},
+    "ir_sha256": {"$ref": "#/$defs/hash"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["project_snapshot_id", "project_sha256", "member", "member_sha256"],
+      "properties": {
+        "project_snapshot_id": {"$ref": "#/$defs/hash"},
+        "project_sha256": {"$ref": "#/$defs/hash"},
+        "member_sha256": {"$ref": "#/$defs/hash"},
+        "member": {"type": "string"}
+      }
+    },
+    "pages": {"type": "array", "maxItems": 256, "items": {"type": "object", "required": ["type", "key", "view_id", "page_index", "live_subpage_name", "children"], "properties": {"type": {"const": "RuntimePage"}, "key": {"$ref": "#/$defs/hash"}, "live_subpage_name": {"type": "null"}, "children": {"$ref": "#/$defs/keys"}}}},
+    "groups": {"type": "array", "maxItems": 10000, "items": {"allOf": [{"$ref": "#/$defs/entity"}, {"properties": {"type": {"const": "RuntimeGroup"}}}]}},
+    "controls": {"type": "array", "maxItems": 10000, "items": {"allOf": [{"$ref": "#/$defs/entity"}, {"required": ["control_semantics", "binding_requirements"], "properties": {"type": {"const": "RuntimeControl"}, "control_semantics": {"type": "object", "required": ["attribute", "expected_current_value"], "properties": {"attribute": {"enum": ["position", "value"]}, "expected_current_value": {"type": "null"}}}}}]}},
+    "displays": {"type": "array", "maxItems": 10000, "items": {"allOf": [{"$ref": "#/$defs/entity"}, {"properties": {"type": {"const": "RuntimeDisplay"}}}]}},
+    "plots": {"type": "array", "maxItems": 10000, "items": {"allOf": [{"$ref": "#/$defs/entity"}, {"required": ["graphs", "parse_status"], "properties": {"type": {"const": "RuntimePlot"}, "graphs": {"type": "array", "maxItems": 2000}}}]}},
+    "unknown_records": {"type": "array", "maxItems": 10000, "items": {"allOf": [{"$ref": "#/$defs/entity"}, {"properties": {"type": {"const": "RuntimeUnknown"}}}]}},
+    "signal_references": {"type": "array", "maxItems": 20000, "items": {
+      "type": "object", "required": ["type", "key", "owner_key", "draft_source", "live_target_verified", "units"],
+      "properties": {"type": {"const": "RuntimeSignalReference"}, "key": {"$ref": "#/$defs/hash"}, "owner_key": {"$ref": "#/$defs/hash"}, "units": {"type": "null"}, "live_target_verified": {"const": false},
+        "draft_source": {"type": "object", "required": ["status", "basis", "stored_component_id", "candidates", "live_target_verified"], "properties": {"status": {"enum": ["unique_saved_reference", "ambiguous", "unresolved"]}, "basis": {"const": "explicit_stored_COMP_ID"}, "live_target_verified": {"const": false}}}}
+    }},
+    "live_target_verified": {"const": false},
+    "authoring_supported": {"const": false},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["available", "partial"]},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "keys": {"type": "array", "items": {"$ref": "#/$defs/hash"}},
+    "entity": {
+      "type": "object", "required": ["type", "key", "component_id", "record_index", "page_key", "parent_key", "identity_status", "current_value", "units", "live_target_verified", "signal_keys"],
+      "properties": {"type": {"type": "string"}, "key": {"$ref": "#/$defs/hash"}, "component_id": {"type": ["integer", "null"], "minimum": 0}, "record_index": {"type": "integer", "minimum": 0}, "identity_status": {"enum": ["stored_unique", "ambiguous"]}, "current_value": {"type": "null"}, "units": {"type": "null"}, "live_target_verified": {"const": false}, "signal_keys": {"$ref": "#/$defs/keys"}}
+    }
+  }
+}

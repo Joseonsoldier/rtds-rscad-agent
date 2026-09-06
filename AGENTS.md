@@ -26,6 +26,8 @@ The structural candidate editor additionally requires an operator-authored proje
 
 Packaged resources are not automatically installed in the host. [Explicit export and discovery](docs/WORKFLOWS.md#optional-task-skills) never modify host configuration. User instructions take precedence over skill guidance; task authorization does not expand live execution permission.
 
+WP-N03 saved Runtime inspection supports inventory and semantic IR. Preserve tagged/plain duplicates, graph/container identity separation and explicit COMP_ID-only Draft candidates; never infer live subpage names, units or values from saved data. Runtime writes require exact case/hash, supplied live subpage, unique typed/name lookup, exact ID and expected value. Rebind before writing and restoration, and preserve failure/cleanup evidence. Inherited Runtime authoring wrappers are not effective authoring evidence; no RTX writer or live overlay adapter is qualified. See [Runtime scope](docs/RUNTIME_IR.md).
+
 ## Delivery preference
 
 The repository owner explicitly requested on 2026-09-05 that completed, validated work be committed and pushed to origin/main after each task. This is standing authorization for normal fast-forward pushes of task changes. Check the remote state and release gates first; preserve unrelated work and excluded private/vendor artifacts. Do not force-push or bypass branch protections. This delivery authorization does not authorize any additional RSCAD or rack operation.

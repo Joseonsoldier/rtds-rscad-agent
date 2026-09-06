@@ -213,10 +213,14 @@ async def extension_calls(session, root, vendor, sources):
     assert Path(trial["working_project"]).read_bytes()==original==model.read_bytes()
     layout=await call("inspect_runtime_layout",{"project_path":str(model)})
     assert layout["records"][0]["component_id"]==8 and layout["gui_observed"] is False
+    ir=await call("inspect_runtime_layout",{"project_path":str(model),"representation":"ir"})
+    assert ir["runtime_ir"]["controls"][0]["component_id"]==8
+    assert ir["runtime_ir"]["signal_references"][0]["draft_source"]["status"]=="unresolved"
+    assert ir["runtime_ir"]["authoring_supported"] is False and model.read_bytes()==original
     listed=await call("list_rscad_projects",{})
     assert trial["working_project"] not in {p["path"] for p in listed["projects"]}
     return {"status":"passed", "trial":"prepared_unexecuted", "selector_node_impact_detected":True,
-            "saved_runtime_inventory":True, "live_calls_made":False, "integration_qualified":False}
+            "saved_runtime_inventory":True, "saved_runtime_ir":True, "live_calls_made":False, "integration_qualified":False}
 
 
 async def engineering_calls(session,root,sources,project):

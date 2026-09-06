@@ -2,6 +2,8 @@
 
 Local MCP tools for RSCAD inspection, installed component/API discovery, isolated numeric and structural candidates, static model checks, saved-result metrics, and guarded sequential experiments.
 
+[WP-N03 saved Runtime IR](docs/RUNTIME_IR.md) adds pages, groups, controls, displays, graph/curve references and explicit saved Draft references to `inspect_runtime_layout`. Live writes now require an exact subpage and unique current type/name/ID lookup. Overlay authoring and live binding qualification remain unsupported/unverified; saved values are not current values.
+
 The [native editing checkpoints](docs/NATIVE_EDITING.md) add existing flat Draft edits and source-derived new-case insertion/wiring or GROUP clipboard reconstruction, with explicit UUID mapping and protected publication. Fresh temporary-file identity, exact stored NAME values, empty Runtime metadata preservation and GROUP-local readback are implemented. Task-scoped local API reconstruction/save/reopen and separate Compile passed for Voltage Divider, CH5 indmac and CH6 gen1. Public policy-bound live apply, automatic selection and the Runtime closed loop remain unqualified. Default static behavior is preserved.
 
 **Early alpha — not an official RTDS Technologies product.** Live operation targets Windows, RSCAD FX 2.7.3, vendor Python API 1.1 and Python 3.12. You must supply your own licensed RSCAD installation and permitted rack access. This repository includes no RTDS software, manuals, MLIB, vendor example projects, API keys, active authorizations, or historical experiment results.

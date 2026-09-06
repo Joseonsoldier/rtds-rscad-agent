@@ -1,13 +1,14 @@
 {
   "name": "rscad-understand-model",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "required_tools": [
     "inspect_rscad_project",
     "get_component_parameters"
   ],
   "optional_tools": [
     "get_component_graph",
-    "get_component_schema"
+    "get_component_schema",
+    "inspect_runtime_layout"
   ],
   "required_capabilities": [
     "project_parsing"

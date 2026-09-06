@@ -24,6 +24,7 @@ Confirm the project's allowed source path and installed RSCAD/library version. R
 3. Read the exact match using `get_component(project_path, component_id, context)`. Reject ambiguous targets instead of choosing the first.
 4. Inspect connections using `get_component_graph(project_path, scope, limit)` and `trace_signal(project_path, component_id, port, context, limit)`. Use `find_unconnected_ports(project_path)` for potential static disconnections. A truncated list is not a complete connection audit.
 5. Use `validate_project(project_path)` for static findings and report its parsing limitations alongside the result.
+6. When Runtime layout matters, use `inspect_runtime_layout(project_path, representation="ir")` for saved pages/groups/controls/displays/graphs. Retain partial/unknown records and duplicate legacy IDs. Only explicit saved COMP_ID references may identify Draft candidates; never equate Runtime and Draft UUIDs. VIEW-ID, saved positions and units do not establish live subpage names, values or units. No overlay authoring is supported.
 
 ## Completion
 

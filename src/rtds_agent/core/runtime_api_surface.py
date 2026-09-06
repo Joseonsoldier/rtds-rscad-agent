@@ -137,7 +137,8 @@ def inspect_runtime_api_surface(
     }
     parsed: dict[str, ast.Module] = {}
     texts: dict[str, str] = {}
-    for name, path in {**sources, "adapter": adapter}.items():
+    binding = HERE / "runtime_binding.py"
+    for name, path in {**sources, "adapter": adapter, "binding": binding}.items():
         parsed[name], texts[name] = _parse(path)
 
     application = _class(parsed["application"], "RSCADFX")
@@ -148,7 +149,13 @@ def inspect_runtime_api_surface(
     signal = _class(parsed["component"], "Signal")
     io_component = _class(parsed["component"], "IOComponent")
     io_positional = _class(parsed["component"], "IOPositionalComponent")
+    component = _class(parsed["component"], "Component")
+    runtime = _class(parsed["runtime"], "Runtime")
     methods = {
+        "runtime_get_objects": _function_info(_function(runtime,"get_objects")),
+        "runtime_get_object": _function_info(_function(runtime,"get_object")),
+        "component_subpage": _function_info(_function(component,"subpage")),
+        "component_subtab": _function_info(_function(component,"subtab")),
         "remote_connection": _function_info(
             _function(parsed["application"], "remote_connection")
         ),
@@ -210,6 +217,12 @@ def inspect_runtime_api_surface(
         "rack.security",
     )
     checks = {
+        "runtime_exact_lookup_signatures": (methods["runtime_get_objects"]["arguments"]==["self","comp_type","name"]
+                                            and methods["runtime_get_object"]["arguments"]==["self","comp_id"]),
+        "runtime_component_scope_readable": all(set(methods[name]["decorators"]) & {"ConnectedProperty", "ConnectedProperty(True)", "ConnectedProperty(True, False)"}
+                                                and methods[name]["return_annotation"]=="str" for name in ("component_subpage","component_subtab")),
+        "adapter_rebinds_control_scope": 'bind_live_control(case,working_copy,binding_sha256,' in adapter_text
+                                         and 'case.runtime.get_objects(action["object_type"],action["object_name"])' in texts["binding"],
         "api_version_1_1": _version(parsed["package"]) == "1.1",
         "remote_connection_zero_argument_factory": (
             methods["remote_connection"]["arguments"] == []
@@ -287,9 +300,10 @@ def inspect_runtime_api_surface(
         "created_at": now(),
         "status": "passed" if all(checks.values()) else "failed",
         "mode": "static_installed_rscad_fx_runtime_api_surface_validation",
-        "rscad_fx_version": "2.7.3",
+        "rscad_fx_version": "unknown",
         "python_api_version": _version(parsed["package"]),
         "source_files": {name: _ref(path) for name, path in sources.items()},
+        "binding_source": _ref(binding),
         "adapter": {
             **_ref(adapter),
             "required_fragment_count": len(required_adapter_fragments),
