@@ -35,6 +35,21 @@ def main(argv=None) -> int:
     params = ks.add_parser("parameters")
     params.add_argument("--project", required=True)
     ks.add_parser("migrate-parameters", help="Explicitly copy verified legacy parameter evidence into an immutable snapshot")
+    graph = ks.add_parser("graph", help="Build or query a local component knowledge graph")
+    gs = graph.add_subparsers(dest="graph_action", required=True)
+    graph_build = gs.add_parser("build", help="Index installed definitions and explicitly selected saved projects; no native calls")
+    graph_build.add_argument("--project", action="append", default=[])
+    graph_build.add_argument("--annotations", help="Optional source-bound advisory annotations JSON")
+    gs.add_parser("status", help="List published graph identities without building")
+    graph_query = gs.add_parser("query", help="Read a current source-checked graph")
+    graph_query.add_argument("--graph-id", required=True)
+    graph_query.add_argument("--mode", choices=["search", "get", "neighbors"], default="search")
+    graph_query.add_argument("--query")
+    graph_query.add_argument("--node-id")
+    graph_query.add_argument("--depth", type=int)
+    graph_query.add_argument("--edge-kind", action="append")
+    graph_query.add_argument("--offset", type=int, default=0)
+    graph_query.add_argument("--limit", type=int, default=20)
     upload = ks.add_parser("upload")
     upload.add_argument("paths", nargs="+")
     upload.add_argument("--allow-upload", action="store_true")
@@ -113,6 +128,19 @@ def main(argv=None) -> int:
             elif args.action == "migrate-parameters":
                 from .core.parameter_catalog import migrate_legacy
                 _print(migrate_legacy())
+            elif args.action == "graph":
+                from .component_knowledge import build_component_knowledge, query_component_knowledge
+                if args.graph_action == "build":
+                    _print(build_component_knowledge(args.project, args.annotations))
+                elif args.graph_action == "status":
+                    from .core.component_graph_store import status
+                    _print(status())
+                else:
+                    request = {'graph_id': args.graph_id, 'mode': args.mode, 'offset': args.offset, 'limit': args.limit}
+                    for name, value in (('query', args.query), ('node_id', args.node_id), ('depth', args.depth), ('edge_kinds', args.edge_kind)):
+                        if value is not None:
+                            request[name] = value
+                    _print(query_component_knowledge(request))
             else:
                 result = upload_documents(args.paths, allow_upload=args.allow_upload)
                 _print(result)

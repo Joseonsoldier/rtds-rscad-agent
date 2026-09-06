@@ -5,6 +5,7 @@ from . import __version__, knowledge, execution, project_tools, editing, capabil
 from . import extension_support, extension_trials, runtime_layout, api_discovery
 from . import model_editor, model_check, result_capture, experiments
 from . import component_catalog
+from .component_knowledge import query_component_knowledge
 from functools import wraps
 from inspect import signature
 from typing import get_type_hints
@@ -40,7 +41,7 @@ INSTRUCTIONS = (
     "The public alpha has no inherited approval, verified experiment catalogue or automatic error promotion. "
     "If dependencies or policy are missing, explain the specific setup step; do not bypass the check."
 )
-READ = [component_catalog.search_component_catalog, component_catalog.get_component_schema, model_check.check_rscad_model, api_discovery.search_rscad_api, api_discovery.lookup_rscad_api, extension_support.inspect_extension_support, extension_trials.preview_selector_change, runtime_layout.inspect_runtime_layout, diagnostics.get_execution_diagnostics, capabilities.get_capabilities, assessment.evaluate_results, assessment.read_result_samples, knowledge.get_knowledge_status, knowledge.search_rtds_local, knowledge.get_manual_page,
+READ = [query_component_knowledge, component_catalog.search_component_catalog, component_catalog.get_component_schema, model_check.check_rscad_model, api_discovery.search_rscad_api, api_discovery.lookup_rscad_api, extension_support.inspect_extension_support, extension_trials.preview_selector_change, runtime_layout.inspect_runtime_layout, diagnostics.get_execution_diagnostics, capabilities.get_capabilities, assessment.evaluate_results, assessment.read_result_samples, knowledge.get_knowledge_status, knowledge.search_rtds_local, knowledge.get_manual_page,
         knowledge.get_manual_section, knowledge.lookup_parameter,
         project_tools.list_rscad_projects, project_tools.inspect_rscad_project,
         project_tools.get_project_hierarchy, project_tools.get_component_graph,
@@ -65,7 +66,7 @@ CORE_NAMES = frozenset({"get_capabilities", "inspect_rscad_project", "get_compon
 ENGINEERING_NAMES = CORE_NAMES | frozenset({"search_component_catalog", "get_component_schema", "search_rscad_api", "lookup_rscad_api",
     "list_rscad_projects", "find_components", "get_component", "get_component_graph", "get_manual_page", "get_manual_section", "get_manual_figure",
     "lookup_parameter", "get_execution_policy", "get_workflow_status", "prepare_simulation_run", "read_result_samples", "save_result_assessment",
-    "apply_parameter_patch_batch", "compare_project_versions"})
+    "apply_parameter_patch_batch", "compare_project_versions", "query_component_knowledge"})
 
 
 def build_server(profile="full"):

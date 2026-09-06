@@ -1,0 +1,1075 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rtds-agent.local/schemas/component_graph.schema.json",
+  "title": "Local source-bound component knowledge graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "graph_sha256",
+    "build_context",
+    "nodes",
+    "edges",
+    "warnings",
+    "statistics",
+    "limitations",
+    "integration_qualified",
+    "live_calls_made",
+    "vendor_imported"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "graph_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "build_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "settings",
+        "catalog_snapshot_id",
+        "source_files",
+        "project_snapshots",
+        "annotation_file"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rscad_home",
+            "data_dir",
+            "source_roots",
+            "document_roots",
+            "expected_rscad_version"
+          ],
+          "properties": {
+            "rscad_home": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "data_dir": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "source_roots": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              }
+            },
+            "document_roots": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              }
+            },
+            "expected_rscad_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          }
+        },
+        "catalog_snapshot_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_files": {
+          "type": "array",
+          "maxItems": 30000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sha256",
+              "bytes",
+              "kind"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 268435456
+              },
+              "kind": {
+                "enum": [
+                  "definition",
+                  "project",
+                  "companion",
+                  "annotation",
+                  "provenance",
+                  "implementation"
+                ]
+              }
+            }
+          }
+        },
+        "project_snapshots": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "snapshot_id"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              },
+              "snapshot_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "annotation_file": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "maxItems": 20000,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "maxItems": 20000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "details",
+          "provenance"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "details": {},
+          "provenance": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/provenance"
+            }
+          }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definitions",
+        "projects",
+        "nodes",
+        "edges",
+        "unresolved_model_instances"
+      ],
+      "properties": {
+        "definitions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "projects": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_model_instances": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 80000
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "integration_qualified": {
+      "const": false
+    },
+    "live_calls_made": {
+      "const": false
+    },
+    "vendor_imported": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_path",
+        "source_sha256",
+        "locator"
+      ],
+      "properties": {
+        "source_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "values",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "observed",
+            "derived",
+            "asserted",
+            "unresolved",
+            "mixed_evidence"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "scope",
+              "provenance",
+              "evidence_kind"
+            ],
+            "properties": {
+              "value": {},
+              "scope": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "provenance": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/provenance"
+                }
+              },
+              "evidence_kind": {
+                "enum": [
+                  "observed",
+                  "derived",
+                  "asserted"
+                ]
+              }
+            }
+          }
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "kind",
+        "label",
+        "identity",
+        "fields",
+        "declarations",
+        "provenance",
+        "project_evidence"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "kind": {
+          "enum": [
+            "definition",
+            "project",
+            "concept",
+            "net"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "identity": {
+          "type": "object"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "category": {
+              "$ref": "#/$defs/fact"
+            },
+            "engineering_role": {
+              "$ref": "#/$defs/fact"
+            },
+            "library": {
+              "$ref": "#/$defs/fact"
+            },
+            "parameter_schema": {
+              "$ref": "#/$defs/fact"
+            },
+            "ports": {
+              "$ref": "#/$defs/fact"
+            },
+            "port_semantics": {
+              "$ref": "#/$defs/fact"
+            },
+            "selector_modes": {
+              "$ref": "#/$defs/fact"
+            },
+            "typical_use": {
+              "$ref": "#/$defs/fact"
+            },
+            "compatible_neighbors": {
+              "$ref": "#/$defs/fact"
+            },
+            "example_projects": {
+              "$ref": "#/$defs/fact"
+            },
+            "manual_references": {
+              "$ref": "#/$defs/fact"
+            },
+            "version_evidence": {
+              "$ref": "#/$defs/fact"
+            }
+          }
+        },
+        "declarations": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "text",
+              "provenance"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "description",
+                  "keywords",
+                  "library_description",
+                  "classification",
+                  "help"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "provenance": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/provenance"
+                }
+              }
+            }
+          }
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/provenance"
+          }
+        },
+        "project_evidence": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "snapshot_id",
+              "coverage",
+              "warnings",
+              "limitations",
+              "provenance"
+            ],
+            "properties": {
+              "snapshot_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "coverage": {},
+              "warnings": {
+                "type": "array"
+              },
+              "limitations": {
+                "type": "array"
+              },
+              "provenance": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/provenance"
+                }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "definition"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "required": [
+                  "category",
+                  "engineering_role",
+                  "library",
+                  "parameter_schema",
+                  "ports",
+                  "port_semantics",
+                  "selector_modes",
+                  "typical_use",
+                  "compatible_neighbors",
+                  "example_projects",
+                  "manual_references",
+                  "version_evidence"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "fields": {
+                "maxProperties": 0
+              },
+              "declarations": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "definition"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "definition_id",
+                  "component_type",
+                  "source_path",
+                  "source_sha256"
+                ],
+                "properties": {
+                  "definition_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "component_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "source_path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4000
+                  },
+                  "source_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              },
+              "project_evidence": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "project"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "project_sha256"
+                ],
+                "properties": {
+                  "project_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              },
+              "project_evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "concept"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                }
+              },
+              "project_evidence": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "net"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "project_sha256",
+                  "net_id",
+                  "domain",
+                  "contexts"
+                ],
+                "properties": {
+                  "project_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "net_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "domain": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "contexts": {
+                    "type": "array",
+                    "maxItems": 5000,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    }
+                  }
+                }
+              },
+              "project_evidence": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "kind",
+        "source",
+        "target",
+        "evidence_kind",
+        "scope",
+        "provenance",
+        "observations",
+        "compatibility_verified",
+        "integration_qualified"
+      ],
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "kind": {
+          "enum": [
+            "IS_A",
+            "CONNECTS_TO",
+            "REQUIRES",
+            "ALTERNATIVE_TO",
+            "USED_IN",
+            "INITIALIZED_BY",
+            "CONTROLLED_BY",
+            "MEASURED_BY"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "evidence_kind": {
+          "enum": [
+            "asserted",
+            "observed_usage",
+            "observed_connectivity"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/provenance"
+          }
+        },
+        "observations": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "type": "object"
+          }
+        },
+        "compatibility_verified": {
+          "const": false
+        },
+        "integration_qualified": {
+          "const": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "evidence_kind": {
+                "const": "observed_usage"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "observations": {
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "project_sha256",
+                    "context",
+                    "component_id",
+                    "component_type",
+                    "selector_values"
+                  ],
+                  "properties": {
+                    "project_sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "context": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "component_id": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "component_type": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "selector_values": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "parameter",
+                          "value",
+                          "origin",
+                          "declared_modes"
+                        ],
+                        "properties": {
+                          "parameter": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "origin": {
+                            "enum": [
+                              "stored",
+                              "definition_default",
+                              "unresolved"
+                            ]
+                          },
+                          "declared_modes": {
+                            "type": "array",
+                            "maxItems": 1000,
+                            "items": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "evidence_kind": {
+                "const": "observed_connectivity"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "observations": {
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "project_sha256",
+                    "context",
+                    "component_id",
+                    "component_type",
+                    "selector_values",
+                    "net_id",
+                    "ports"
+                  ],
+                  "properties": {
+                    "project_sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "context": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "component_id": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "component_type": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "selector_values": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "parameter",
+                          "value",
+                          "origin",
+                          "declared_modes"
+                        ],
+                        "properties": {
+                          "parameter": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "origin": {
+                            "enum": [
+                              "stored",
+                              "definition_default",
+                              "unresolved"
+                            ]
+                          },
+                          "declared_modes": {
+                            "type": "array",
+                            "maxItems": 1000,
+                            "items": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "net_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1000
+                    },
+                    "ports": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 2000,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "atom",
+                          "port",
+                          "coordinate",
+                          "domain",
+                          "phase",
+                          "kind",
+                          "direction",
+                          "data_type"
+                        ],
+                        "properties": {
+                          "atom": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 2000
+                          },
+                          "port": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "coordinate": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "maxItems": 2,
+                            "items": {
+                              "type": "number"
+                            }
+                          },
+                          "domain": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "phase": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "kind": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "direction": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "data_type": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "evidence_kind": {
+                "const": "asserted"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "observations": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

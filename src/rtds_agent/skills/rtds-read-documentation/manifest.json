@@ -1,11 +1,12 @@
 {
   "name": "rtds-read-documentation",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "required_tools": [
     "lookup_rscad_api",
     "search_rtds_local"
   ],
   "optional_tools": [
+    "query_component_knowledge",
     "get_component_schema",
     "get_manual_page",
     "inspect_extension_support"

@@ -16,7 +16,7 @@ class EngineeringIntegrationTests(unittest.TestCase):
     def test_default_full_contract_and_opt_in_profiles(self):
         from rtds_agent.mcp_server import server,build_server,CORE_NAMES,ENGINEERING_NAMES
         full={t.name:t for t in asyncio.run(server.list_tools())}
-        self.assertEqual(len(full),49)
+        self.assertEqual(len(full),50)
         for profile,names in [('core',CORE_NAMES),('engineering',ENGINEERING_NAMES)]:
             actual={t.name for t in asyncio.run(build_server(profile).list_tools())}
             self.assertEqual(actual,set(names)); self.assertLess(actual,set(full))

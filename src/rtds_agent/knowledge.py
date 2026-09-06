@@ -108,9 +108,11 @@ def get_knowledge_status() -> dict[str, Any]:
     import os
     from .core.parameter_catalog import catalog_status
     catalog = catalog_status()
+    from .core.component_graph_store import status as component_graph_status
     return {"local_index_ready": (s.data_dir / "knowledge/index.sqlite").is_file(),
             "parameter_index_ready": catalog["status"] == "ready",
             "parameter_catalog": catalog,
+            "component_graph": component_graph_status(),
             "document_roots": [str(p) for p in s.document_roots],
             "vector_store_configured": bool(s.vector_store_id),
             "api_key_configured": bool(os.environ.get("OPENAI_API_KEY", "").strip()),

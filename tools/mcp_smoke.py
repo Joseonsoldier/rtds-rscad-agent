@@ -16,7 +16,7 @@ from mcp.client.stdio import stdio_client
 # Deliberately independent of mcp_server.READ/LOCAL_WRITE/LIVE. New tools require a
 # conscious public-contract update; a matching count cannot conceal a missing tool.
 READ_TOOLS = frozenset({
-    "search_component_catalog", "get_component_schema", "check_rscad_model",
+    "search_component_catalog", "get_component_schema", "check_rscad_model", "query_component_knowledge",
     "search_rscad_api", "lookup_rscad_api",
     "inspect_extension_support", "preview_selector_change", "inspect_runtime_layout",
     "get_execution_diagnostics", "get_capabilities", "evaluate_results", "read_result_samples", "get_knowledge_status", "search_rtds_local", "get_manual_page", "get_manual_section",
@@ -63,7 +63,7 @@ def assert_contract(tools):
         actual = (annotation.read_only_hint, annotation.destructive_hint,
                   annotation.idempotent_hint, annotation.open_world_hint)
         assert actual == expected, (name, actual, expected)
-    for name in ("apply_parameter_patch_batch", "evaluate_results", "save_result_assessment"):
+    for name in ("apply_parameter_patch_batch", "evaluate_results", "save_result_assessment", "query_component_knowledge"):
         request = by_name[name].input_schema["properties"]["request"]
         assert request["type"] == "object" and request["additionalProperties"] is False, (name, request)
     for name in ("preview_selector_change", "prepare_extension_trial"):
@@ -441,11 +441,35 @@ async def smoke():
                 scenario = await scenario_calls(session,root,vendor,sources,project,env)
                 scenario["extensions"] = await extension_calls(session,root,vendor,sources)
                 scenario["engineering"] = await engineering_calls(session,root,sources,project)
+                graph_build = subprocess.run([sys.executable, '-m', 'rtds_agent', 'knowledge', 'graph', 'build', '--project', str(project)],
+                    env=env, capture_output=True, text=True, encoding='utf-8', timeout=90, check=True)
+                graph_id = json.loads(graph_build.stdout)['graph_id']
+                graph_before = {p: p.read_bytes() for p in root.rglob('*') if p.is_file()}
+                graph_request = {'graph_id': graph_id, 'mode': 'search', 'query': 'synthetic_gain', 'limit': 1}
+                graph_result = await session.call_tool('query_component_knowledge', {'request': graph_request})
+                assert not graph_result.is_error, graph_result
+                graph_content = graph_result.structured_content
+                assert graph_content['status'] == 'found' and graph_content['compatibility_verified'] is False
+                node_id = graph_content['nodes'][0]['node_id']
+                for mode in ('get', 'neighbors'):
+                    result = await session.call_tool('query_component_knowledge', {'request': {'graph_id': graph_id, 'mode': mode, 'node_id': node_id}})
+                    assert not result.is_error and result.structured_content['mutations_performed'] is False, result
+                malformed = await session.call_tool('query_component_knowledge', {'request': {**graph_request, 'depth': 2}})
+                assert malformed.is_error
+                assert graph_before == {p: p.read_bytes() for p in root.rglob('*') if p.is_file()}
+                definition = vendor/'MLIB'/'COMPONENTS'/'synthetic_gain'
+                old_definition = definition.read_bytes()
+                try:
+                    definition.write_bytes(old_definition + b'\n// stale graph probe\n')
+                    assert (await session.call_tool('query_component_knowledge', {'request': graph_request})).is_error
+                finally:
+                    definition.write_bytes(old_definition)
+                scenario['component_knowledge'] = {'cli_build': True, 'read_only_search_get_neighbors': True, 'stale_source_refused': True}
                 summary={"scenario":scenario,"status": "passed", "transport": "stdio", "tool_count": len(tools.tools),
                                   "detail_normal_calls": 6, "detail_error_calls": 7, "forbidden_calls": len(FORBIDDEN_TOOLS),
                          "default_policy": "inactive", "live_actions_blocked": 4, "live_rscad_calls": False}
         profile_results=[]
-        for profile,count in (("core",10),("engineering",29)):
+        for profile,count in (("core",10),("engineering",30)):
             params=StdioServerParameters(command=sys.executable,args=["-m","rtds_agent","mcp","serve","--profile",profile],env=env)
             async with stdio_client(params) as streams:
                 async with ClientSession(*streams) as session:

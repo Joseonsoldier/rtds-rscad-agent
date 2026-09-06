@@ -5,6 +5,10 @@ description: Resolve unknown RTDS/RSCAD facts, parameter schemas and installed A
 
 # Resolve unknown RTDS/RSCAD information
 
+For local component knowledge, use the grounded discovery workflow: build the graph only through the explicit CLI builder, then use `status` or the read-only `query_component_knowledge` MCP request with a graph ID. Query results are source-checked derived evidence, not permission to edit, Compile, start Runtime or access a rack.
+
+Treat annotation claims as bound assertions. Preserve the current exact source definition path and SHA, and for definition edges or compatible-neighbor claims also preserve the target definition path and SHA plus cited supporting sources. A definition change requires an explicit rebuild and deliberate reauthorization of claims; stale assertions are rejected. Mark mixed facts `observed`, `derived`, or `asserted`, and retain per-source project snapshots, coverage, warnings and limitations. Aggregate project nodes by model content SHA across paths.
+
 ## Use when
 
 An RTDS/RSCAD question needs evidence, an API name/signature is uncertain, or sources disagree. Choose the shortest route below; skip sources irrelevant to the question.
