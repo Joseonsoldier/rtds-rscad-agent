@@ -1,5 +1,17 @@
 # Implementation status
 
+## WP-N05A — timing contracts and supplied-sample evidence (2026-09-06)
+
+Baseline `c24e1e0`. This partial WP-N05 software checkpoint adds explicit debug/model-native schedules, retained/hash-bound canonical contracts and sampled timing-error evidence using declared clock-channel values. Native intent is never lowered to host writes. Unsupported native execution, Compile and Runtime request creation are refused before backend/grant/rack dispatch. Native initial conditions and original-model-only clock evidence across Draft sweeps are rejected early. Legacy omitted-mode canonical plans remain unchanged; action receipts now explicitly leave measured simulator timing unverified.
+
+Per-event onset/clear evidence retains requested/observed time, signed/absolute error, conservative brackets, exact source/context and qualification. Multiple, missing, reused and out-of-order edges cannot establish agreement. Supplied timing agreement remains separate from ordinary numerical assessment, actual scheduler/clock qualification and Runtime safe completion. See [EVENT_TIMING.md](EVENT_TIMING.md) for contracts, source findings and unimplemented operation.
+
+The user's [model-routing policy](MODEL_ROUTING.md) is now referenced by AGENTS.md. This wave used two Astra high agents for installed timing discovery/core implementation/integration review and one Luna low agent for verbatim policy copying, fixed-schema fixtures and documentation sync. Parallel code workers used separate worktrees and focused tests; the root integrated the wave and owns the final release gate and main delivery. Root model settings were not changed. No elapsed-time reduction is claimed from an unmeasured comparison.
+
+Changed implementation covers `core/event_timing.py`, DSL/suite integration, Runtime/public/orchestrator refusal and debug receipts, two schemas, capability reports, two skill instructions/manifests, three timing test files, STDIO scenario, policy and documentation. Runtime schema ID 1.4 and suite ID 1.3 are additive; 49/10/29 tools, nine skills, Python/dependencies and inactive execution policy remain unchanged. Actual full regression: **453 run, 451 passed, 2 existing skips, no failures/errors (84.912 s)**. Focused timing41, STDIO49/10/29, nine skill validators, manifest93, Git-byte hash comparison and source/artifact checks passed. All 48 protected hashes remained unchanged. A fresh external-venv wheel installation also passed. Distribution evidence is recorded in [VALIDATION.md](VALIDATION.md).
+
+No real RSCAD connection, Compile, Runtime, rack, GUI or load-flow operation occurred. Installed SCHED/TIME/sequencer sources provide candidates, but no compatible current List-mode scheduler, common epoch or qualified Python scheduling adapter was established. WP-N05 live/model-native actuation remains incomplete; WP-N06–N11 remain pending. Full work-order completion is not claimed.
+
 ## WP-N04 — native signal-array acquisition software (2026-09-06)
 
 Baseline `225063e`. Implemented opt-in `native_signal_arrays` inside existing Runtime/suite execution, read-only native preparation and saved receipt conversion. Exact saved graph/live scope, source-bound metadata, actual run/attempt/project identity, sample hashes/rates and ordered acquisition/Runtime recovery are covered by synthetic tests. Missing or ambiguous identity/metadata and malformed arrays fail; no native meter/CSV fallback. Capture success is separate from safe completion.

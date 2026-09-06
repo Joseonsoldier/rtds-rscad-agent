@@ -35,6 +35,16 @@ def plan_suite(request):
         grounding.append({"path":str(path),"sha256":sha256_file(path)})
     runs = expand(request["specification"],request["sweep"])
     for run in runs:
+        timing=run['test_spec'].get('event_timing')
+        if timing:
+            evidence=timing['source_evidence']
+            if evidence and evidence['source_sha256'] not in {request['source_sha256'],*[r['sha256'] for r in grounding]}:
+                raise ToolSafetyError('Timing clock evidence is not a bound model or grounding source')
+            if evidence and run['draft_operations'] and evidence['source_sha256'] not in {r['sha256'] for r in grounding}:
+                raise ToolSafetyError('Draft sweeps require timing evidence from an unchanged grounding source; the original model hash cannot bind the patched source')
+            run['timing_qualification']={'execution_supported':timing['mode']!='model_native',
+                'deterministic_verified':False,'integration_qualified':False,
+                'reason':'No qualified model-native scheduler/clock epoch; native execution is blocked' if timing['mode']=='model_native' else 'Controller wall-clock debug timing is not authoritative'}
         run["traceability"] = verify_traceability(run["specification"])
         # Validate all numerical criteria before creating a workflow; supplied dummy
         # artifact identities are used for schema validation only, never loaded.
@@ -87,6 +97,9 @@ def run_experiment_suite(request: SuiteRequest) -> dict[str, Any]:
             require_action(get_settings(),"compile" if item["action"] == "compile" else "runtime_start_stop",
                            controls=item["action"] == "runtime" and bool(request["specification"]["events"] or request["specification"]["initial_conditions"]))
     plan = plan_suite(request)
+    if request['mode']=='execute':
+        from .core.event_timing import require_executable_timing
+        for row in plan['runs']:require_executable_timing(row['test_spec'])
     base = {"suite_id":plan["suite_id"],"engineering_verdict":"not_evaluated","live_calls_made":False}
     if request["mode"] == "plan": return {**base,"status":"planned","plan":plan}
     if request["suite_id"] != plan["suite_id"]: raise ToolSafetyError("Suite plan changed; review the new suite_id")
@@ -191,6 +204,22 @@ def run_experiment_suite(request: SuiteRequest) -> dict[str, Any]:
             if ref["input_project_sha256"] != saved["runs"][run_id]["input_project_sha256"] or Path(ref["input_project"]).resolve() != Path(saved["runs"][run_id]["input_project"]).resolve():
                 raise ToolSafetyError("Suite capture is bound to a different model")
             if ref["run_id"] != workflow.manifest["workflow_id"]: raise ToolSafetyError("Suite capture has a different workflow run_id")
+            timing=rows[run_id]['test_spec'].get('event_timing')
+            timing_report=None
+            if timing:
+                from .assessment import _load
+                from .core.event_timing import evaluate_timing
+                data,channels=_load(ref)
+                declared={row['channel_id']:row for row in rows[run_id]['specification']['channels']}
+                used={timing['clock_channel_id'],*[a['observation']['channel_id'] for a in timing['actions'] if a['observation']]}
+                for cid in used-{None}:
+                    if cid in channels and any(channels[cid].get(k)!=declared[cid].get(k) for k in ('signal_path','units','sign_convention','pu_base')):
+                        raise ToolSafetyError('Timing sample metadata differs from the suite channel declaration')
+                timing_report=evaluate_timing(timing,data,channels)
+                timing_report['source']=dict(ref)
+                # Re-read through the hash/identity loader before publishing the
+                # derived result. Timing agreement cannot establish a live clock.
+                _load(ref)
             criterion=rows[run_id]["specification"]["criteria"]
             result=save_result_assessment({"source":ref,"specification":criterion,"specification_sha256":sha256_json(criterion)})
             artifact=Path(result["artifact"]["path"])
@@ -201,7 +230,8 @@ def run_experiment_suite(request: SuiteRequest) -> dict[str, Any]:
                 raise ToolSafetyError("Saved suite assessment changed while aggregating")
             requirements=[{k:r[k] for k in ("requirement_id","status","metrics","reasons")} for r in evaluated["results"]]
             assessments.append({"run_id":run_id,"axis_values":rows[run_id]["axis_values"],"assessment":result,
-                                "requirement_results":requirements,"traceability":rows[run_id]["traceability"]})
+                                "requirement_results":requirements,"traceability":rows[run_id]["traceability"],
+                                **({'event_timing':timing_report} if timing_report is not None else {})})
         from collections import Counter
         counts = Counter(a["assessment"]["status"] for a in assessments)
         metric_values={}
@@ -216,6 +246,12 @@ def run_experiment_suite(request: SuiteRequest) -> dict[str, Any]:
         report={**base,"status":"assessed_supplied_samples","assessments":assessments,"assessment_status_counts":dict(sorted(counts.items())),
                 "metric_ranges_across_supplied_runs":ranges,
                 "not_supplied_run_ids":sorted(set(rows)-{a["run_id"] for a in assessments}),"integration_qualified":False}
+        timed=[row['event_timing'] for row in assessments if 'event_timing' in row]
+        if timed:
+            report['timing_status_counts']=dict(sorted(Counter(row['status'] for row in timed).items()))
+            report['deterministic_verified']=False
+            for capture in request['captures']:_load(capture['source'])
+            if plan_suite(request)!=plan:raise ToolSafetyError('Timing suite source or declarations changed before publication')
         _write(folder/(sha256_json(report)+".assessment.json"),report)
         return report
     finally:

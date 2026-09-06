@@ -322,7 +322,37 @@ COMPONENT-END:
     native_capture=await call('capture_rtds_results',{'request':{'mode':'prepare_native','workflow_path':native_workflow}})
     assert native_capture['status']=='prepared_native_capture_unexecuted' and native_capture['grant_created'] is False
     assert native_capture['live_calls_made'] is False and before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
-    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True}
+    timing_channels=[{'channel_id':'state','signal_path':'Authored|State','units':'position','sign_convention':'0=open 1=closed'},
+                     {'channel_id':'clock','signal_path':'Authored|Clock','units':'s','sign_convention':'elapsed since declared reset'}]
+    timing_dsl={**dsl,'test_id':'stdio-timing','criteria':{'schema_version':'1.0','requirements':[]},'channels':timing_channels,
+        'controls':[{'target_id':'switch','purpose':'switch_operation','object_uuid':20,'object_type':'switch','object_name':'Authored',
+                     'object_group':'Authored|Controls','object_desc':'Switch','object_subpage':'Controls','attribute':'position','expected_initial_value':0,'units':'position'}],
+        'events':[{'event_id':'on','kind':'operator_control','target_id':'switch','value':1,'units':'position','at_seconds':1}],
+        'event_timing':{'mode':'model_native','clock_channel_id':'clock',
+            'source_evidence':{'source_sha256':digest(sources/'synthetic-guide.md'),'locator':'Authored clock declaration, not simulator qualification'},
+            'observations':[{'action_id':'event.on','channel_id':'state','window_start_seconds':0,'window_end_seconds':2,
+                             'value_tolerance':0,'max_timing_error_seconds':.51,'max_sample_gap_seconds':.51}]}}
+    timing_request={**request,'specification':timing_dsl}
+    timing_plan=await call('run_experiment_suite',{'request':timing_request})
+    assert timing_plan['plan']['runs'][0]['test_spec']['runtime_controls']['runtime_parameter_writes']==[]
+    timing_prepared=await call('run_experiment_suite',{'request':{**timing_request,'mode':'prepare','suite_id':timing_plan['suite_id']}})
+    timing_run,timing_row=next(iter(timing_prepared['runs'].items()))
+    workflow=json.loads(Path(timing_row['workflow_path']).read_text(encoding='utf-8'))
+    samples=root/'data'/'authored-timing.json'
+    sample_data={'schema_version':'1.0','input_project_sha256':timing_row['input_project_sha256'],'run_id':workflow['workflow_id'],
+        'attempt_id':'stdio-supplied','time_unit':'s','time_basis':'simulator_time',
+        'channels':[{**timing_channels[0],'times':[100,100.5,101,101.5,102],'values':[0,0,1,1,1]},
+                    {**timing_channels[1],'times':[100,100.5,101,101.5,102],'values':[0,.5,1,1.5,2]}]}
+    samples.write_text(json.dumps(sample_data),encoding='utf-8')
+    timing_ref={'data_path':str(samples),'data_sha256':digest(samples),'input_project':timing_row['input_project'],
+        'input_project_sha256':timing_row['input_project_sha256'],'run_id':workflow['workflow_id'],'attempt_id':'stdio-supplied'}
+    timing_result=await call('run_experiment_suite',{'request':{**timing_request,'mode':'assess','suite_id':timing_plan['suite_id'],
+        'captures':[{'run_id':timing_run,'source':timing_ref}]}})
+    assert timing_result['timing_status_counts']=={'passed':1} and timing_result['deterministic_verified'] is False
+    assert timing_result['assessments'][0]['event_timing']['events'][0]['observed_simulator_time']==1
+    no_grant=await session.call_tool('prepare_simulation_run',{'workflow_path':timing_row['workflow_path']})
+    assert no_grant.is_error and not list(Path(timing_row['workflow_path']).parent.glob('runtime-request-*.json'))
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True,"native_timing_plan_and_supplied_assessment":True,"native_timing_grant_refused":True}
 
 
 async def smoke():

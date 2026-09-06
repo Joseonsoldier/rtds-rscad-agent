@@ -8,6 +8,12 @@ Use the existing Python 3.12, unittest, explicit MCP allowlist, JSON Schema cont
 
 Run relevant tests, then the full suite and [release checks](docs/VALIDATION.md). After reviewing the final source/schema/skill changes, regenerate the portable release manifest and rerun checks; never use hash regeneration to bypass a failed gate. Report synthetic software evidence separately from installed SDK or rack qualification. Do not commit vendor models/manuals/definitions, generated data, active configuration, or credentials.
 
+## Model routing and parallel waves
+
+Follow [Model Routing and Multi-Agent Policy](docs/MODEL_ROUTING.md), supplied by the repository owner on 2026-09-06. Prefer Astra low for ordinary independent implementation; use Astra high for native API semantics, public contracts, recovery/safety and integration review. Use Luna only for explicitly specified repetitive tasks. Model/effort overrides apply where the host supports them; never claim a root setting was changed without actually changing it.
+
+Delegate independent bounded work with explicit file ownership and compact context. Use isolated worktrees for parallel code changes when supported. Workers run focused tests and return evidence; they do not independently commit/push a delivery or run the full release pipeline. Integrate and review one wave before the root runs final validation and normal main delivery. The current host supports four concurrent agents including the root. Do not spawn recursively without root delegation. Keep all real RSCAD/Compile/Runtime/rack work in one separately authorized serialized lane; a multi-agent request does not expand live permission.
+
 ## Task skills
 
 The nine instruction-only skills and versioned capability manifests are packaged under [src/rtds_agent/skills](src/rtds_agent/skills), with names and descriptions available through `rtds-agent skills list`. Read the matching `SKILL.md` when the user's actual task calls for its workflow:
@@ -29,6 +35,8 @@ Packaged resources are not automatically installed in the host. [Explicit export
 WP-N03 saved Runtime inspection supports inventory and semantic IR. Preserve tagged/plain duplicates, graph/container identity separation and explicit COMP_ID-only Draft candidates; never infer live subpage names, units or values from saved data. Runtime writes require exact case/hash, supplied live subpage, unique typed/name lookup, exact ID and expected value. Rebind before writing and restoration, and preserve failure/cleanup evidence. Inherited Runtime authoring wrappers are not effective authoring evidence; no RTX writer or live overlay adapter is qualified. See [Runtime scope](docs/RUNTIME_IR.md).
 
 ## Delivery preference
+
+WP-N05 timing contracts may plan/prepare/assess supplied samples. No qualified scheduler adapter exists: preserve explicit model-native refusal before all live dispatch/grant creation and never lower native schedules to host writes. Keep clock-value provenance, non-reused ordered edge assignment and conservative error brackets; numerical agreement never proves a simulator epoch or deterministic execution. See [event timing scope](docs/EVENT_TIMING.md).
 
 WP-N04 native signal arrays are opt-in through existing execution gates. Preserve source-bound metadata, exact saved graph/live scope and current run/attempt/hash receipts. Native conversion must use `workflow_native` with recorded metadata and sample hashes. Acquisition dispatch stop is local only; do not claim remote abort, fresh/atomic data, verified simulator clock or live integration. Keep ordered acquisition stop, controls restoration, Runtime stop and resource cleanup separate. See [native capture scope](docs/NATIVE_CAPTURE.md).
 

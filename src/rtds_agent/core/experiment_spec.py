@@ -14,6 +14,8 @@ def compile_spec(spec):
     events = spec["events"]
     if len({e["event_id"] for e in events}) != len(events): raise ValueError("Duplicate DSL event_id")
     initials = spec["initial_conditions"]
+    if spec.get('event_timing',{}).get('mode')=='model_native' and initials:
+        raise ValueError('Model-native initial_conditions are not represented by this schedule contract; use an empty list')
     if len({i["target_id"] for i in initials}) != len(initials): raise ValueError("Duplicate initial condition")
     channels = spec["channels"]
     if len({c["channel_id"] for c in channels}) != len(channels): raise ValueError("Duplicate measurement channel")
@@ -50,6 +52,22 @@ def compile_spec(spec):
               "experiment_dsl_sha256":sha256_json(spec),"event_timing_basis":"controller_wall_clock_after_run_confirmation",
               "event_semantics":"caller-declared mapping; fault/trip labels do not imply verified electrical effects"}
     if "acquisition_mode" in spec:result['runtime_capture']['acquisition_mode']=spec['acquisition_mode']
+    if 'event_timing' in spec:
+        from .event_timing import build_timing
+        actions=[]
+        for event,write in zip(scheduled,writes):
+            if event['phase']!='after_run':continue
+            actions.append({'action_id':write['action_id'],'event_id':event['event_id'],
+                'transition':'clear' if write['action_id'].startswith('clear.') else 'apply',
+                'target_id':event['target_id'],'kind':event['kind'],'requested_simulator_time':event['at_seconds'],
+                'from_value':write['expected_initial_value'],'to_value':write['value'],'units':event['units']})
+        result['event_timing']=build_timing(spec['event_timing'],actions,channels)
+        if spec['event_timing']['mode']=='model_native':
+            # A native schedule is an unexecuted model intent. Never lower it to
+            # sleep + Runtime writes, including initial conditions.
+            result['runtime_controls']['runtime_parameter_writes']=[]
+            result['execution_mode']='runtime_read_only_signal_capture'
+            result['event_timing_basis']='requested_simulator_time_unqualified'
     validate_runtime_test_spec(result)
     return result
 

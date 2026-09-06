@@ -961,6 +961,8 @@ class ProductionRscadBackend:
         authorization: dict[str, Any] | None = None,
         acquisition_context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
+        from .event_timing import require_executable_timing
+        require_executable_timing(test_spec)
         if not self.runtime_enabled:
             raise BackendSafetyViolation(
                 "Runtime is disabled; construct the backend with an explicit "
@@ -1094,6 +1096,8 @@ class ProductionRscadBackend:
                 capture_options['native_capture']={'context':{**acquisition_context,'input_project_sha256':expected_working_sha256},
                     'minimum_samples':runtime_plan['runtime_capture']['minimum_samples_per_channel'],
                     'maximum_samples':min(self.config.runtime_max_samples_per_channel,100000)}
+            if 'event_timing' in runtime_plan:
+                capture_options['event_timing']=runtime_plan['event_timing']
             planned_control_writes = runtime_plan["runtime_controls"][
                 "runtime_parameter_writes"
             ]

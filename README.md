@@ -16,6 +16,8 @@ The [native editing checkpoints](docs/NATIVE_EDITING.md) add existing flat Draft
 
 The [v2.0 engineering guide](docs/V2_DEVELOPMENT.md) documents six added tools, a JSON experiment DSL, fourteen sampled metrics, project component policy, nine packaged skills and optional tool profiles. Default full mode preserves the previous 43 tools and adds six (49 total). Software/static-source tests are separate from native structural, Compile-log and rack qualification; see [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
+The partial WP-N05 checkpoint adds explicit debug/model-native event timing contracts and offline evidence from supplied clock-channel values; see [event timing](docs/EVENT_TIMING.md). Timing evidence has conservative error brackets and is not simulator-clock or scheduler qualification. Omit the timing field to retain legacy behavior; schemas are suite 1.3 and Runtime 1.4.
+
 In PowerShell, from this repository:
 
 ```powershell

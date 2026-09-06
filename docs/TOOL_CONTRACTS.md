@@ -4,6 +4,8 @@ Native checkpoint additions: `edit_rscad_model.request.backend` accepts `static`
 
 The local STDIO server uses an explicit allowlist. Treat the connected server's `tools/list` input schemas as the callable contract; the repository's independent smoke test detects missing, renamed, or unreviewed tools. Optional project-query fields are additive. No tool enables policy, runs arbitrary code, writes arbitrary paths, changes rack/hardware configuration, saves a running case, or deploys.
 
+The partial WP-N05 [event timing contract](EVENT_TIMING.md) adds optional debug/model-native schedule evidence from supplied clock-channel values, with conservative timing-error brackets and no interpolation. Model-native live dispatch and Runtime grant creation are refused before the backend; no SDK scheduler adapter, native `initial_conditions`, or source-only-clock-evidence Draft sweep is supported. Omit timing to keep legacy plans and behavior.
+
 ## Read tools
 
 WP-N04 adds `capture_rtds_results` modes `prepare_native` (read-only, no grant) and `workflow_native` (saved receipt/CSV conversion, no metadata overrides). Native acquisition executes only through the existing Runtime/suite policy and one-use-grant path. Exact fields, hash bindings, compatibility and recovery are in [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md).

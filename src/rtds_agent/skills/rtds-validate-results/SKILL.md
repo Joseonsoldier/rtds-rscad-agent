@@ -28,6 +28,8 @@ Use `capture_rtds_results` mode `workflow_native` for saved native session recei
 
 ## Completion
 
+Suite `event_timing` assessment uses explicit clock-channel values and matching state-channel timestamps. Require exact declared signal paths/units/sign/pu base and source hashes. Preserve onset/clear IDs, transition brackets and signed error; a sampled edge cannot be reused or assigned out of order. Missing/ambiguous edges or brackets overlapping tolerance boundaries are inconclusive. Timing agreement never verifies the simulator clock, electrical effect or deterministic scheduling, and cannot override Runtime recovery failures.
+
 Provide numerical values, units, thresholds, source hashes, windows, alignment/conversion assumptions, per-requirement outcomes, and the exact scope of the verdict. Separate structural validity, compile status, execution status, and requirements demonstrated by these data.
 
 ## On failure

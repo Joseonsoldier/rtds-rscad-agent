@@ -543,6 +543,19 @@ def validate_runtime_test_spec(
             if type(capture["minimum_samples_per_channel"]) is not int or not 2<=minimum_samples<=100000:
                 raise ValueError("Native acquisition requires 2–100000 minimum samples")
         except ValueError as exc:raise RuntimeContractError(str(exc)) from exc
+    timing=None
+    if 'event_timing' in test_spec:
+        from .event_timing import validate_timing_contract
+        try:
+            timing=validate_timing_contract(test_spec['event_timing'],channels)
+            if timing['mode']=='model_native' and runtime_writes:
+                raise ValueError('Model-native schedule cannot contain host-timed Runtime writes')
+            if any(row['requested_simulator_time']>warmup for row in timing['actions']):
+                raise ValueError('Scheduled event is after capture')
+            for original,canonical in zip(channels,canonical_channels):
+                for key in ('sign_convention','pu_base'):
+                    if key in original:canonical[key]=original[key]
+        except ValueError as exc:raise RuntimeContractError(str(exc)) from exc
     if runtime_writes and runtime_writes[-1]["apply_after_seconds"] > warmup:
         raise RuntimeContractError("Runtime action time exceeds warmup_seconds")
 
@@ -629,6 +642,7 @@ def validate_runtime_test_spec(
             "minimum_samples_per_channel": minimum_samples,
             **({"acquisition_mode":NATIVE_MODE} if acquisition_mode==NATIVE_MODE else {}),
         },
+        **({'event_timing':timing} if timing is not None else {}),
         "loadflow_initialization": {
             "enabled": enabled,
             "timeout_seconds": loadflow_timeout,
@@ -767,6 +781,7 @@ class RscadFxRuntimeDriver:
         runtime_parameter_writes: list[dict[str, Any]] | None = None,
         capture_directory: str | None = None,
         native_capture: Mapping[str, Any] | None = None,
+        event_timing: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {
             "connected": False,
@@ -841,6 +856,8 @@ class RscadFxRuntimeDriver:
         acquisition = None
         writes = list(runtime_parameter_writes or [])
         try:
+            from .event_timing import require_executable_timing
+            require_executable_timing({'event_timing':event_timing,'measurement_channels':channels} if event_timing is not None else {})
             writes = _canonical_runtime_parameter_writes(writes)
             binding_sha256 = sha256_file(Path(working_copy)) if writes else None
             input_records = runtime_input_objects(working_copy) if writes else {}
@@ -990,6 +1007,16 @@ class RscadFxRuntimeDriver:
                         "readback": readback,
                         "applied": True,
                         "restored": False,
+                        "timing_evidence": {
+                            "requested_controller_delay_seconds": action['apply_after_seconds'],
+                            "requested_simulator_time": None,
+                            "observed_simulator_time": None,
+                            "measured_timing_error_seconds": None,
+                            "timing_mechanism": 'controller_sleep_then_write' if action['phase']=='after_run' else 'before_run_write',
+                            "time_source": 'requested_delay_accumulator_only',
+                            "qualification_state": 'debug_nonauthoritative',
+                            "deterministic_verified": False,
+                        },
                     }
                 )
             for action in writes:

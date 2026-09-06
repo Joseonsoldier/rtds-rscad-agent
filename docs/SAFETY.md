@@ -2,6 +2,8 @@
 
 WP-N04 native acquisition retains the existing policy, grant, source protection and Runtime recovery gates. Stop local pull dispatch before restoring controls and stopping Runtime; release owned handles afterwards. There is no verified remote acquisition abort. Capture success does not override any recovery failure. Metadata semantics, time origin, freshness and atomicity stay unverified. See [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md).
 
+The partial WP-N05 [event timing contract](EVENT_TIMING.md) permits offline debug/model-native evidence from supplied clock-channel values only; it does not qualify an independent simulator clock or scheduler. Model-native plans, preparation and assessment remain software-only, and live dispatch or Runtime grant creation is refused before the backend. Omitted timing preserves legacy behavior.
+
 ## Operator scope
 
 Run this alpha only on an isolated lab simulator that you are authorized to operate. It is not qualified for controlling power equipment, protection systems or external hardware. The absence of a hardware-I/O tool does not prove that your existing RSCAD case has no physical outputs; the lab operator must check that before enabling it.

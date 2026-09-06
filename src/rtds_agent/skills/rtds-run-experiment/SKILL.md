@@ -31,6 +31,8 @@ For opt-in `native_signal_arrays`, first supply exact saved graph/live page iden
 
 ## Completion
 
+For precise event work, explicitly choose the suite DSL `event_timing` contract. `model_native` currently supports offline plan/preparation and supplied-sample assessment only; Compile, Runtime request creation and execution are refused before backend dispatch because no scheduler/clock-epoch adapter is qualified. Native initial conditions are unsupported and must be empty. Omitted timing keeps existing host scheduling; `wall_clock_debug` labels it explicitly. Never present sleep/write delays or Runtime value readback as measured simulator event timing.
+
 Report the actual backend and attempt, policy/plan/project binding, raw captures, control writes and readback, restored values, stop/cleanup evidence, and any incomplete outcome. Compile success and completed simulation do not establish engineering acceptance.
 
 ## On failure
