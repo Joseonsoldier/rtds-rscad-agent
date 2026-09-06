@@ -380,7 +380,11 @@ def write_patched_archive(source: Path, output: Path, dfx_member: str, dfx_data:
                 outgoing.comment = incoming.comment
                 for info in incoming.infolist():
                     data = dfx_data if info.filename == dfx_member else incoming.read(info.filename)
+                    external_attr = info.external_attr
                     outgoing.writestr(info, data)
+                    # zipfile substitutes Unix permissions for a zero attribute.
+                    # Restore the source value before the central directory is written.
+                    info.external_attr = external_attr
         os.rename(temp, output)
     finally:
         if temp.exists():

@@ -1,5 +1,9 @@
 # Compatibility and migration
 
+WP-N10C adds two internal modules for exact line-token plans/projection and a separately authorized SDK-observed hybrid adapter. It adds no public tool, CLI command, dependency, policy action or backend choice. Existing native-save preservation and empty-Runtime reconciliation remain unchanged. The hybrid result explicitly reports `native_serialized_output=false`; it cannot be consumed as lossless native output or public integration qualification. See [line-binding scope](LINE_AUTHORING.md#internal-hybrid-line-binding).
+
+The shared isolated archive writer now preserves a source ZIP member's zero external attributes, which Python previously replaced with default Unix permissions. Rebuilt candidate container hashes can therefore differ from earlier builds for those inputs; original files remain untouched. Validation still rejects unrequested metadata changes.
+
 WP-N04: runtime schema ID 1.3, suite schema ID 1.2 and capture schema ID 1.1 add optional native signal-array acquisition. Omitted acquisition mode preserves legacy canonical plans and execution behavior. Native receipt artifacts require `workflow_native`; legacy `workflow` cannot override their channel metadata. Canonical channel records add run/attempt/project identity and sample interval. No new tool or dependency. See [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md).
 
 The partial WP-N05 [event timing contract](EVENT_TIMING.md) adds optional suite 1.3 and Runtime 1.4 timing fields for debug/model-native schedules and offline supplied clock-channel evidence. Evidence uses conservative error brackets, cannot be reused or reordered, and does not qualify a simulator clock or scheduler. Omitted timing preserves legacy canonical behavior; no new tool or dependency is added.

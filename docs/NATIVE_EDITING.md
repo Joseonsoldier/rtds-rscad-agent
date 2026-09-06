@@ -2,6 +2,8 @@
 
 This checkpoint implements a bounded native editor and GROUP inspection. It is **not completion of WP-N01 through WP-N11**, nor qualification of a native construction/Runtime closed loop. Existing v1/v2 tools and execution safeguards remain.
 
+WP-N10C adds a separate internal [hybrid line-binding protocol](LINE_AUTHORING.md#internal-hybrid-line-binding). Actual SDK edits and retained native export evidence ground twelve endpoint source-token replacements, optionally plus the calculation block's constants filename; the resulting archive is assembled from the original and independently reopened. Endpoint-only edits leave compiler dependency binding unverified. The protocol explicitly reports `native_serialized_output=false`. Public native-save preservation checks and the narrow empty-Runtime reconciliation rule below are unchanged. A populated original RTX is retained as exact source bytes during assembly, never restored into a failed native output under a new exemption. Local Compile evidence for this protocol is recorded separately from native serialization and public transaction qualification.
+
 ## Checkpoint 3 — local construction and Compile (2026-09-06)
 
 Baseline `1a9d54e`. The earlier cleanup incident was already resolved. This follow-up fixes fresh new-case ownership, stored NAME insertion, empty Runtime metadata preservation and GROUP-local API readback. Three explicitly authorized local adapter trials passed; each candidate was then copied separately for one local Compile. No GUI automation, rack query/reservation/connection, Runtime execution/capture/control or load-flow call was made. The transport guard allowlisted every RPC; Python sockets stayed on loopback. Java background networking was not measured.

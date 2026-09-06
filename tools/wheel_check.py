@@ -73,15 +73,22 @@ import json, sys
 import rtds_agent
 from rtds_agent.integrity import verify_release
 from rtds_agent.skill_catalog import list_skills
+from rtds_agent.core import line_binding, line_binding_native
 installation, checkout = map(lambda p: Path(p).resolve(), sys.argv[1:])
 loaded = Path(rtds_agent.__file__).resolve()
 assert loaded.is_relative_to(installation), "Imported outside isolated venv"
 assert not loaded.is_relative_to(checkout), "Imported source checkout"
+for module in (line_binding, line_binding_native):
+    assert Path(module.__file__).resolve().is_relative_to(installation)
+assert callable(line_binding.prepare_line_binding) and callable(line_binding.project_line_binding)
+assert callable(line_binding_native.bind_line_case) and callable(line_binding_native.allow_line_binding_rpc)
+assert not any(name == "rtds" or name.startswith("rtds.") for name in sys.modules), "Import loaded the vendor SDK"
 skills = list_skills()
 assert len(skills["skills"]) == 9
 print(json.dumps({"import_path_in_venv": loaded.relative_to(installation).as_posix(),
                   "version": metadata.version("rtds-rscad-agent"),
-                  "integrity": verify_release(), "skill_count": len(skills["skills"])}))
+                  "integrity": verify_release(), "skill_count": len(skills["skills"]),
+                  "internal_line_binding_imported_without_sdk": True}))
 ''', encoding="utf-8")
         installed = run("installed import, release integrity and packaged resources",
                         [str(probe), str(installation), str(ROOT)], json_output=True)
