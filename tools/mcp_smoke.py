@@ -352,7 +352,37 @@ COMPONENT-END:
     assert timing_result['assessments'][0]['event_timing']['events'][0]['observed_simulator_time']==1
     no_grant=await session.call_tool('prepare_simulation_run',{'workflow_path':timing_row['workflow_path']})
     assert no_grant.is_error and not list(Path(timing_row['workflow_path']).parent.glob('runtime-request-*.json'))
-    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True,"native_timing_plan_and_supplied_assessment":True,"native_timing_grant_refused":True}
+    point={'P':{'value':1,'units':'pu','sign_convention':'authored injection','pu_base':100}}
+    initialization={'schema_version':'1.0','mode':'preconditions','input_project_sha256':digest(project),
+        'entities':[{'entity_id':'source1','role':'source','context':'subsystem:0','component_id':1,
+            'component_type':'synthetic_gain','requested_operating_point':point,
+            'parameter_bindings':[{'quantity':'P','parameter':'Gain','expected_stored_value':'1',
+                'calculated_parameter':'Gain','expected_calculated_stored_value':'1'}]}],
+        'provenance':[{'source_path':str(sources/'synthetic-guide.md'),'source_sha256':digest(sources/'synthetic-guide.md'),
+                       'locator':'Authored mapping, not a solver result'}]}
+    before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    checked_init=(await call('check_rscad_model',{'project_path':str(project),'initialization':initialization}))['initialization']
+    assert checked_init['status']=='preconditions_checked' and checked_init['execution_authorized'] is False
+    assert before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    lf_data=root/'data'/'supplied-initialization.json'
+    lf_data.write_text(json.dumps({'schema_version':'1.0','evidence_id':'authored-only',
+        'initialization_plan_sha256':checked_init['initialization_plan_sha256'],'input_project_sha256':digest(project),
+        'after_project_sha256':digest(project),'solver_report':{'reported_status':'converged','warnings':[]},
+        'calculated_states':[{'entity_id':'source1','operating_point':point}],'parameter_changes':[]}),encoding='utf-8')
+    supplied_init=(await call('check_rscad_model',{'project_path':str(project),'initialization':{
+        **initialization,'mode':'supplied_evidence','evidence':{'data_path':str(lf_data),'data_sha256':digest(lf_data),
+            'after_project':str(project),'after_project_sha256':digest(project),'after_snapshot_id':checked_init['snapshot_id']}}}))['initialization']
+    assert supplied_init['status']=='consistent_supplied_evidence' and supplied_init['integration_qualified'] is False
+    assert supplied_init['loadflow_called'] is False and supplied_init['mutations_performed'] is False
+    legacy_spec={**plan['plan']['runs'][0]['test_spec'],'loadflow_initialization':{'enabled':True,'timeout_seconds':30,
+        'zero_impedance_threshold_pu':1e-6,'flat_start':True,'method':'FAST_DECOUPLED'}}
+    legacy=await call('prepare_workflow',{'source_project':str(project),'test_spec':legacy_spec,
+        'grounding_paths':[str(sources/'synthetic-guide.md')]})
+    refused_lf=await session.call_tool('prepare_simulation_run',{'workflow_path':legacy['workflow_path']})
+    assert refused_lf.is_error and 'frequency, not timeout' in str(refused_lf)
+    assert not list(Path(legacy['workflow_path']).parent.glob('runtime-request-*.json'))
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True,"native_timing_plan_and_supplied_assessment":True,"native_timing_grant_refused":True,
+            "initialization_preconditions_and_supplied_evidence":True,"legacy_loadflow_grant_refused":True}
 
 
 async def smoke():

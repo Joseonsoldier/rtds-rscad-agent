@@ -36,6 +36,8 @@ WP-N03 saved Runtime inspection supports inventory and semantic IR. Preserve tag
 
 ## Delivery preference
 
+WP-N06 initialization inspection is read-only and source/hash bound. Keep declared preconditions, supplied result consistency, reported convergence and actual integration separate; compare all saved model changes and preserve original/companion hashes. Enabled legacy Runtime LF must be refused before backend, grants and rack discovery: SDK 1.1 takes frequency, not timeout, and documentation requires LF before Compile. No live LF adapter or compiled-artifact mutation exemption is qualified. See [initialization scope](docs/LOADFLOW_INITIALIZATION.md).
+
 WP-N05 timing contracts may plan/prepare/assess supplied samples. No qualified scheduler adapter exists: preserve explicit model-native refusal before all live dispatch/grant creation and never lower native schedules to host writes. Keep clock-value provenance, non-reused ordered edge assignment and conservative error brackets; numerical agreement never proves a simulator epoch or deterministic execution. See [event timing scope](docs/EVENT_TIMING.md).
 
 WP-N04 native signal arrays are opt-in through existing execution gates. Preserve source-bound metadata, exact saved graph/live scope and current run/attempt/hash receipts. Native conversion must use `workflow_native` with recorded metadata and sample hashes. Acquisition dispatch stop is local only; do not claim remote abort, fresh/atomic data, verified simulator clock or live integration. Keep ordered acquisition stop, controls restoration, Runtime stop and resource cleanup separate. See [native capture scope](docs/NATIVE_CAPTURE.md).

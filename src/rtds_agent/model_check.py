@@ -8,6 +8,7 @@ from .safety import ToolSafetyError, sha256_file
 from .input_contracts import validate
 from .core.topology_parser import parse_parameter_schema
 from .core.structured_patch import validate_new_value
+from .initialization import InitializationRequest, inspect_initialization
 
 FIELD = {"type": "object", "additionalProperties": False, "required": ["context", "component_id", "parameter", "units"],
          "properties": {"context": {"type": "string", "minLength": 1}, "component_id": {"type": "integer", "minimum": 0},
@@ -138,9 +139,12 @@ def check_document(document, electrical_rules=None):
 
 
 def check_rscad_model(project_path: str, snapshot_id: str | None = None,
-                      electrical_rules: ElectricalRules | None = None) -> dict[str, Any]:
-    """Check static structure, declared values and explicit unit-bound engineering rules."""
+                      electrical_rules: ElectricalRules | None = None,
+                      initialization: InitializationRequest | None = None) -> dict[str, Any]:
+    """Check static rules and optional declared/supplied initialization evidence without live calls."""
     _, _, document = _document(project_path, snapshot_id)
     result = check_document(document, electrical_rules)
+    if initialization is not None:
+        result['initialization'] = inspect_initialization(project_path, document['snapshot_id'], initialization)
     _document(project_path, document["snapshot_id"])
     return {**result, "snapshot_id": document["snapshot_id"], "source": document["source"]}

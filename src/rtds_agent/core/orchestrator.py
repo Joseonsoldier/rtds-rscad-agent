@@ -86,8 +86,8 @@ class ApprovalGatedOrchestrator:
             raise ApprovalRequired(
                 "compile authorization is required before rack discovery or compile"
             )
-        from .event_timing import require_executable_timing
-        require_executable_timing(self.workflow.manifest['test_spec'])
+        from .execution_requirements import require_executable_spec
+        require_executable_spec(self.workflow.manifest['test_spec'])
         rack_snapshot = self.backend.refresh_racks(ApprovalAction.COMPILE.value)
         self.workflow.consume_approval(
             ApprovalAction.COMPILE, rack_snapshot=rack_snapshot
@@ -117,8 +117,8 @@ class ApprovalGatedOrchestrator:
             raise ApprovalRequired(
                 "offline-test authorization is required before tool execution"
             )
-        from .event_timing import require_executable_timing
-        require_executable_timing(self.workflow.manifest['test_spec'])
+        from .execution_requirements import require_executable_spec
+        require_executable_spec(self.workflow.manifest['test_spec'])
         self.workflow.consume_approval(ApprovalAction.OFFLINE_TEST)
         compile_result = self.workflow.manifest.get("compile") or {}
         try:
@@ -148,8 +148,8 @@ class ApprovalGatedOrchestrator:
             )
         from .native_acquisition import MODE, native_channels, validate_grounding
         spec=self.workflow.manifest['test_spec']
-        from .event_timing import require_executable_timing
-        require_executable_timing(spec)
+        from .execution_requirements import require_executable_spec
+        require_executable_spec(spec)
         native=spec.get('runtime_capture',{}).get('acquisition_mode')==MODE
         options={}
         if native:

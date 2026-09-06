@@ -180,8 +180,8 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
         if (settings.data_dir / "native_recovery_required.json").exists():
             raise PermissionError("Unverified native case cleanup blocks live execution; inspect the exact native journal before operator recovery")
         path, workflow = _load_workflow(workflow_path)
-        from .core.event_timing import require_executable_timing
-        require_executable_timing(workflow.manifest['test_spec'])
+        from .core.execution_requirements import require_executable_spec
+        require_executable_spec(workflow.manifest['test_spec'])
         if expected_workflow_sha256 and sha256_file(path) != expected_workflow_sha256:
             raise ToolSafetyError("Runtime request changed before execution lock")
         if expected_policy_sha256 and sha256_json(require_action(settings, action.value)) != expected_policy_sha256:
@@ -307,8 +307,8 @@ def run_offline_test(workflow_path: str) -> dict[str, Any]:
 def prepare_simulation_run(workflow_path: str) -> dict[str, Any]:
     """Bind a Runtime request to an existing compile and plan; no live calls."""
     path, workflow = _load_workflow(workflow_path)
-    from .core.event_timing import require_executable_timing
-    require_executable_timing(workflow.manifest['test_spec'])
+    from .core.execution_requirements import require_executable_spec
+    require_executable_spec(workflow.manifest['test_spec'])
     if workflow.state is not WorkflowState.COMPILED:
         raise ToolSafetyError("Compile this workflow before preparing Runtime")
     plan = validate_runtime_test_spec(workflow.manifest["test_spec"])
@@ -322,8 +322,8 @@ def prepare_simulation_run(workflow_path: str) -> dict[str, Any]:
 def run_simulation(workflow_path: str, request_path: str, request_sha256: str) -> dict[str, Any]:
     """Run bounded controls/capture, verify readback, restore and stop; no per-run prompt."""
     path, workflow = _load_workflow(workflow_path)
-    from .core.event_timing import require_executable_timing
-    require_executable_timing(workflow.manifest['test_spec'])
+    from .core.execution_requirements import require_executable_spec
+    require_executable_spec(workflow.manifest['test_spec'])
     request_file = checked_file(request_path, (path.parent,), ".json")
     if not request_file.name.startswith("runtime-request-") or sha256_file(request_file) != request_sha256:
         raise ToolSafetyError("Runtime request identity mismatch")

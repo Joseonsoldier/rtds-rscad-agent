@@ -961,8 +961,8 @@ class ProductionRscadBackend:
         authorization: dict[str, Any] | None = None,
         acquisition_context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        from .event_timing import require_executable_timing
-        require_executable_timing(test_spec)
+        from .execution_requirements import require_executable_spec
+        require_executable_spec(test_spec)
         if not self.runtime_enabled:
             raise BackendSafetyViolation(
                 "Runtime is disabled; construct the backend with an explicit "
@@ -1245,21 +1245,13 @@ class ProductionRscadBackend:
         )
         compiled_artifact_integrity_clean = bool(
             integrity.get("compiled_artifact_unchanged") is True
-            or (
-                loadflow_enabled
-                and execution.get("loadflow_succeeded") is True
-                and safety.get("load_flow_called") is True
-            )
         )
         integrity_clean = bool(
             non_artifact_integrity_clean and compiled_artifact_integrity_clean
         )
-        compiled_artifact_change_authorized_by_loadflow = bool(
-            integrity.get("compiled_artifact_unchanged") is False
-            and loadflow_enabled
-            and execution.get("loadflow_succeeded") is True
-            and safety.get("load_flow_called") is True
-        )
+        # A completed SDK call provides no bound list of solver changes.
+        # Preserve the legacy receipt field without granting a hash exemption.
+        compiled_artifact_change_authorized_by_loadflow = False
 
         raw_data: dict[str, Any] | None = None
         channel_summaries: dict[str, dict[str, Any]] = {}

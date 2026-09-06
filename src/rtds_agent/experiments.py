@@ -98,8 +98,8 @@ def run_experiment_suite(request: SuiteRequest) -> dict[str, Any]:
                            controls=item["action"] == "runtime" and bool(request["specification"]["events"] or request["specification"]["initial_conditions"]))
     plan = plan_suite(request)
     if request['mode']=='execute':
-        from .core.event_timing import require_executable_timing
-        for row in plan['runs']:require_executable_timing(row['test_spec'])
+        from .core.execution_requirements import require_executable_spec
+        for row in plan['runs']:require_executable_spec(row['test_spec'])
     base = {"suite_id":plan["suite_id"],"engineering_verdict":"not_evaluated","live_calls_made":False}
     if request["mode"] == "plan": return {**base,"status":"planned","plan":plan}
     if request["suite_id"] != plan["suite_id"]: raise ToolSafetyError("Suite plan changed; review the new suite_id")

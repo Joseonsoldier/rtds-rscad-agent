@@ -6,6 +6,7 @@ import math
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -164,12 +165,12 @@ class FakeLiveCase:
         self.state.run_state = 'running'
         return None
 
-    def run_loadflow(self, timeout_seconds: int, zero_impedance_threshold_pu: float, flat_start: bool, method: str) -> bool:
+    def run_loadflow(self, frequency: int, threshold: float, flat_start: bool, algorithm: str) -> None:
         self.events.append('loadflow')
-        self.loadflow_calls.append((timeout_seconds, zero_impedance_threshold_pu, flat_start, method))
+        self.loadflow_calls.append((frequency, threshold, flat_start, algorithm))
         if self.loadflow_fails:
             raise RuntimeError('injected loadflow failure')
-        return True
+        return None
 
     def update_plots(self) -> None:
         self.update_calls += 1
@@ -430,27 +431,29 @@ class RscadFxRuntimeDriverTests(unittest.TestCase):
         self.assertEqual(control.position, 1)
         self.assertEqual(app.sleep_calls, [0.5, 0.5, 5.0])
 
-    def test_loadflow_runs_before_runtime_start(self) -> None:
+    def test_legacy_loadflow_is_refused_before_connection(self) -> None:
         case = FakeLiveCase(self.path)
         result, app = self._capture(case, loadflow_enabled=True)
-        self.assertEqual(case.events[:2], ['loadflow', 'run'])
-        self.assertEqual(case.loadflow_calls, [(60, 1e-06, True, 'FAST_DECOUPLED')])
-        self.assertTrue(result['execution']['loadflow_succeeded'])
-        self.assertTrue(result['safety']['load_flow_called'])
-        self.assertTrue(result['execution']['stop_succeeded'])
-        self.assertTrue(result['cleanup']['case_closed'])
-        self.assertEqual(app.disconnect_calls, 1)
-
-    def test_loadflow_failure_prevents_run_and_cleans_up(self) -> None:
-        case = FakeLiveCase(self.path, loadflow_fails=True)
-        result, app = self._capture(case, loadflow_enabled=True)
-        self.assertTrue(result['execution']['loadflow_call_attempted'])
+        self.assertTrue(result['errors'])
+        self.assertIn('frequency, not timeout', result['errors'][0]['message'])
+        self.assertFalse(result['execution']['loadflow_call_attempted'])
         self.assertFalse(result['execution']['loadflow_succeeded'])
+        self.assertEqual(result['execution']['loadflow_convergence'], 'not_observed')
+        self.assertEqual(case.loadflow_calls, [])
         self.assertEqual(case.run_calls, 0)
-        self.assertEqual(case.stop_calls, 0)
-        self.assertTrue(result['cleanup']['case_closed'])
-        self.assertTrue(result['cleanup']['disconnected'])
-        self.assertEqual(app.disconnect_calls, 1)
+        self.assertEqual(app.connect_calls, 0)
+        self.assertEqual(app.disconnect_calls, 0)
+
+    def test_unsupported_loadflow_results_cannot_establish_convergence(self) -> None:
+        for value in (None, True, False, {'converged': True}):
+            with self.subTest(value=value):
+                case = FakeLiveCase(self.path)
+                with patch.object(case, 'run_loadflow', return_value=value) as loadflow:
+                    result, app = self._capture(case, loadflow_enabled=True)
+                    loadflow.assert_not_called()
+                self.assertFalse(result['execution']['loadflow_succeeded'])
+                self.assertEqual(result['execution']['loadflow_convergence'], 'not_observed')
+                self.assertEqual(app.connect_calls, 0)
 
     def test_signal_read_failure_still_stops_and_cleans_up(self) -> None:
         case = FakeLiveCase(self.path, signal_fails=True)
@@ -567,33 +570,33 @@ class ProductionRuntimeBackendTests(unittest.TestCase):
         self.assertNotIn('samples', manifest['driver'])
         self.assertTrue(all(manifest['hashes']['integrity'].values()))
 
-    def test_loadflow_happy_path_is_hash_bound_and_required(self) -> None:
+    def test_legacy_loadflow_is_refused_before_rack_discovery(self) -> None:
         self.workflow = self._workflow(loadflow_enabled=True)
-        result = self._execute()
-        self.assertTrue(result['safe_completion'])
-        manifest = self._latest_manifest()
-        self.assertTrue(manifest['runtime_plan']['loadflow_initialization']['enabled'])
-        self.assertTrue(manifest['execution']['loadflow_call_attempted'])
-        self.assertTrue(manifest['execution']['loadflow_succeeded'])
-        self.assertTrue(manifest['safety']['load_flow_called'])
+        with patch.object(self.backend, 'refresh_racks', side_effect=AssertionError('rack')) as racks:
+            with self.assertRaisesRegex(ValueError, 'frequency, not timeout'):
+                self._execute()
+            racks.assert_not_called()
+        self.assertEqual(self.runtime_driver.calls, 0)
 
-    def test_loadflow_compiled_artifact_mutation_is_authorized(self) -> None:
+    def test_direct_production_loadflow_refuses_before_project_or_driver(self) -> None:
         self.workflow = self._workflow(loadflow_enabled=True)
+        with patch.object(self.backend, '_project_context', side_effect=AssertionError('project')) as context:
+            with self.assertRaisesRegex(ValueError, 'frequency, not timeout'):
+                self.backend.run_runtime(working_copy=str(self.working), rack=1,
+                    test_spec=self.workflow.manifest['test_spec'],
+                    expected_working_sha256=sha256_file(self.working),
+                    compiled_artifact_sha256=sha256_file(self.artifact),
+                    source_path=str(self.source), expected_source_sha256=sha256_file(self.source))
+            context.assert_not_called()
+        self.assertEqual(self.runtime_driver.calls, 0)
+
+    def test_compiled_artifact_change_has_no_loadflow_exemption(self) -> None:
         self.runtime_driver.mutate_path = self.artifact
-        result = self._execute()
-        self.assertTrue(result['safe_completion'])
-        manifest = self._latest_manifest()
-        self.assertFalse(manifest['hashes']['integrity']['compiled_artifact_unchanged'])
-        self.assertTrue(manifest['hashes']['compiled_artifact_change_authorized_by_loadflow'])
-
-    def test_loadflow_failure_fails_closed(self) -> None:
-        self.workflow = self._workflow(loadflow_enabled=True)
-        self.runtime_driver.mode = 'loadflow_failure'
         result = self._execute()
         self.assertFalse(result['safe_completion'])
         manifest = self._latest_manifest()
-        self.assertFalse(manifest['execution']['loadflow_succeeded'])
-        self.assertTrue(any((item['type'] == 'SafetyTelemetryError' for item in manifest['errors'])))
+        self.assertFalse(manifest['hashes']['integrity']['compiled_artifact_unchanged'])
+        self.assertFalse(manifest['hashes']['compiled_artifact_change_authorized_by_loadflow'])
 
     def test_working_copy_tamper_is_blocked_before_driver(self) -> None:
         orchestrator = self._approve()

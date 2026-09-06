@@ -12,6 +12,8 @@ Default policy is inactive. Opt-in belongs to each installation's operator, not 
 
 Allowed scopes are Compile, offline FSAT, Runtime capture, and optionally bounded Runtime control. No generic script execution, standalone arbitrary write, case save, deployment, rack reconfiguration, hardware I/O or source overwrite tools are exposed.
 
+WP-N06A's optional load-flow initialization is a read-only planned/supplied-evidence route. Enabled legacy Runtime initialization is refused before any backend, rack, or grant access; omitted or disabled initialization keeps existing behavior. Preconditions or supplied convergence evidence do not prove live integration or grant permission, and no automatic compiled-artifact mutation exemption exists.
+
 Runtime binds source/copy/test/companion/compiled-artifact hashes, same compile rack and a fresh consumed approval. Inputs require exact UUID/type/name/group/description, expected initial value, readback and restoration. A failed restore/stop/close/disconnect is not success. Time/sample bounds are enforced by the application but cannot guarantee recovery if the process, OS, network or simulator fails.
 
 Writes additionally require the exact live `object_subpage`. Current case/hash, a unique typed/name lookup, Runtime subtab, exact ID and page must agree before writes and restoration. Saved VIEW-ID, Runtime UUID or an IR Draft candidate never supplies live authority. If scope changes before restoration, the driver records failure without writing to the changed target and continues remaining cleanup. These checks have synthetic qualification only.

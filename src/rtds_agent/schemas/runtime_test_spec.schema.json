@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.rtds-agent/schemas/runtime-test-spec-1.4.json",
+  "$id": "https://local.rtds-agent/schemas/runtime-test-spec-1.5.json",
   "title": "RSCAD Runtime control and signal-capture test specification",
   "type": "object",
   "required": [
@@ -192,11 +192,7 @@
     "loadflow_initialization": {
       "type": "object",
       "required": [
-        "enabled",
-        "timeout_seconds",
-        "zero_impedance_threshold_pu",
-        "flat_start",
-        "method"
+        "enabled"
       ],
       "properties": {
         "enabled": {
@@ -223,7 +219,30 @@
           ]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Legacy plan inspection only when enabled; live execution is refused before dispatch. The old timeout field is not an installed solver timeout.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "timeout_seconds",
+              "zero_impedance_threshold_pu",
+              "flat_start",
+              "method"
+            ]
+          },
+          "else": {
+            "maxProperties": 1
+          }
+        }
+      ]
     },
     "measurement_channels": {
       "type": "array",

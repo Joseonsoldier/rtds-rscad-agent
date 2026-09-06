@@ -31,6 +31,8 @@ For opt-in `native_signal_arrays`, first supply exact saved graph/live page iden
 
 ## Completion
 
+Enabled legacy `loadflow_initialization` is refused before execution or grant creation. The installed SDK takes frequency as its first argument, and initialized parameters must be compiled before Runtime. Use optional `check_rscad_model(..., initialization=...)` for read-only preconditions and supplied evidence. No live initialization adapter is qualified. Supplied convergence does not authorize execution or compiled-artifact changes. Omit legacy initialization or use `{"enabled": false}` for unchanged Runtime capture.
+
 For precise event work, explicitly choose the suite DSL `event_timing` contract. `model_native` currently supports offline plan/preparation and supplied-sample assessment only; Compile, Runtime request creation and execution are refused before backend dispatch because no scheduler/clock-epoch adapter is qualified. Native initial conditions are unsupported and must be empty. Omitted timing keeps existing host scheduling; `wall_clock_debug` labels it explicitly. Never present sleep/write delays or Runtime value readback as measured simulator event timing.
 
 Report the actual backend and attempt, policy/plan/project binding, raw captures, control writes and readback, restored values, stop/cleanup evidence, and any incomplete outcome. Compile success and completed simulation do not establish engineering acceptance.

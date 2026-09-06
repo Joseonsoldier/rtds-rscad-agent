@@ -429,9 +429,9 @@ def validate_runtime_test_spec(
 ) -> dict[str, Any]:
     """Return the canonical bounded Runtime control/capture plan or reject it.
 
-    The supported operation is optionally initializing an already-compiled
-    case with the embedded load-flow solver, starting it, collecting numeric
-    signal arrays, and stopping it.  The explicit empty action lists prevent a
+    The supported operation starts an already-compiled case, collects numeric
+    signal arrays, and stops it. Legacy load-flow plans can be inspected here
+    but are refused by execution guards. The explicit empty action lists prevent a
     future caller from smuggling writes into a generic event or controls object.
     """
 
@@ -797,6 +797,9 @@ class RscadFxRuntimeDriver:
                 "run_state_after_start": None,
                 "loadflow_call_attempted": False,
                 "loadflow_succeeded": False,
+                "loadflow_call_completed": False,
+                "loadflow_convergence": "not_observed",
+                "loadflow_succeeded_meaning": "call_completed_without_exception_only",
                 "loadflow_return_value": None,
                 "loadflow_parameters": None,
                 "warmup_seconds": warmup_seconds,
@@ -856,8 +859,11 @@ class RscadFxRuntimeDriver:
         acquisition = None
         writes = list(runtime_parameter_writes or [])
         try:
-            from .event_timing import require_executable_timing
-            require_executable_timing({'event_timing':event_timing,'measurement_channels':channels} if event_timing is not None else {})
+            from .execution_requirements import require_executable_spec
+            execution_spec = {'loadflow_initialization': loadflow_initialization} if loadflow_initialization is not None else {}
+            if event_timing is not None:
+                execution_spec.update(event_timing=event_timing, measurement_channels=channels)
+            require_executable_spec(execution_spec)
             writes = _canonical_runtime_parameter_writes(writes)
             binding_sha256 = sha256_file(Path(working_copy)) if writes else None
             input_records = runtime_input_objects(working_copy) if writes else {}
@@ -907,33 +913,12 @@ class RscadFxRuntimeDriver:
                 raise RuntimeContractError(
                     f"case must be stopped before Runtime start: {result['run_state_before']}"
                 )
-            loadflow = dict(loadflow_initialization or {"enabled": False})
             execution = result["execution"]
             if native_capture is not None:
                 acquisition=NativeAcquisition(case,working_copy,channels,native_capture['context'],
                     minimum_samples=native_capture['minimum_samples'],maximum_samples=native_capture['maximum_samples'])
                 result['acquisition']=acquisition.evidence
                 acquisition.bind()
-            if loadflow.get("enabled") is True:
-                parameters = {
-                    "timeout_seconds": int(loadflow["timeout_seconds"]),
-                    "zero_impedance_threshold_pu": float(
-                        loadflow["zero_impedance_threshold_pu"]
-                    ),
-                    "flat_start": bool(loadflow["flat_start"]),
-                    "method": str(loadflow["method"]),
-                }
-                execution["loadflow_call_attempted"] = True
-                execution["loadflow_parameters"] = parameters
-                result["safety"]["load_flow_called"] = True
-                loadflow_value = case.run_loadflow(
-                    parameters["timeout_seconds"],
-                    parameters["zero_impedance_threshold_pu"],
-                    parameters["flat_start"],
-                    parameters["method"],
-                )
-                execution["loadflow_return_value"] = repr(loadflow_value)
-                execution["loadflow_succeeded"] = True
             meter_ids = {} if acquisition else runtime_meter_ids(working_copy)
             plot_ids = {} if acquisition else runtime_single_curve_plot_ids(working_copy)
             for channel in ([] if acquisition else channels):

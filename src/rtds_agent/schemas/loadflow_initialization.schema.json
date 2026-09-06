@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rtds-agent.local/schemas/loadflow_initialization.schema.json",
+  "title": "Read-only load-flow preconditions and supplied initialization evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "input_project_sha256",
+    "entities",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "mode": {
+      "enum": [
+        "preconditions",
+        "supplied_evidence"
+      ]
+    },
+    "input_project_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence_ref"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "supplied_evidence"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "evidence"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "evidence"
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "units",
+        "sign_convention"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": -1000000000000,
+          "maximum": 1000000000000
+        },
+        "units": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sign_convention": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "pu_base": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000000
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "units": {
+                "const": "pu"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "pu_base"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "pu_base"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "P": {
+          "$ref": "#/$defs/quantity"
+        },
+        "Q": {
+          "$ref": "#/$defs/quantity"
+        },
+        "V": {
+          "$ref": "#/$defs/quantity"
+        },
+        "angle": {
+          "$ref": "#/$defs/quantity"
+        }
+      },
+      "minProperties": 1
+    },
+    "full_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "P",
+        "Q",
+        "V",
+        "angle"
+      ],
+      "properties": {
+        "P": {
+          "$ref": "#/$defs/quantity"
+        },
+        "Q": {
+          "$ref": "#/$defs/quantity"
+        },
+        "V": {
+          "$ref": "#/$defs/quantity"
+        },
+        "angle": {
+          "$ref": "#/$defs/quantity"
+        }
+      },
+      "minProperties": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_path",
+        "source_sha256",
+        "locator"
+      ],
+      "properties": {
+        "source_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quantity",
+        "parameter",
+        "expected_stored_value",
+        "calculated_parameter",
+        "expected_calculated_stored_value"
+      ],
+      "properties": {
+        "quantity": {
+          "enum": [
+            "P",
+            "Q",
+            "V",
+            "angle"
+          ]
+        },
+        "parameter": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "expected_stored_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "calculated_parameter": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "expected_calculated_stored_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "role",
+        "context",
+        "component_id",
+        "component_type",
+        "requested_operating_point",
+        "parameter_bindings"
+      ],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "role": {
+          "enum": [
+            "source",
+            "generator",
+            "load"
+          ]
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "component_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "component_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "requested_operating_point": {
+          "$ref": "#/$defs/point"
+        },
+        "parameter_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context",
+        "component_id",
+        "component_type",
+        "parameter",
+        "before_value",
+        "after_value"
+      ],
+      "properties": {
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "component_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "component_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "parameter": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "before_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "after_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "calculated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "operating_point"
+      ],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "operating_point": {
+          "$ref": "#/$defs/point"
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_path",
+        "data_sha256",
+        "after_project",
+        "after_project_sha256",
+        "after_snapshot_id"
+      ],
+      "properties": {
+        "data_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "data_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "after_project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "after_project_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "after_snapshot_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "supplied_document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "evidence_id",
+        "initialization_plan_sha256",
+        "input_project_sha256",
+        "after_project_sha256",
+        "solver_report",
+        "calculated_states",
+        "parameter_changes"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "initialization_plan_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "input_project_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "after_project_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "solver_report": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reported_status",
+            "warnings"
+          ],
+          "properties": {
+            "reported_status": {
+              "enum": [
+                "converged",
+                "not_converged",
+                "unknown"
+              ]
+            },
+            "warnings": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              }
+            }
+          }
+        },
+        "calculated_states": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/calculated"
+          }
+        },
+        "parameter_changes": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/change"
+          }
+        }
+      }
+    }
+  }
+}

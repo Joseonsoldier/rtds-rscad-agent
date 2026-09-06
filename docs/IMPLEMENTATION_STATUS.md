@@ -1,5 +1,19 @@
 # Implementation status
 
+## WP-N06A — initialization evidence and local Compile verification (2026-09-06)
+
+Baseline `efc9211`. Added optional read-only initialization preconditions and supplied evidence to `check_rscad_model`. Requests bind exact source/definition/companion/provenance hashes, separate requested and calculated parameter identities, quantities/units/base, before/after models and artifact hashes. Comparison preserves numeric changes, structure, geometry, GROUP/settings and opaque/non-DFX content. Missing/unbound quantities and reported convergence remain explicit; a consistent supplied receipt is not solver or integration qualification. See [LOADFLOW_INITIALIZATION.md](LOADFLOW_INITIALIZATION.md).
+
+Installed SDK/manual investigation found a concrete legacy defect: Runtime passed `timeout_seconds` to the solver's frequency argument and omitted the documented post-LF Compile. Enabled legacy LF is now refused before all public/backend/grant/rack dispatch and direct driver connection; the incorrect invocation and compiled-artifact hash exemption are removed. Omitted/disabled Runtime capture retains its existing gates. Runtime schema 1.5 also accepts the exact disabled request. Tool counts 49/10/29, nine skills and dependencies are unchanged.
+
+Actual execution: one new isolated CH6 `gen1` copy compiled successfully in 1.187 s. All 18 RPCs were allowed; fresh success/empty error logs and matching 292,269-byte binaries passed; 47 protected hashes and input hash stayed unchanged, with confirmed close/disconnect. This task-scoped local API Compile is separate from public live qualification. A read-only installed-source audit passed 29 checks and all 66 accumulated protected hashes matched. No live LF, rack query/reservation/connection, Runtime start/capture/control or GUI action occurred.
+
+Read-only CH2 `acsys1` inspection passed exact source `Pt→P` and `Qt→Q` bindings with installed `MW`/`MVAR` definitions and 57/57 resolved component definitions. An initial `Mvar` spelling was correctly blocked against installed `MVAR`; case is never normalized silently. V/angle, slack/island sufficiency and actual convergence remain not evaluated.
+
+This wave used Astra high workers for native source discovery, initialization implementation and independent review, plus Luna low for bounded documentation synchronization. Root integrated the separate worktree, execution fixes, MCP exercise and release evidence. Actual full regression: **482 run, 480 passed, 2 existing skips, zero failures/errors (237.330 s)**. STDIO49/10/29, nine skills, manifest97/Git-byte checks, source/artifact scanning and fresh-wheel installation passed. Full software/release results are recorded in [VALIDATION.md](VALIDATION.md).
+
+WP-N06A is a partial software checkpoint. Fresh LF output grammar/convergence, native parameter save/reopen/diff, post-initialization Compile and recovery remain unqualified. WP-N05 live scheduling/clock acquisition remains incomplete; WP-N07–N11 retain their unmet live prerequisites. Work-order completion is not claimed.
+
 ## WP-N05A — timing contracts and supplied-sample evidence (2026-09-06)
 
 Baseline `c24e1e0`. This partial WP-N05 software checkpoint adds explicit debug/model-native schedules, retained/hash-bound canonical contracts and sampled timing-error evidence using declared clock-channel values. Native intent is never lowered to host writes. Unsupported native execution, Compile and Runtime request creation are refused before backend/grant/rack dispatch. Native initial conditions and original-model-only clock evidence across Draft sweeps are rejected early. Legacy omitted-mode canonical plans remain unchanged; action receipts now explicitly leave measured simulator timing unverified.

@@ -16,7 +16,7 @@ The [native editing checkpoints](docs/NATIVE_EDITING.md) add existing flat Draft
 
 The [v2.0 engineering guide](docs/V2_DEVELOPMENT.md) documents six added tools, a JSON experiment DSL, fourteen sampled metrics, project component policy, nine packaged skills and optional tool profiles. Default full mode preserves the previous 43 tools and adds six (49 total). Software/static-source tests are separate from native structural, Compile-log and rack qualification; see [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
-The partial WP-N05 checkpoint adds explicit debug/model-native event timing contracts and offline evidence from supplied clock-channel values; see [event timing](docs/EVENT_TIMING.md). Timing evidence has conservative error brackets and is not simulator-clock or scheduler qualification. Omit the timing field to retain legacy behavior; schemas are suite 1.3 and Runtime 1.4.
+The partial WP-N05 checkpoint adds explicit debug/model-native event timing contracts and offline evidence from supplied clock-channel values; see [event timing](docs/EVENT_TIMING.md). Timing evidence has conservative error brackets and is not simulator-clock or scheduler qualification. Omit the timing field to retain legacy behavior; schemas are suite 1.3 and Runtime 1.5.
 
 In PowerShell, from this repository:
 
@@ -89,7 +89,9 @@ New installations are inactive. After reviewing [the boundaries and recovery pro
 
 Replace `1 2` with racks you are authorized to use. The agent chooses an available rack within that set. Runtime must use the rack recorded by Compile. Within the selected scope, no application-level per-run prompt or CMD approval is required. Host or OS security prompts are separate.
 
-Switches, sliders, dials, Runtime numeric inputs and supported machine/breaker LockFree switches require an exact target identity, expected initial value, write readback and restoration before stopping. Requests are limited to 64 actions and 30 seconds of warmup/control timing. The API connection and load-flow operations have separate timeouts. This is not a hard real-time watchdog.
+Switches, sliders, dials, Runtime numeric inputs and supported machine/breaker LockFree switches require an exact target identity, expected initial value, write readback and restoration before stopping. Requests are limited to 64 actions and 30 seconds of warmup/control timing. The API connection has a separate timeout. Enabled legacy load-flow execution is unsupported. This is not a hard real-time watchdog.
+
+WP-N06A adds optional read-only `check_rscad_model(..., initialization=None)` planning and supplied-evidence inspection; see [load-flow initialization](docs/LOADFLOW_INITIALIZATION.md). An enabled legacy Runtime load-flow initialization request is refused before backend, rack, or grant access; omitted or disabled initialization remains unchanged. The installed SDK expects frequency as its first argument, and load-flow initialization must precede Compile. No live qualification or automatic compiled-artifact mutation is implied.
 
 The MCP server cannot enable policy, deploy, change rack configuration, save running cases, write vendor source files or configure external hardware I/O. See [workflow examples and limitations](docs/WORKFLOWS.md).
 

@@ -8,6 +8,8 @@ For native editing or a source-derived `rebuild_draft`, follow [preview/plan, is
 
 For saved Runtime structure use `inspect_runtime_layout(project_path, representation="ir")` and retain its source/snapshot hashes. [Runtime IR](RUNTIME_IR.md) preserves unresolved references and distinguishes stored positions from current values. A live write plan additionally needs exact verified `object_subpage`, type/name/ID, expected value and existing execution authorization. The driver rejects ambiguous candidates and rechecks scope before writing/restoration. No overlay generation tool is available.
 
+Optional WP-N06A load-flow initialization is limited to `check_rscad_model(..., initialization=None)` planning and supplied evidence; see [LOADFLOW_INITIALIZATION.md](LOADFLOW_INITIALIZATION.md). Enabled legacy Runtime initialization is refused before backend, rack, or grant access. Omitted or disabled initialization remains unchanged, and any plan inspection may retain historical enabled contracts without executing them. Load-flow initialization must precede Compile; supplied convergence does not qualify live integration.
+
 The MCP server publishes the explicit [tool contracts](TOOL_CONTRACTS.md), with separate local read, local output, and live-action annotations. Document/source reads, project inspection, numeric-copy edits and run preparation are separate from live execution. Unlike the private prototype, a new user creates a fresh workflow instead of importing someone else's accepted experiment.
 
 ## Source and plan
