@@ -1,5 +1,7 @@
 # Model changes, prepared results, and bounded experiments
 
+For opt-in native acquisition, prepare source-bound metadata and exact saved/live graph scope, inspect `capture_rtds_results` mode `prepare_native`, and execute only through the existing authorized Runtime workflow. Convert the completed attempt with `workflow_native`, which derives channel metadata from its receipt. No preparation or conversion starts RSCAD. See [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md).
+
 For native editing or a source-derived `rebuild_draft`, follow [preview/plan, isolated creation, mapped comparison, exact reopen and recovery](NATIVE_EDITING.md). Default static behavior is unchanged; auto apply remains refused. Reconstruction has synthetic qualification and three task-scoped local construction/Compile trials; public live apply remains unqualified. A recovery marker blocks further native apply/Compile/Runtime until operator review; do not reconnect using an old case ID. Do not promote private tutorial scripts or synthetic policies into operator authorizations.
 
 For saved Runtime structure use `inspect_runtime_layout(project_path, representation="ir")` and retain its source/snapshot hashes. [Runtime IR](RUNTIME_IR.md) preserves unresolved references and distinguishes stored positions from current values. A live write plan additionally needs exact verified `object_subpage`, type/name/ID, expected value and existing execution authorization. The driver rejects ambiguous candidates and rechecks scope before writing/restoration. No overlay generation tool is available.

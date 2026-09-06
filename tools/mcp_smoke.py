@@ -285,7 +285,44 @@ async def engineering_calls(session,root,sources,project):
     denied=await session.call_tool("run_experiment_suite",{"request":{**request,"mode":"execute","suite_id":plan["suite_id"],
         "executions":[{"run_id":run_id,"action":"compile","workflow_sha256":digest(Path(row["workflow_path"]))}]}})
     assert denied.is_error
-    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True}
+    native_project=sources/'authored-native-signals.rtfx'
+    with zipfile.ZipFile(project) as original,zipfile.ZipFile(native_project,'w') as candidate:
+        for name in original.namelist():
+            if name.endswith('.dfx'):candidate.writestr(name,original.read(name))
+        candidate.writestr('authored.rtx','''VIEW-START: view VIEW-TYPE: RUNTIME-VIEW VIEW-ID: "saved"
+COMPONENT: PLOT
+NAME: Container
+UUID: 100
+PLOT-DATA-START
+GRAPH-START: GRAPH 1: 1 CURVE
+GRAPH-DATA-START
+NAME: Voltage
+UUID: 101
+GRAPH-DATA-END
+CURVE-START
+GROUP: Subsystem #1|Outputs
+DESC: V
+COMP_ID: 1
+CURVE-END
+GRAPH-END
+PLOT-DATA-END
+COMPONENT-END:
+''')
+    native_dsl={**dsl,'test_id':'stdio-native-arrays','acquisition_mode':'native_signal_arrays',
+        'channels':[{'channel_id':'v','signal_path':'Subsystem #1|Outputs|V','units':'V','sign_convention':'as_recorded',
+          'time_basis':'simulator_time','metadata_evidence':{'source_sha256':digest(sources/'synthetic-guide.md'),'locator':'Authored test declaration'},
+          'runtime_identity':{'object_uuid':101,'object_name':'Voltage','object_subpage':'Plots'}}]}
+    native_overview=await call('inspect_rscad_project',{'project_path':str(native_project)})
+    native_request={**request,'source_project':str(native_project),'source_sha256':digest(native_project),
+        'snapshot_id':native_overview['snapshot_id'],'specification':native_dsl}
+    native_plan=await call('run_experiment_suite',{'request':native_request})
+    native_suite=await call('run_experiment_suite',{'request':{**native_request,'mode':'prepare','suite_id':native_plan['suite_id']}})
+    native_workflow=next(iter(native_suite['runs'].values()))['workflow_path']
+    before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    native_capture=await call('capture_rtds_results',{'request':{'mode':'prepare_native','workflow_path':native_workflow}})
+    assert native_capture['status']=='prepared_native_capture_unexecuted' and native_capture['grant_created'] is False
+    assert native_capture['live_calls_made'] is False and before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True}
 
 
 async def smoke():

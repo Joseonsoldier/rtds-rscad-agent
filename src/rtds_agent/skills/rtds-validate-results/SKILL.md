@@ -24,6 +24,8 @@ Identify the raw data source/hash, channel names and units, time unit and orderi
 3. Check every returned metric's data/window/algorithm evidence and limitations. The implementation requires matching sample timestamps, units, sign convention, time basis, and pu base. It performs no interpolation, resampling, or unit conversion.
 4. Distinguish `passed`, `failed`, `inconclusive`, and `not_evaluated` outcomes. Unsupported formats or criterion kinds fail validation. Preserve criteria that cannot be evaluated instead of silently excluding them. When the user wants a saved report, call `save_result_assessment(request)`; it writes a separate local assessment without changing approved workflows.
 
+Use `capture_rtds_results` mode `workflow_native` for saved native session receipts; channel declarations come from the bound plan and cannot be overridden. Legacy `workflow` conversion refuses native receipts. `supplied_csv` remains explicitly caller-supplied evidence. Keep capture success separate from safe completion: a failed control restoration or Runtime stop remains a failure even if samples convert or numerical criteria pass. Source-bound metadata declarations, SDK-generated plot time, freshness and atomicity are not independently verified by conversion.
+
 ## Completion
 
 Provide numerical values, units, thresholds, source hashes, windows, alignment/conversion assumptions, per-requirement outcomes, and the exact scope of the verdict. Separate structural validity, compile status, execution status, and requirements demonstrated by these data.

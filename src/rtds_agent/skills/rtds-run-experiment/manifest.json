@@ -1,11 +1,12 @@
 {
   "name": "rtds-run-experiment",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "required_tools": [
     "prepare_workflow",
     "get_execution_policy"
   ],
   "optional_tools": [
+    "capture_rtds_results",
     "run_experiment_suite",
     "prepare_simulation_run",
     "run_simulation"

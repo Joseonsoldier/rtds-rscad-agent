@@ -137,11 +137,22 @@ class ApprovalGatedOrchestrator:
         )
         return result
 
-    def execute_runtime(self) -> dict[str, Any]:
+    def execute_runtime(self, *, acquisition_context=None) -> dict[str, Any]:
         if self.workflow.state is not WorkflowState.RUNTIME_APPROVED:
             raise ApprovalRequired(
                 "explicit per-action Runtime approval is required before rack discovery or start"
             )
+        from .native_acquisition import MODE, native_channels, validate_grounding
+        spec=self.workflow.manifest['test_spec']
+        native=spec.get('runtime_capture',{}).get('acquisition_mode')==MODE
+        options={}
+        if native:
+            if not isinstance(acquisition_context,dict) or set(acquisition_context)!={'run_id','attempt_id'} or acquisition_context['run_id']!=self.workflow.manifest['workflow_id'] or not isinstance(acquisition_context['attempt_id'],str) or not acquisition_context['attempt_id']:
+                raise ValueError('Native capture requires the current workflow/attempt context before rack discovery')
+            project=self.workflow.manifest['project']
+            hashes={project['source_sha256'],project['working_sha256'],*[r['sha256'] for r in self.workflow.manifest['evidence']['grounding']['refs']]}
+            validate_grounding(native_channels(spec['measurement_channels']),hashes)
+            options['acquisition_context']=dict(acquisition_context)
         rack_snapshot = self.backend.refresh_racks(ApprovalAction.RUNTIME.value)
         authorization = self.workflow.consume_approval(
             ApprovalAction.RUNTIME, rack_snapshot=rack_snapshot
@@ -154,6 +165,7 @@ class ApprovalGatedOrchestrator:
                 test_spec=self.workflow.manifest["test_spec"],
                 compiled_artifact_sha256=compile_result.get("artifact_sha256"),
                 authorization=authorization,
+                **options,
                 **self._project_args(),
             )
         except Exception as exc:

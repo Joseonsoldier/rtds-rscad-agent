@@ -6,6 +6,8 @@ The local STDIO server uses an explicit allowlist. Treat the connected server's 
 
 ## Read tools
 
+WP-N04 adds `capture_rtds_results` modes `prepare_native` (read-only, no grant) and `workflow_native` (saved receipt/CSV conversion, no metadata overrides). Native acquisition executes only through the existing Runtime/suite policy and one-use-grant path. Exact fields, hash bindings, compatibility and recovery are in [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md).
+
 The v2.0 full registry has 49 tools. Six additions are `search_component_catalog`, `get_component_schema`, `edit_rscad_model`, `check_rscad_model`, `capture_rtds_results` and `run_experiment_suite`. Their fields, modes, bounds, qualifications and safety behavior are in [V2_DEVELOPMENT.md](V2_DEVELOPMENT.md) and the packaged JSON schemas. All previous 43 names remain in default full mode. Optional core/engineering profiles expose 10/29 names. The mixed-mode suite tool carries live/destructive annotations because execute mode can call existing guarded live actions; plan/prepare/assess do not call RSCAD.
 
 Existing signatures add optional fields: `inspect_rscad_project(..., representation=None)` accepts `ir` or `mermaid`; `get_execution_diagnostics(..., include_grounding=False)` adds local evidence; `compile_project(..., expected_workflow_sha256=None)` pins the workflow hash inside the existing execution lock. Existing assessment kinds remain and `power_metric` is additive. Existing numeric tools retain their original policy/catalog requirements; only the new structural tool needs a component policy and reviewed preview.

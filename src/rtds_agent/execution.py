@@ -74,6 +74,11 @@ def prepare_workflow(source_project: str, test_spec: TestSpecification, groundin
     docs = [checked_file(p, settings.document_roots) for p in grounding_paths]
     validate_test_spec(test_spec)
     source_hash = sha256_file(source)
+    from .core.native_acquisition import MODE, validate_grounding, discover_saved_signals
+    if test_spec.get('runtime_capture',{}).get('acquisition_mode')==MODE:
+        plan=validate_runtime_test_spec(test_spec)
+        validate_grounding(plan['measurement_channels'],{source_hash,*[sha256_file(p) for p in docs]})
+        discover_saved_signals(source,plan['measurement_channels'])
     discovery = discover_companion_dependencies(source, settings.definition_root, search_root=source.parent)
     require_complete(discovery)
     run = settings.projects_root / uuid.uuid4().hex
@@ -206,7 +211,10 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
             orchestrator = ApprovalGatedOrchestrator(workflow, backend)
             attempt["phase"] = "execution"
             attempt["execution"] = "unknown"
-            result = {ApprovalAction.COMPILE: orchestrator.execute_compile,
+            if runtime and plan['runtime_capture'].get('acquisition_mode')=='native_signal_arrays':
+                result=orchestrator.execute_runtime(acquisition_context={'run_id':attempt['workflow_id'],'attempt_id':attempt['attempt_id']})
+            else:
+                result = {ApprovalAction.COMPILE: orchestrator.execute_compile,
                       ApprovalAction.RUNTIME: orchestrator.execute_runtime,
                       ApprovalAction.OFFLINE_TEST: orchestrator.execute_offline_test}[action]()
             ok = result.get("safe_completion") if runtime else result.get("succeeded")

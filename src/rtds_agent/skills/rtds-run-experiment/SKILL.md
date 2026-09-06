@@ -27,6 +27,8 @@ Control write entries require the exact live `object_subpage` together with type
 4. For an authorized offline test use `run_offline_test(workflow_path)`. For Runtime use `prepare_simulation_run(workflow_path)` immediately before `run_simulation(workflow_path, request_path, request_sha256)` with the freshly returned request path/hash. Preserve rack binding; never reuse a consumed request.
 5. Re-read status and evidence. Check restoration, stop, and cleanup outcomes explicitly before reporting completion.
 
+For opt-in `native_signal_arrays`, first supply exact saved graph/live page identity and source-hash/locator evidence for units, sign, time basis and pu base. `capture_rtds_results` mode `prepare_native` is read-only and creates no execution grant. Execute through the same authorized workflow, then convert with `workflow_native` to preserve the actual attempt receipt. Array reads have no meter/CSV fallback. Check local acquisition dispatch stop, control restoration, Runtime stop and owned-handle release separately. The installed SDK does not establish remote abort, atomic snapshots, fresh data or authoritative simulator-time events; preserve those unverified fields.
+
 ## Completion
 
 Report the actual backend and attempt, policy/plan/project binding, raw captures, control writes and readback, restored values, stop/cleanup evidence, and any incomplete outcome. Compile success and completed simulation do not establish engineering acceptance.

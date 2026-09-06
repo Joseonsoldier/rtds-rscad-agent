@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Mapping
 from .runtime_binding import bind_live_control
 from .state_machine import sha256_file
+from .native_acquisition import MODE as NATIVE_MODE, NativeAcquisition, native_channels, discover_saved_signals
 
 
 class RuntimeContractError(RuntimeError):
@@ -515,7 +516,7 @@ def validate_runtime_test_spec(
     if not isinstance(capture, Mapping):
         raise RuntimeContractError("runtime_capture object is required")
     unknown_capture = sorted(
-        set(capture) - {"warmup_seconds", "minimum_samples_per_channel"}
+        set(capture) - {"warmup_seconds", "minimum_samples_per_channel", "acquisition_mode"}
     )
     if unknown_capture:
         raise RuntimeContractError(
@@ -534,6 +535,14 @@ def validate_runtime_test_spec(
         )
     if minimum_samples < 1:
         raise RuntimeContractError("minimum_samples_per_channel must be positive")
+    acquisition_mode=capture.get("acquisition_mode","legacy")
+    if acquisition_mode not in {"legacy",NATIVE_MODE}:raise RuntimeContractError("Unsupported acquisition_mode")
+    if acquisition_mode==NATIVE_MODE:
+        try:
+            canonical_channels=native_channels(channels)
+            if type(capture["minimum_samples_per_channel"]) is not int or not 2<=minimum_samples<=100000:
+                raise ValueError("Native acquisition requires 2–100000 minimum samples")
+        except ValueError as exc:raise RuntimeContractError(str(exc)) from exc
     if runtime_writes and runtime_writes[-1]["apply_after_seconds"] > warmup:
         raise RuntimeContractError("Runtime action time exceeds warmup_seconds")
 
@@ -618,6 +627,7 @@ def validate_runtime_test_spec(
         "runtime_capture": {
             "warmup_seconds": warmup,
             "minimum_samples_per_channel": minimum_samples,
+            **({"acquisition_mode":NATIVE_MODE} if acquisition_mode==NATIVE_MODE else {}),
         },
         "loadflow_initialization": {
             "enabled": enabled,
@@ -756,6 +766,7 @@ class RscadFxRuntimeDriver:
         loadflow_initialization: Mapping[str, Any] | None = None,
         runtime_parameter_writes: list[dict[str, Any]] | None = None,
         capture_directory: str | None = None,
+        native_capture: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {
             "connected": False,
@@ -827,11 +838,21 @@ class RscadFxRuntimeDriver:
         meter_handles: dict[str, Any] = {}
         plot_handles: dict[str, Any] = {}
         original_control_values: dict[tuple[int, str], Any] = {}
+        acquisition = None
         writes = list(runtime_parameter_writes or [])
         try:
             writes = _canonical_runtime_parameter_writes(writes)
             binding_sha256 = sha256_file(Path(working_copy)) if writes else None
             input_records = runtime_input_objects(working_copy) if writes else {}
+            if native_capture is not None:
+                channels=native_channels(channels)
+                if set(native_capture)!={'context','minimum_samples','maximum_samples'} or type(native_capture['minimum_samples']) is not int or type(native_capture['maximum_samples']) is not int or not 2<=native_capture['minimum_samples']<=native_capture['maximum_samples']<=100000:
+                    raise RuntimeContractError('Invalid native acquisition limits')
+                if set(native_capture['context'])!={'run_id','attempt_id','input_project_sha256'} or not all(isinstance(v,str) and v for v in native_capture['context'].values()):
+                    raise RuntimeContractError('Invalid native acquisition context')
+                if native_capture['context']['input_project_sha256']!=sha256_file(Path(working_copy)):
+                    raise RuntimeContractError('Native capture input hash mismatch')
+                discover_saved_signals(working_copy,channels)
             app = self._new_connection()
             with redirect_stdout(StringIO()), redirect_stderr(StringIO()):
                 app.connect()
@@ -871,6 +892,11 @@ class RscadFxRuntimeDriver:
                 )
             loadflow = dict(loadflow_initialization or {"enabled": False})
             execution = result["execution"]
+            if native_capture is not None:
+                acquisition=NativeAcquisition(case,working_copy,channels,native_capture['context'],
+                    minimum_samples=native_capture['minimum_samples'],maximum_samples=native_capture['maximum_samples'])
+                result['acquisition']=acquisition.evidence
+                acquisition.bind()
             if loadflow.get("enabled") is True:
                 parameters = {
                     "timeout_seconds": int(loadflow["timeout_seconds"]),
@@ -891,9 +917,9 @@ class RscadFxRuntimeDriver:
                 )
                 execution["loadflow_return_value"] = repr(loadflow_value)
                 execution["loadflow_succeeded"] = True
-            meter_ids = runtime_meter_ids(working_copy)
-            plot_ids = runtime_single_curve_plot_ids(working_copy)
-            for channel in channels:
+            meter_ids = {} if acquisition else runtime_meter_ids(working_copy)
+            plot_ids = {} if acquisition else runtime_single_curve_plot_ids(working_copy)
+            for channel in ([] if acquisition else channels):
                 channel_id = channel["channel_id"]
                 signal_handles[channel_id] = case.get_signal(
                     channel["signal_path"]
@@ -996,6 +1022,7 @@ class RscadFxRuntimeDriver:
             result["runtime_controls"]["all_readbacks_verified"] = (
                 result["runtime_controls"]["applied"] == len(writes)
             )
+            if acquisition:acquisition.start()
             case.update_plots()
             execution["update_plots_called"] = True
             # update_plots() submits a request; the installed API does not
@@ -1003,7 +1030,10 @@ class RscadFxRuntimeDriver:
             # the request, so wait a bounded interval before reading arrays.
             self.sleeper(self.plot_update_wait_seconds)
             export_root: Path | None = None
-            for index, channel in enumerate(channels):
+            if acquisition:
+                result['samples']=acquisition.read()
+                result['signals']=acquisition.evidence['channels']
+            for index, channel in enumerate([] if acquisition else channels):
                 channel_id = channel["channel_id"]
                 handle = signal_handles[channel_id]
                 times = list(handle.get_time_data())
@@ -1058,6 +1088,11 @@ class RscadFxRuntimeDriver:
             )
         finally:
             execution = result["execution"]
+            if acquisition:
+                acquisition.evidence['recovery']['stop_acquisition_dispatch']='unconfirmed'
+                try:acquisition.stop()
+                except Exception as exc:result['cleanup_errors'].append({'operation':'stop_acquisition_dispatch','type':type(exc).__name__,'message':str(exc)})
+                acquisition.evidence['recovery_order'].append('restore_controls')
             if case is not None and original_control_values:
                 for key, original_value in reversed(
                     list(original_control_values.items())
@@ -1095,6 +1130,9 @@ class RscadFxRuntimeDriver:
             elif not writes:
                 result["runtime_controls"]["all_readbacks_verified"] = True
                 result["runtime_controls"]["all_restored"] = True
+            if acquisition:
+                acquisition.evidence['recovery']['restore_controls']='not_required' if not original_control_values else 'succeeded' if result['runtime_controls']['all_restored'] else 'unconfirmed'
+                acquisition.evidence['recovery_order'].append('stop_runtime')
             if case is not None and execution["run_call_attempted"]:
                 execution["stop_call_attempted"] = True
                 try:
@@ -1112,6 +1150,11 @@ class RscadFxRuntimeDriver:
                             "message": str(exc),
                         }
                     )
+            if acquisition:
+                acquisition.evidence['recovery']['stop_runtime']='not_required' if not execution['run_call_attempted'] else 'succeeded' if execution['stop_succeeded'] else 'unconfirmed'
+                acquisition.evidence['recovery']['close_owned_acquisition_handles']='unconfirmed'
+                try:acquisition.close()
+                except Exception as exc:result['cleanup_errors'].append({'operation':'close_owned_acquisition_handles','type':type(exc).__name__,'message':str(exc)})
             if case is not None:
                 result["cleanup"]["case_close_attempted"] = True
                 try:

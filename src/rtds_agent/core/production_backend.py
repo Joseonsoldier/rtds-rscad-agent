@@ -959,6 +959,7 @@ class ProductionRscadBackend:
         expected_input_bundle_sha256: str | None = None,
         expected_companion_discovery_sha256: str | None = None,
         authorization: dict[str, Any] | None = None,
+        acquisition_context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         if not self.runtime_enabled:
             raise BackendSafetyViolation(
@@ -1075,6 +1076,10 @@ class ProductionRscadBackend:
         result_path = runtime_run_dir / "runtime_execution.json"
         raw_path = runtime_run_dir / "raw_signals_long.csv"
 
+        native=runtime_plan['runtime_capture'].get('acquisition_mode')=='native_signal_arrays'
+        if native and (not isinstance(acquisition_context,dict) or set(acquisition_context)!={'run_id','attempt_id'}
+                       or acquisition_context.get('run_id')!=run_dir.name or not isinstance(acquisition_context.get('attempt_id'),str) or not acquisition_context['attempt_id']):
+            raise BackendSafetyViolation('Native capture context does not match this workflow attempt')
         self._last_rack_snapshot = None
         try:
             capture_options: dict[str, Any] = {
@@ -1085,6 +1090,10 @@ class ProductionRscadBackend:
                 "loadflow_initialization": runtime_plan["loadflow_initialization"],
                 "capture_directory": str(runtime_run_dir),
             }
+            if native:
+                capture_options['native_capture']={'context':{**acquisition_context,'input_project_sha256':expected_working_sha256},
+                    'minimum_samples':runtime_plan['runtime_capture']['minimum_samples_per_channel'],
+                    'maximum_samples':min(self.config.runtime_max_samples_per_channel,100000)}
             planned_control_writes = runtime_plan["runtime_controls"][
                 "runtime_parameter_writes"
             ]
@@ -1160,6 +1169,19 @@ class ProductionRscadBackend:
         safety = dict(driver_result.get("safety") or {})
         errors = list(driver_result.get("errors") or [])
         cleanup_errors = list(driver_result.get("cleanup_errors") or [])
+        acquisition=driver_result.get('acquisition') or {}
+        if not isinstance(acquisition,dict):acquisition={}
+        acquisition_clean=not native
+        if native:
+            expected_context={**acquisition_context,'input_project_sha256':expected_working_sha256}
+            acquisition_clean=bool(acquisition.get('mode')=='native_signal_arrays' and acquisition.get('context')==expected_context
+                and acquisition.get('capture_success') is True and acquisition.get('dispatch_stopped') is True
+                and acquisition.get('resources_closed') is True and acquisition.get('state')=='closed'
+                and acquisition.get('recovery_order')==['stop_acquisition_dispatch','restore_controls','stop_runtime','close_owned_acquisition_handles'])
+            recovery=acquisition.get('recovery',{})
+            if not isinstance(recovery,dict):recovery={}
+            acquisition_clean=acquisition_clean and all(recovery.get(k)=='succeeded' for k in ('stop_acquisition_dispatch','stop_runtime','close_owned_acquisition_handles')) and recovery.get('restore_controls') in {'succeeded','not_required'}
+            if not acquisition_clean:errors.append({'type':'AcquisitionError','message':'Native acquisition context/completion/recovery is incomplete'})
         required_safety_flags = (
             "compile_called",
             "case_settings_write_called",
@@ -1248,6 +1270,17 @@ class ProductionRscadBackend:
                     self.config.runtime_max_samples_per_channel
                 ),
             )
+            if native:
+                from .native_acquisition import sampling
+                if set(acquisition.get('channels',{}))!={c['channel_id'] for c in runtime_plan['measurement_channels']}:raise RuntimeContractError('Native channel receipt set differs from plan')
+                for channel in runtime_plan['measurement_channels']:
+                    receipt=acquisition['channels'][channel['channel_id']];samples=canonical_samples[channel['channel_id']]
+                    bound={**channel,**expected_context}
+                    if any(receipt.get(k)!=v for k,v in bound.items()) or receipt.get('sample_count')!=len(samples['times']) or receipt.get('samples_sha256')!=sha256_json({k:samples[k] for k in ('times','values')}):
+                        raise RuntimeContractError('Native channel metadata/sample receipt mismatch')
+                    if any(receipt.get(k)!=v for k,v in sampling(samples['times']).items()):raise RuntimeContractError('Native sample interval/rate receipt mismatch')
+                    binding=receipt.get('binding',{})
+                    if binding.get('identity_verified') is not True or binding.get('case_sha256')!=expected_working_sha256 or binding.get('object_type')!='plot' or binding.get('lookup_count')!=1 or any(binding.get(k)!=v for k,v in channel['runtime_identity'].items()):raise RuntimeContractError('Native graph binding receipt mismatch')
             row_count = write_raw_signal_csv(
                 raw_path,
                 canonical_samples,
@@ -1305,6 +1338,7 @@ class ProductionRscadBackend:
             and execution.get("stop_call_attempted") is True
             and stopped
             and cleanup_complete
+            and acquisition_clean
             and integrity_clean
             and safety_clean
             and not errors
@@ -1387,6 +1421,7 @@ class ProductionRscadBackend:
             "cleanup": cleanup,
             "signals": channel_summaries,
             "raw_data": raw_data,
+            **({'native_acquisition':acquisition} if native else {}),
             "safety": safety,
             "driver": driver_evidence,
             "errors": errors,

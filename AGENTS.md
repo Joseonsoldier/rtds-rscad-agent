@@ -30,4 +30,6 @@ WP-N03 saved Runtime inspection supports inventory and semantic IR. Preserve tag
 
 ## Delivery preference
 
+WP-N04 native signal arrays are opt-in through existing execution gates. Preserve source-bound metadata, exact saved graph/live scope and current run/attempt/hash receipts. Native conversion must use `workflow_native` with recorded metadata and sample hashes. Acquisition dispatch stop is local only; do not claim remote abort, fresh/atomic data, verified simulator clock or live integration. Keep ordered acquisition stop, controls restoration, Runtime stop and resource cleanup separate. See [native capture scope](docs/NATIVE_CAPTURE.md).
+
 The repository owner explicitly requested on 2026-09-05 that completed, validated work be committed and pushed to origin/main after each task. This is standing authorization for normal fast-forward pushes of task changes. Check the remote state and release gates first; preserve unrelated work and excluded private/vendor artifacts. Do not force-push or bypass branch protections. This delivery authorization does not authorize any additional RSCAD or rack operation.

@@ -138,7 +138,8 @@ def inspect_runtime_api_surface(
     parsed: dict[str, ast.Module] = {}
     texts: dict[str, str] = {}
     binding = HERE / "runtime_binding.py"
-    for name, path in {**sources, "adapter": adapter, "binding": binding}.items():
+    acquisition = HERE / "native_acquisition.py"
+    for name, path in {**sources, "adapter": adapter, "binding": binding, "acquisition": acquisition}.items():
         parsed[name], texts[name] = _parse(path)
 
     application = _class(parsed["application"], "RSCADFX")
@@ -217,6 +218,10 @@ def inspect_runtime_api_surface(
         "rack.security",
     )
     checks = {
+        "native_acquisition_uses_bound_array_reads": all(token in texts['acquisition'] for token in
+            ('bind_live_control(', 'self.case.get_signal(', 'handle.get_time_data()', 'handle.get_data()', 'handle.parent is not self.case.runtime')),
+        "native_acquisition_has_no_connection_or_runtime_dispatch": not any(token in texts['acquisition'] for token in
+            ('import rtds.', '.connect(', '.run(', '.update_plots(', '.get_available_racks(', '.save(')),
         "runtime_exact_lookup_signatures": (methods["runtime_get_objects"]["arguments"]==["self","comp_type","name"]
                                             and methods["runtime_get_object"]["arguments"]==["self","comp_id"]),
         "runtime_component_scope_readable": all(set(methods[name]["decorators"]) & {"ConnectedProperty", "ConnectedProperty(True)", "ConnectedProperty(True, False)"}
@@ -304,6 +309,7 @@ def inspect_runtime_api_surface(
         "python_api_version": _version(parsed["package"]),
         "source_files": {name: _ref(path) for name, path in sources.items()},
         "binding_source": _ref(binding),
+        "acquisition_source": _ref(acquisition),
         "adapter": {
             **_ref(adapter),
             "required_fragment_count": len(required_adapter_fragments),

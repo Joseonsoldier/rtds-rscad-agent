@@ -1,5 +1,7 @@
 # RTDS/RSCAD Agent
 
+WP-N04 adds opt-in native SDK signal arrays with source-bound channel metadata, current run/attempt/hash receipts and ordered recovery through existing execution gates. Read-only preparation and saved receipt conversion reuse `capture_rtds_results`. Synthetic integration and installed source inspection do not qualify live capture, freshness, atomicity or simulator-time events. See [native capture scope](docs/NATIVE_CAPTURE.md).
+
 Local MCP tools for RSCAD inspection, installed component/API discovery, isolated numeric and structural candidates, static model checks, saved-result metrics, and guarded sequential experiments.
 
 [WP-N03 saved Runtime IR](docs/RUNTIME_IR.md) adds pages, groups, controls, displays, graph/curve references and explicit saved Draft references to `inspect_runtime_layout`. Live writes now require an exact subpage and unique current type/name/ID lookup. Overlay authoring and live binding qualification remain unsupported/unverified; saved values are not current values.

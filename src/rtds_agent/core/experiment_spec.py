@@ -49,6 +49,7 @@ def compile_spec(spec):
               "output_requirements":{"raw_numeric_data_required":True,"screenshot_only_pass_fail_forbidden":True},
               "experiment_dsl_sha256":sha256_json(spec),"event_timing_basis":"controller_wall_clock_after_run_confirmation",
               "event_semantics":"caller-declared mapping; fault/trip labels do not imply verified electrical effects"}
+    if "acquisition_mode" in spec:result['runtime_capture']['acquisition_mode']=spec['acquisition_mode']
     validate_runtime_test_spec(result)
     return result
 

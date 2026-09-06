@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.rtds-agent/schemas/result-capture-1.0.json",
-  "title": "Acquisition of existing saved native CSV results",
+  "$id": "https://local.rtds-agent/schemas/result-capture-1.1.json",
+  "title": "Prepare native capture or convert saved CSV/native acquisition evidence",
   "oneOf": [
     {
       "type": "object",
@@ -171,6 +171,42 @@
             "simulator_time",
             "wall_clock"
           ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "workflow_path"
+      ],
+      "properties": {
+        "mode": {
+          "const": "prepare_native"
+        },
+        "workflow_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "workflow_path"
+      ],
+      "properties": {
+        "mode": {
+          "const": "workflow_native"
+        },
+        "workflow_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
         }
       }
     }

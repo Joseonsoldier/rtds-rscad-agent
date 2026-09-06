@@ -1,5 +1,15 @@
 # Implementation status
 
+## WP-N04 — native signal-array acquisition software (2026-09-06)
+
+Baseline `225063e`. Implemented opt-in `native_signal_arrays` inside existing Runtime/suite execution, read-only native preparation and saved receipt conversion. Exact saved graph/live scope, source-bound metadata, actual run/attempt/project identity, sample hashes/rates and ordered acquisition/Runtime recovery are covered by synthetic tests. Missing or ambiguous identity/metadata and malformed arrays fail; no native meter/CSV fallback. Capture success is separate from safe completion.
+
+Changed files cover new `core/native_acquisition.py`, Runtime driver/production/orchestration and public execution, converter/DSL, three request schemas, static API/capability reports, two skill instructions/manifests, synthetic tests and STDIO scenario, release manifest and documentation. [NATIVE_CAPTURE.md](NATIVE_CAPTURE.md) records fields, scope and compatibility. Runtime/suite/capture schema IDs are 1.3/1.2/1.1; omitted mode preserves old canonical plans, while native receipts require `workflow_native`. Python/dependencies, 49/10/29 tools, nine skills and inactive policy remain unchanged.
+
+Actual full regression: **412 run, 410 passed, 2 existing skips, no failures/errors (81.864 s)**. All 28 new native tests passed, as did actual STDIO49/core10/engineering29, nine skill validators, manifest92, source/artifact checks and a fresh external-venv wheel installation. Read-only installed SDK audit passed 29 checks and all 37 protected file hashes remained unchanged. Distribution evidence is recorded in [VALIDATION.md](VALIDATION.md).
+
+No real RSCAD connection, Compile, Runtime, rack, GUI or load-flow operation occurred in this checkpoint. Local SDK/Java source evidence does not verify fresh/atomic capture, simulator-clock origin, metadata semantics or remote acquisition abort. WP-N04 live qualification is pending; WP-N05 timing and WP-N06–N11 remain pending. Full work-order completion is not claimed.
+
 ## WP-N03 — saved Runtime parser/IR and exact control binding (2026-09-06)
 
 Baseline `bf6f8e3`. Phase A/B is implemented as a bounded saved Runtime subset with pages, visual groups, controls, displays, plot graphs/curves and explicit COMP_ID-only Draft candidates. Legacy duplicates and unknown types remain visible; units, current values and live targets are not inferred. Phase C is unsupported: installed Java Runtime insertion/copy/paste paths do not construct content, despite inherited Python/HTML declarations. No Runtime authoring adapter or RTX writer was added.
