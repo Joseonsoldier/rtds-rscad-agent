@@ -22,6 +22,7 @@ Obtain the workflow path and its intended project identity. Distinguish the newe
 1. Call `get_workflow_status(workflow_path)` and `revalidate_execution_evidence(workflow_path)` before interpreting results.
 2. Call `get_execution_diagnostics(workflow_path, stage, offset, limit)` using `stage` = `"compile"` (or `"runtime"` / `"offline_test"` when relevant). The selected workflow and its attempt journal determine `attempt_id`; there is no arbitrary attempt-selector argument. Check the returned attempt identity, input hashes, source artifact/hash, execution state, and log completeness. Follow `next_offset` while retaining the same workflow/attempt/artifact identity. An earlier success cannot replace a failed or stale current attempt.
 3. Only `component_mapping: "exact_context_uuid"` maps to a unique checked component. Preserve `unknown` mapping and original message evidence otherwise. For a supported exact component reference, call `get_component(project_path, component_id, context)`. A label or ambiguous UUID may yield candidates; preserve the uncertainty instead of declaring an exact match.
+   Optional `native_compile_analysis` separately reports bound raw-log references, parser coverage and recorded attempt outcome. An API exception may identify only `rscad_api`, with no detailed compiler cause or component. Empty collected bytes never prove Compile success. The current backend does not automatically collect these receipts; never fabricate one from an unrelated log. The `diagnostics corpus` CLI checks parser expectations only, with declared native origin unverified.
 4. Use `search_rtds_local(query, top_k)` and `get_manual_page(source_path, page)` to check the relevant version and documented diagnostic meaning.
 5. Propose only changes supported by the raw message, source, and documentation. Use the numeric editing workflow separately if the user has requested a supported correction.
 
@@ -32,3 +33,5 @@ Report the attempt identity, project/hash association, original messages, linked
 ## On failure
 
 A missing or mismatched evidence hash makes the affected conclusion untrusted. Preserve the raw evidence and request a correctly associated attempt or manual. Do not automatically retry an ambiguous failed run, modify policy, or promote an unmatched diagnostic into a model edit.
+
+Structured log entries must not hide operational or cleanup failures. Suggested repairs require a separate source-bound preview and new isolated candidate through the existing edit contract. Keep `automatic_retry` and `automatic_repair` false; a failed attempt is not repaired by rereading an old success.

@@ -28,6 +28,11 @@ def main(argv=None) -> int:
     sub.add_parser("mcp-config", help="Print a Codex TOML entry")
     rulepacks = sub.add_parser('rulepacks', help='Read optional domain criterion templates; no model or native operation')
     rulepacks.add_argument('action', choices=['list'])
+    diagnostic = sub.add_parser('diagnostics', help='Inspect supplied Compile parser evidence; no native action')
+    ds = diagnostic.add_subparsers(dest='action', required=True)
+    ds.add_parser('list', help='List bounded observed parser formats and taxonomy')
+    corpus = ds.add_parser('corpus', help='Check an existing source-bound parser corpus without writing')
+    corpus.add_argument('manifest')
     mcp = sub.add_parser("mcp")
     mcp.add_argument("action", choices=["serve"])
     mcp.add_argument("--profile", choices=["core", "engineering", "full"], default="full")
@@ -167,6 +172,15 @@ def main(argv=None) -> int:
         elif args.command == 'rulepacks':
             from .core.power_system_rules import rulepack_catalog
             _print(rulepack_catalog())
+        elif args.command == 'diagnostics':
+            if args.action == 'list':
+                from .core.compile_diagnostics import parser_catalog
+                _print(parser_catalog())
+            else:
+                from .compile_corpus import inspect_compile_corpus
+                result = inspect_compile_corpus(args.manifest)
+                _print(result)
+                return 0 if result['status'] == 'passed' else 1
         elif args.command == "demo":
             from .demo import run_demo
             _print(run_demo())

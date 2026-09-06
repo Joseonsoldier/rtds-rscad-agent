@@ -48,13 +48,14 @@ def _input_hashes(result: dict[str, Any], stage: str) -> dict[str, Any]:
 def _entries(result: dict[str, Any]) -> tuple[list[tuple[dict[str, Any], str, str]], bool]:
     """Known operational error fields are partial; completeness needs an explicit log."""
     log = result.get("diagnostic_log")
+    rows, complete = [], False
     if log is not None:
         if (not isinstance(log, dict) or log.get("schema_version") != "1.0"
                 or type(log.get("complete")) is not bool or not isinstance(log.get("entries"), list)
                 or len(log["entries"]) > 10000 or any(not isinstance(row, dict) for row in log["entries"])):
             raise ToolSafetyError("Unsupported structured diagnostic log schema")
-        return [(row, f"/diagnostic_log/entries/{index}", "unknown") for index, row in enumerate(log["entries"])], log["complete"]
-    rows = []
+        rows = [(row, f"/diagnostic_log/entries/{index}", "unknown") for index, row in enumerate(log["entries"])]
+        complete = log['complete']
     for container, prefix in ((result, ""), (result.get("driver", {}), "/driver")):
         if not isinstance(container, dict):
             continue
@@ -66,7 +67,8 @@ def _entries(result: dict[str, Any]) -> tuple[list[tuple[dict[str, Any], str, st
                 if not isinstance(row, dict):
                     row = {"message": str(row)}
                 rows.append((row, f"{prefix}/{key}/{index}", "error"))
-    return rows, False
+                complete = False
+    return rows, complete
 
 
 def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset: int = 0,
@@ -95,10 +97,14 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
                             "states": {"grounding": "unknown", "structure": "unknown", "execution": "unknown",
                                        "data_quality": "not_evaluated", "requirements": "not_evaluated"},
                             "engineering_verdict": "not_evaluated", "mutations_performed": False,
-                            "live_rscad_connection_opened": False, "rack_query_called": False, "rerun": False}
+                            "live_rscad_connection_opened": False, "rack_query_called": False, "rerun": False,
+                            "automatic_retry": False, "automatic_repair": False}
+    native_receipt, native_roots = None, None
 
     def finish(status: str, reason: str | None = None) -> dict[str, Any]:
         base["status"] = status
+        if status in {'stale', 'unsupported'}:
+            base.pop('native_compile_analysis', None)
         if reason:
             base["reason"] = reason
         return base
@@ -204,6 +210,14 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
             roots = (path.parent, *settings.source_roots, *settings.document_roots)
             if settings.rscad_home:
                 roots = (*roots, settings.rscad_home)
+            if 'native_compile_logs' in result:
+                if stage != 'compile':
+                    return finish('unsupported', 'Native Compile receipts apply only to the Compile stage')
+                from .native_compile_logs import inspect_native_compile_logs
+                native_receipt, native_roots = result['native_compile_logs'], (path.parent,)
+                base['native_compile_analysis'] = inspect_native_compile_logs(native_receipt,
+                    workflow_id=manifest['workflow_id'], attempt_id=attempt['attempt_id'], input_hashes=expected_inputs,
+                    document=current, roots=native_roots, execution=attempt.get('execution', 'unknown'), offset=offset, limit=limit)
             _nested_references(result, roots)
             try:
                 rows, complete = _entries(result)
@@ -213,6 +227,10 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
             return finish("unsupported", "Diagnostic count exceeds the 10,000 entry read limit")
         execution_observed = attempt.get("status") == "finished" and attempt.get("execution") in {"succeeded", "failed"}
         complete = complete and execution_observed
+        # A failed attempt or cleanup cannot become an empty success report.
+        complete = complete and attempt.get('execution') != 'failed' and attempt.get('cleanup') != 'failed'
+        if native_receipt is not None:
+            complete = False  # Collected bytes never establish full native-message coverage.
         base["log_completeness"] = "complete" if complete else "partial"
         diagnostics = []
         for index, (row, location, default_severity) in enumerate(rows):
@@ -234,6 +252,10 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
                                 "mapping_snapshot_id": current["snapshot_id"] if len(matches) == 1 else "unknown",
                                 "timestamp": str(row.get("timestamp", result.get("created_at") or "unknown"))[:100],
                                 "source_artifact": base["source_artifact"], "source_hash": base["source_hash"], "location": {"json_pointer": location}})
+            diagnostics[-1]['classification'] = {
+                'category': 'rscad_api' if row.get('type') in {'RSCADError', 'CommunicationError', 'ConnectionSetupError'} else 'unknown',
+                'basis': 'reported_exception_type' if row.get('type') in {'RSCADError', 'CommunicationError', 'ConnectionSetupError'} else 'unresolved',
+                'root_cause_verified': False, 'automatic_retry': False, 'automatic_repair': False}
             if include_grounding and offset <= index < offset+limit:
                 from .core.diagnostic_grounding import ground_diagnostic
                 diagnostics[-1]["grounding"] = ground_diagnostic(row,matches[0] if len(matches)==1 else None,current)
@@ -250,6 +272,13 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
         # Final input checks do not use the model snapshot as a replacement for hashes.
         _load_workflow(str(path))
         _document(project["working_copy"], snapshot_id=current["snapshot_id"])
+        if native_receipt is not None:
+            from .native_compile_logs import revalidate_logs
+            revalidate_logs(native_receipt, native_roots)
+        if ref:
+            _nested_references(result, roots)
+        if get_settings() != settings:
+            raise ToolSafetyError('Diagnostic settings changed while reading')
         return finish("available", None if complete else "Only the saved operational diagnostic fields are covered; full native log completeness is not established")
     except (ToolSafetyError, ValidationError, ValueError, OSError, BadZipFile, KeyError, TypeError) as exc:
         base["diagnostics"] = []
@@ -257,5 +286,6 @@ def get_execution_diagnostics(workflow_path: str, stage: str = "compile", offset
         base["returned_count"] = 0
         base["next_offset"] = None
         base["no_diagnostics_found"] = False
+        base.pop('native_compile_analysis', None)
         base["states"]["grounding"] = "stale_or_invalid"
         return finish("stale", str(exc))

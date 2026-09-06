@@ -254,6 +254,105 @@ class DiagnosticTests(unittest.TestCase):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 get_execution_diagnostics(str(workflow), **kwargs)
 
+    def native_evidence(self, text=None, collection='partial', execution='failed'):
+        from rtds_agent.core.compile_diagnostics import COMPILE_INCOMPLETE_MESSAGE, API_EXCEPTION_FORMAT_ID
+        workflow, artifact, marker = self.evidence()
+        log = workflow.parent/'saved-compile-exception.txt'
+        log.write_bytes((COMPILE_INCOMPLETE_MESSAGE if text is None else text).encode())
+        attempt = json.loads(marker.read_text(encoding='utf-8'))
+        attempt['execution'] = execution
+        marker.write_text(json.dumps(attempt), encoding='utf-8')
+        envelope = {'schema_version':'1.0','workflow_id':attempt['workflow_id'], 'attempt_id':attempt['attempt_id'],
+                    'action':'compile', **attempt['input_hashes'], 'logs':[{'path':str(log), 'sha256':sha256_file(log),
+                    'bytes':log.stat().st_size, 'encoding':'utf-8', 'format_id':API_EXCEPTION_FORMAT_ID,
+                    'collection_status':collection}]}
+        self.replace_result(workflow, artifact, marker, lambda result: result.update(native_compile_logs=envelope))
+        return workflow, artifact, marker, log
+
+    def test_explicit_empty_log_never_hides_operational_or_cleanup_errors(self):
+        workflow, artifact, marker = self.evidence()
+        self.replace_result(workflow, artifact, marker, lambda result: result.update(driver={
+            'errors':[{'type':'RSCADError','message':'Compile failure'}], 'cleanup_errors':[{'message':'Close failed'}]}))
+        result = get_execution_diagnostics(str(workflow))
+        self.assertEqual(result['diagnostic_count'],2)
+        self.assertFalse(result['no_diagnostics_found'])
+        self.assertEqual(result['log_completeness'],'partial')
+        self.assertEqual(result['diagnostics'][0]['classification']['category'],'rscad_api')
+
+    def test_failed_attempt_or_cleanup_with_empty_complete_log_stays_partial(self):
+        for key in ('execution','cleanup'):
+            workflow, _, marker = self.evidence()
+            attempt=json.loads(marker.read_text(encoding='utf-8'));attempt[key]='failed'
+            marker.write_text(json.dumps(attempt),encoding='utf-8')
+            result=get_execution_diagnostics(str(workflow))
+            self.assertFalse(result['no_diagnostics_found'])
+            self.assertEqual(result['log_completeness'],'partial')
+
+    def test_attempt_bound_native_exception_is_read_only_category_only(self):
+        workflow, _, _, _ = self.native_evidence()
+        before={p:p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        with patch('socket.create_connection',side_effect=AssertionError('network')), patch('subprocess.Popen',side_effect=AssertionError('native')):
+            result=get_execution_diagnostics(str(workflow))
+        self.assertEqual(result['status'],'available',result)
+        native=result['native_compile_analysis'];row=native['diagnostics'][0]
+        self.assertEqual(row['category'],'rscad_api')
+        self.assertEqual(row['component_mapping'],'unknown')
+        self.assertFalse(native['integration_qualified'])
+        self.assertFalse(native['automatic_retry'])
+        self.assertEqual(native['native_outcome'],'not_evaluated')
+        self.assertFalse(result['no_diagnostics_found'])
+        self.assertEqual(before,{p:p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
+
+    def test_native_empty_or_unknown_log_never_establishes_success(self):
+        for text in ('','Unknown failure UUID 1; error parameter'):
+            workflow, _, _, _=self.native_evidence(text,collection='complete',execution='succeeded')
+            result=get_execution_diagnostics(str(workflow))
+            self.assertFalse(result['no_diagnostics_found'])
+            self.assertFalse(result['native_compile_analysis']['empty_log_proves_success'])
+            if text:self.assertEqual(result['native_compile_analysis']['diagnostics'][0]['category'],'unknown')
+
+    def test_native_receipt_requires_explicit_attempt_action_and_input_identity(self):
+        for field in ('workflow_id','attempt_id','action','source_sha256','working_sha256'):
+            workflow,artifact,marker,_=self.native_evidence()
+            def change(result):result['native_compile_logs'][field]='0'*64
+            self.replace_result(workflow,artifact,marker,change)
+            result=get_execution_diagnostics(str(workflow))
+            self.assertEqual(result['status'],'stale',field)
+            self.assertNotIn('native_compile_analysis',result)
+
+    def test_native_log_changed_during_grounding_invalidates_all_native_analysis(self):
+        workflow,artifact,marker,log=self.native_evidence()
+        self.replace_result(workflow,artifact,marker,lambda result:result['diagnostic_log'].update(entries=[{'message':'operational'}]))
+        def change(*args):log.write_text('changed during grounding',encoding='utf-8');return {}
+        with patch('rtds_agent.core.diagnostic_grounding.ground_diagnostic',side_effect=change):
+            result=get_execution_diagnostics(str(workflow),include_grounding=True)
+        self.assertEqual(result['status'],'stale')
+        self.assertNotIn('native_compile_analysis',result)
+
+    def test_native_receipt_bounds_links_duplicates_and_tamper(self):
+        for mode in ('size','duplicate','bad-hash','unknown-field'):
+            workflow,artifact,marker,log=self.native_evidence()
+            def change(result):
+                env=result['native_compile_logs'];ref=env['logs'][0]
+                if mode=='size':ref['bytes']=1048577
+                elif mode=='duplicate':env['logs'].append(dict(ref))
+                elif mode=='bad-hash':ref['sha256']='0'*64
+                else:env['execute']=True
+            self.replace_result(workflow,artifact,marker,change)
+            self.assertEqual(get_execution_diagnostics(str(workflow))['status'],'stale',mode)
+        workflow, _, _, _=self.native_evidence()
+        with patch.object(Path,'is_junction',return_value=True):
+            self.assertEqual(get_execution_diagnostics(str(workflow))['status'],'stale')
+
+    def test_native_pagination_retains_stable_record_identity(self):
+        workflow, _, _, _=self.native_evidence('Unknown first\nUnknown second\n')
+        first=get_execution_diagnostics(str(workflow),limit=1)['native_compile_analysis']
+        second=get_execution_diagnostics(str(workflow),offset=first['next_offset'],limit=1)['native_compile_analysis']
+        again=get_execution_diagnostics(str(workflow),offset=1,limit=1)['native_compile_analysis']
+        self.assertEqual(first['diagnostic_count'],2)
+        self.assertNotEqual(first['diagnostics'][0]['record_id'],second['diagnostics'][0]['record_id'])
+        self.assertEqual(second,again)
+
 
 if __name__ == "__main__":
     unittest.main()

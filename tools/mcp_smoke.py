@@ -407,9 +407,40 @@ COMPONENT-END:
     bad_provenance['packs'][0]['rules'][0]['source'][0]['source_sha256']='0'*64
     assert (await session.call_tool('check_rscad_model',{'project_path':str(rule_model),'rulepacks':bad_provenance})).is_error
     assert readonly_before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    # Authored saved evidence exercises parsing only; no Compile is dispatched.
+    diag_workflow=Path(legacy['workflow_path']);diag_manifest=json.loads(diag_workflow.read_text(encoding='utf-8'))
+    diag_inputs={'source_sha256':diag_manifest['project']['source_sha256'],'working_sha256':diag_manifest['project']['working_sha256']}
+    diag_log=diag_workflow.parent/'authored-api-exception.txt'
+    diag_log.write_text("rscad.library.RSCADException: Compile process failed to complete. See 'Compile Messages' tab for more details.",encoding='utf-8')
+    diag_attempt_id='authored-native-diagnostics'
+    diag_result={'schema_version':'1.0','backend':'ProductionRscadBackend','action':'compile',
+        'evidence_kind':'synthetic_software_test','workflow_id':diag_manifest['workflow_id'],'attempt_id':diag_attempt_id,
+        'hashes':{'source_before':diag_inputs['source_sha256'],'working_before':diag_inputs['working_sha256']},
+        'diagnostic_log':{'schema_version':'1.0','complete':True,'entries':[]},
+        'driver':{'errors':[{'type':'RSCADError','message':'Authored failed attempt'}],'cleanup_errors':[]},
+        'native_compile_logs':{'schema_version':'1.0','workflow_id':diag_manifest['workflow_id'],
+            'attempt_id':diag_attempt_id,'action':'compile',**diag_inputs,'logs':[{'path':str(diag_log),'sha256':digest(diag_log),
+            'bytes':diag_log.stat().st_size,'encoding':'utf-8','format_id':'rscad_compile_api_exception_v1','collection_status':'partial'}]}}
+    diag_artifact=diag_workflow.parent/'authored-compile-result.json';diag_artifact.write_text(json.dumps(diag_result),encoding='utf-8')
+    diag_ref={'path':str(diag_artifact),'sha256':digest(diag_artifact)}
+    diag_manifest['compile']={'succeeded':False,'artifact_sha256':None,'selected_rack':1,'result_ref':diag_ref}
+    diag_workflow.write_text(json.dumps(diag_manifest),encoding='utf-8')
+    (diag_workflow.parent/'compile.attempt.json').write_text(json.dumps({'schema_version':1,'workflow_id':diag_manifest['workflow_id'],
+        'attempt_id':diag_attempt_id,'action':'compile','status':'finished','execution':'failed','cleanup':'succeeded',
+        'input_hashes':diag_inputs,'result_ref':diag_ref}),encoding='utf-8')
+    diag_before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    diag=await call('get_execution_diagnostics',{'workflow_path':str(diag_workflow)})
+    assert diag['status']=='available' and diag['diagnostic_count']==1 and diag['no_diagnostics_found'] is False
+    assert diag['native_compile_analysis']['diagnostics'][0]['category']=='rscad_api'
+    assert diag['native_compile_analysis']['diagnostics'][0]['component_mapping']=='unknown'
+    assert diag_before=={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    diag_log.write_text('Changed after receipt capture',encoding='utf-8')
+    stale_diag=await call('get_execution_diagnostics',{'workflow_path':str(diag_workflow)})
+    assert stale_diag['status']=='stale' and 'native_compile_analysis' not in stale_diag
     return {"catalog_schema":True,"static_editor_roundtrip":True,"native_preview_only":True,"native_reconstruction_preview":True,"auto_apply_denied":True,"model_check":True,"canonical_csv_metric":True,"suite_prepare":True,"suite_execution_denied":True,"native_capture_preparation":True,"native_timing_plan_and_supplied_assessment":True,"native_timing_grant_refused":True,
             "initialization_preconditions_and_supplied_evidence":True,"legacy_loadflow_grant_refused":True,
-            "domain_rules_zero_resistance":True,"domain_rules_selector_inconclusive":True,"domain_rules_bad_provenance_refused":True}
+            "domain_rules_zero_resistance":True,"domain_rules_selector_inconclusive":True,"domain_rules_bad_provenance_refused":True,
+            "native_compile_diagnostics_read_only":True,"native_log_tamper_refused":True,"empty_log_retains_operational_failure":True}
 
 
 async def smoke():
