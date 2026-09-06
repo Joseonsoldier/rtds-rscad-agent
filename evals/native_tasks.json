@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "track": "WP-N11 Native Closed-Loop",
-  "scope": "Ten declared tasks; only N01, N02 and N09 are executable against authored synthetic fixtures. Legacy evals/tasks.json is unchanged.",
+  "scope": "Ten bounded executable tasks: seven authored offline fixtures and three explicitly operator-bound local-native reconstruction/Compile cases. No rack/Runtime execution. Legacy evals/tasks.json is unchanged.",
   "final_contract": {
     "description": "Return exactly final_state and evidence. Each required evidence value references a completed tool envelope call_id and an RFC 6901 pointer relative to its production result.",
     "reference_fields": [
@@ -119,81 +119,774 @@
     },
     {
       "task_id": "EVAL-N03",
+      "contract_version": "1.2",
       "title": "Native divider construction",
-      "prompt": "Construct, save, reopen and Compile a native voltage divider with exact source and cleanup evidence.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "prompt": "Synthesize the declared voltage divider in a genuinely new native case using exact source-derived component insertion and wiring, then save, reopen and locally Compile it. Call eval_native_inspect exactly once with no arguments. Ground the full construction plan in its returned component identities, types, placement, parameters or parameter hashes, wires, groups, settings and definition evidence. Submit eval_native_construct exactly once with request containing precisely task_id, fixture_id, fixture_sha256, source_sha256, snapshot_id and the complete returned plan. Then call eval_native_compile exactly once with request containing task_id, fixture_id, construction_receipt_sha256 from the construction receipt_sha256 and candidate_sha256. Report only observed save/reopen, reconstruction, local Compile artifacts and cleanup evidence. If any step fails, stop; do not retry, call a production Compile tool, create policy, query racks, use Runtime/load-flow/GUI, or claim engineering or general integration qualification.",
+      "executable": true,
+      "fixture_source": "explicit operator-pinned private source-derived native fixture",
+      "unsupported_reason": null,
       "expected_final_state": "native_divider_verified",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "eval_native_inspect": 1,
+        "eval_native_construct": 1,
+        "eval_native_compile": 1
+      },
+      "max_calls": 3,
+      "evidence_requirements": [
+        {
+          "key": "manifest_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/fixture_sha256",
+          "fixture_key": "native_manifest_sha256"
+        },
+        {
+          "key": "source_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/source_sha256",
+          "fixture_key": "source_sha256"
+        },
+        {
+          "key": "snapshot_id",
+          "tool": "eval_native_inspect",
+          "pointer": "/snapshot_id"
+        },
+        {
+          "key": "strategy",
+          "tool": "eval_native_inspect",
+          "pointer": "/plan/strategy",
+          "fixture_key": "native_strategy"
+        },
+        {
+          "key": "construction_status",
+          "tool": "eval_native_construct",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "candidate_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/candidate_sha256"
+        },
+        {
+          "key": "construction_receipt_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "construction_journal_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "component_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/component_count",
+          "fixture_key": "native_component_count"
+        },
+        {
+          "key": "group_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/group_count",
+          "fixture_key": "native_group_count"
+        },
+        {
+          "key": "reopened",
+          "tool": "eval_native_construct",
+          "pointer": "/native_evidence/reopened",
+          "expected": true
+        },
+        {
+          "key": "construction_cleanup",
+          "tool": "eval_native_construct",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "same_static_topology",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/same_static_topology",
+          "expected": true
+        },
+        {
+          "key": "compile_status",
+          "tool": "eval_native_compile",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "compile_receipt_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "compile_journal_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "compile_returned_true",
+          "tool": "eval_native_compile",
+          "pointer": "/native_evidence/return_value",
+          "expected": true
+        },
+        {
+          "key": "compile_cleanup",
+          "tool": "eval_native_compile",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "artifacts_status",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/status",
+          "expected": "verified"
+        },
+        {
+          "key": "success_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/success_log_sha256"
+        },
+        {
+          "key": "error_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_sha256"
+        },
+        {
+          "key": "error_log_empty",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_empty",
+          "expected": true
+        },
+        {
+          "key": "fresh_artifacts",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/fresh_artifacts",
+          "expected": true
+        },
+        {
+          "key": "binary_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/sha256"
+        },
+        {
+          "key": "binary_bytes",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/bytes"
+        },
+        {
+          "key": "integration_qualified",
+          "tool": "eval_native_compile",
+          "pointer": "/integration_qualified",
+          "expected": false
+        },
+        {
+          "key": "automatic_retry",
+          "tool": "eval_native_compile",
+          "pointer": "/automatic_retry",
+          "expected": false
+        }
+      ],
+      "qualification": "task/input-scoped native save/reopen and local Compile evidence; source-derived synthesis only; no rack, Runtime, electrical, dynamic, general native or engineering qualification"
     },
     {
       "task_id": "EVAL-N04",
-      "title": "Native transformer editing",
-      "prompt": "Edit a native transformer candidate and verify identities, saved values, source preservation and Compile evidence.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "contract_version": "1.2",
+      "title": "Native transformer/network synthesis",
+      "prompt": "Synthesize the declared transformer and connected network in a genuinely new native case using the operator-fixed source-derived insertion or clipboard strategy; preserve any declared hierarchy, then save, reopen and locally Compile it. Call eval_native_inspect exactly once with no arguments. Ground the full construction plan in its returned component identities, types, placement, parameters or parameter hashes, wires, groups, settings and definition evidence. Submit eval_native_construct exactly once with request containing precisely task_id, fixture_id, fixture_sha256, source_sha256, snapshot_id and the complete returned plan. Then call eval_native_compile exactly once with request containing task_id, fixture_id, construction_receipt_sha256 from the construction receipt_sha256 and candidate_sha256. Report only observed save/reopen, reconstruction, local Compile artifacts and cleanup evidence. If any step fails, stop; do not retry, call a production Compile tool, create policy, query racks, use Runtime/load-flow/GUI, or claim engineering or general integration qualification.",
+      "executable": true,
+      "fixture_source": "explicit operator-pinned private source-derived native fixture",
+      "unsupported_reason": null,
       "expected_final_state": "native_transformer_verified",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "eval_native_inspect": 1,
+        "eval_native_construct": 1,
+        "eval_native_compile": 1
+      },
+      "max_calls": 3,
+      "evidence_requirements": [
+        {
+          "key": "manifest_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/fixture_sha256",
+          "fixture_key": "native_manifest_sha256"
+        },
+        {
+          "key": "source_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/source_sha256",
+          "fixture_key": "source_sha256"
+        },
+        {
+          "key": "snapshot_id",
+          "tool": "eval_native_inspect",
+          "pointer": "/snapshot_id"
+        },
+        {
+          "key": "strategy",
+          "tool": "eval_native_inspect",
+          "pointer": "/plan/strategy",
+          "fixture_key": "native_strategy"
+        },
+        {
+          "key": "construction_status",
+          "tool": "eval_native_construct",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "candidate_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/candidate_sha256"
+        },
+        {
+          "key": "construction_receipt_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "construction_journal_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "component_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/component_count",
+          "fixture_key": "native_component_count"
+        },
+        {
+          "key": "group_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/group_count",
+          "fixture_key": "native_group_count"
+        },
+        {
+          "key": "reopened",
+          "tool": "eval_native_construct",
+          "pointer": "/native_evidence/reopened",
+          "expected": true
+        },
+        {
+          "key": "construction_cleanup",
+          "tool": "eval_native_construct",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "same_static_topology",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/same_static_topology",
+          "expected": true
+        },
+        {
+          "key": "compile_status",
+          "tool": "eval_native_compile",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "compile_receipt_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "compile_journal_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "compile_returned_true",
+          "tool": "eval_native_compile",
+          "pointer": "/native_evidence/return_value",
+          "expected": true
+        },
+        {
+          "key": "compile_cleanup",
+          "tool": "eval_native_compile",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "artifacts_status",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/status",
+          "expected": "verified"
+        },
+        {
+          "key": "success_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/success_log_sha256"
+        },
+        {
+          "key": "error_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_sha256"
+        },
+        {
+          "key": "error_log_empty",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_empty",
+          "expected": true
+        },
+        {
+          "key": "fresh_artifacts",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/fresh_artifacts",
+          "expected": true
+        },
+        {
+          "key": "binary_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/sha256"
+        },
+        {
+          "key": "binary_bytes",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/bytes"
+        },
+        {
+          "key": "integration_qualified",
+          "tool": "eval_native_compile",
+          "pointer": "/integration_qualified",
+          "expected": false
+        },
+        {
+          "key": "automatic_retry",
+          "tool": "eval_native_compile",
+          "pointer": "/automatic_retry",
+          "expected": false
+        }
+      ],
+      "qualification": "task/input-scoped native save/reopen and local Compile evidence; source-derived synthesis only; no rack, Runtime, electrical, dynamic, general native or engineering qualification"
     },
     {
       "task_id": "EVAL-N05",
-      "title": "Diagnose Compile evidence",
-      "prompt": "Diagnose supplied Compile evidence while separating raw native coverage, outcome, cleanup and root cause.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "contract_version": "1.2",
+      "title": "Diagnose supplied Compile evidence",
+      "prompt": "Read status and revalidate the supplied offline_diagnostic_workflow, then get compile diagnostics (offset 0, limit 10). This fixture is an authored failed attempt, not a real Compile. Preserve the operational and cleanup messages, partial raw-log parser coverage, unknown component/root cause, exact artifact hashes and unverified native origin.",
+      "executable": true,
+      "fixture_source": "authored offline_v1 fixture; supplied records are not native execution",
+      "unsupported_reason": null,
       "expected_final_state": "diagnosed_with_limits",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "get_workflow_status": 1,
+        "revalidate_execution_evidence": 1,
+        "get_execution_diagnostics": 1
+      },
+      "max_calls": 4,
+      "evidence_requirements": [
+        {
+          "key": "workflow_hash",
+          "tool": "get_workflow_status",
+          "pointer": "/sha256",
+          "fixture_key": "offline_diagnostic_workflow_sha256"
+        },
+        {
+          "key": "saved_compile_succeeded",
+          "tool": "get_workflow_status",
+          "pointer": "/compile/succeeded",
+          "expected": false
+        },
+        {
+          "key": "revalidated",
+          "tool": "revalidate_execution_evidence",
+          "pointer": "/status",
+          "expected": "hashes_match"
+        },
+        {
+          "key": "attempt_id",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/attempt_id",
+          "fixture_key": "offline_diagnostic_attempt_id"
+        },
+        {
+          "key": "artifact_hash",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/source_hash",
+          "fixture_key": "offline_diagnostic_result_sha256"
+        },
+        {
+          "key": "execution",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/states/execution",
+          "expected": "failed"
+        },
+        {
+          "key": "completeness",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/log_completeness",
+          "expected": "partial"
+        },
+        {
+          "key": "diagnostic_count",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/diagnostic_count",
+          "expected": 2
+        },
+        {
+          "key": "operational_message",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/diagnostics/0/message",
+          "fixture_key": "offline_operational_message"
+        },
+        {
+          "key": "cleanup_message",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/diagnostics/1/message",
+          "fixture_key": "offline_cleanup_message"
+        },
+        {
+          "key": "component_mapping",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/diagnostics/0/component_mapping",
+          "expected": "unknown"
+        },
+        {
+          "key": "root_cause_verified",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/diagnostics/0/classification/root_cause_verified",
+          "expected": false
+        },
+        {
+          "key": "parser_coverage",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/native_compile_analysis/parser_coverage",
+          "expected": "partial"
+        },
+        {
+          "key": "raw_hash",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/native_compile_analysis/diagnostics/0/source_hash",
+          "fixture_key": "offline_raw_sha256"
+        },
+        {
+          "key": "native_origin_verified",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/native_compile_analysis/native_origin_verified",
+          "expected": false
+        },
+        {
+          "key": "automatic_retry",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/automatic_retry",
+          "expected": false
+        },
+        {
+          "key": "engineering_verdict",
+          "tool": "get_execution_diagnostics",
+          "pointer": "/engineering_verdict",
+          "expected": "not_evaluated"
+        }
+      ],
+      "qualification": "offline supplied evidence/planning only; no native origin, freshness, live binding or engineering qualification"
     },
     {
       "task_id": "EVAL-N06",
-      "title": "Derive an experiment specification",
-      "prompt": "Derive a bounded source-backed experiment specification without inventing engineering criteria or execution authority.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "contract_version": "1.2",
+      "title": "Derive a bounded experiment specification",
+      "prompt": "Read offline_plan_document page 1 and inspect offline_project. Assemble the declared offline_suite_request with the observed inspection snapshot_id and run_experiment_suite mode plan. Preserve exact authored controls, event onset/clear timing, criterion, document/hash/page traceability and sequential plan hash. This evaluates bounded specification assembly from declared inputs, with no execution or invented engineering criterion.",
+      "executable": true,
+      "fixture_source": "authored offline_v1 fixture; supplied records are not native execution",
+      "unsupported_reason": null,
       "expected_final_state": "planned",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "get_manual_page": 1,
+        "inspect_rscad_project": 1,
+        "run_experiment_suite": 1
+      },
+      "max_calls": 4,
+      "evidence_requirements": [
+        {
+          "key": "document_hash",
+          "tool": "get_manual_page",
+          "pointer": "/source_sha256",
+          "fixture_key": "offline_plan_document_sha256"
+        },
+        {
+          "key": "snapshot_id",
+          "tool": "inspect_rscad_project",
+          "pointer": "/snapshot_id"
+        },
+        {
+          "key": "status",
+          "tool": "run_experiment_suite",
+          "pointer": "/status",
+          "expected": "planned"
+        },
+        {
+          "key": "suite_id",
+          "tool": "run_experiment_suite",
+          "pointer": "/suite_id"
+        },
+        {
+          "key": "source_hash",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/source_sha256",
+          "fixture_key": "offline_project_sha256"
+        },
+        {
+          "key": "execution_order",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/execution_order",
+          "expected": "sequential"
+        },
+        {
+          "key": "onset",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/test_spec/runtime_controls/runtime_parameter_writes/0/apply_after_seconds",
+          "expected": 1
+        },
+        {
+          "key": "clear",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/test_spec/runtime_controls/runtime_parameter_writes/1/apply_after_seconds",
+          "expected": 1.5
+        },
+        {
+          "key": "restore",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/test_spec/runtime_controls/runtime_parameter_writes/1/restore_after_capture",
+          "expected": true
+        },
+        {
+          "key": "criterion_upper",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/traceability/0/criterion/upper",
+          "expected": 2
+        },
+        {
+          "key": "document_verified",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/traceability/0/document_hash_and_page_verified",
+          "expected": true
+        },
+        {
+          "key": "interpretation_verified",
+          "tool": "run_experiment_suite",
+          "pointer": "/plan/runs/0/traceability/0/statement_interpretation_verified",
+          "expected": false
+        },
+        {
+          "key": "live_calls",
+          "tool": "run_experiment_suite",
+          "pointer": "/live_calls_made",
+          "expected": false
+        },
+        {
+          "key": "engineering_verdict",
+          "tool": "run_experiment_suite",
+          "pointer": "/engineering_verdict",
+          "expected": "not_evaluated"
+        }
+      ],
+      "qualification": "offline supplied evidence/planning only; no native origin, freshness, live binding or engineering qualification"
     },
     {
       "task_id": "EVAL-N07",
-      "title": "Prepare native capture",
-      "prompt": "Prepare source-bound capture metadata with exact saved graph and live scope limitations.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "contract_version": "1.2",
+      "title": "Prepare native signal capture without execution",
+      "prompt": "Read inactive execution policy, prepare_workflow using exactly offline_project, offline_capture_spec and offline_grounding_paths, then capture_rtds_results with mode prepare_native and that returned workflow_path. Separate saved graph 101, container 100 and Draft reference 1. Report exact source/metadata/plan bindings and unverified live scope; preparation creates neither acquisition data nor an execution grant.",
+      "executable": true,
+      "fixture_source": "authored offline_v1 fixture; supplied records are not native execution",
+      "unsupported_reason": null,
       "expected_final_state": "capture_prepared",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "get_execution_policy": 1,
+        "prepare_workflow": 1,
+        "capture_rtds_results": 1
+      },
+      "max_calls": 4,
+      "evidence_requirements": [
+        {
+          "key": "policy_status",
+          "tool": "get_execution_policy",
+          "pointer": "/status",
+          "expected": "inactive"
+        },
+        {
+          "key": "workflow_path",
+          "tool": "prepare_workflow",
+          "pointer": "/workflow_path"
+        },
+        {
+          "key": "status",
+          "tool": "capture_rtds_results",
+          "pointer": "/status",
+          "expected": "prepared_native_capture_unexecuted"
+        },
+        {
+          "key": "workflow_hash",
+          "tool": "capture_rtds_results",
+          "pointer": "/workflow_sha256"
+        },
+        {
+          "key": "source_hash",
+          "tool": "capture_rtds_results",
+          "pointer": "/input_project_sha256",
+          "fixture_key": "offline_project_sha256"
+        },
+        {
+          "key": "capture_plan_hash",
+          "tool": "capture_rtds_results",
+          "pointer": "/capture_plan_sha256"
+        },
+        {
+          "key": "graph_id",
+          "tool": "capture_rtds_results",
+          "pointer": "/discovery/0/graph_id",
+          "expected": 101
+        },
+        {
+          "key": "container_id",
+          "tool": "capture_rtds_results",
+          "pointer": "/discovery/0/plot_container_id",
+          "expected": 100
+        },
+        {
+          "key": "draft_id",
+          "tool": "capture_rtds_results",
+          "pointer": "/discovery/0/stored_draft_comp_id",
+          "expected": 1
+        },
+        {
+          "key": "metadata_hash",
+          "tool": "capture_rtds_results",
+          "pointer": "/channels/0/metadata_evidence/source_sha256",
+          "fixture_key": "offline_plan_document_sha256"
+        },
+        {
+          "key": "live_target_verified",
+          "tool": "capture_rtds_results",
+          "pointer": "/discovery/0/live_target_verified",
+          "expected": false
+        },
+        {
+          "key": "grant_created",
+          "tool": "capture_rtds_results",
+          "pointer": "/grant_created",
+          "expected": false
+        },
+        {
+          "key": "live_calls",
+          "tool": "capture_rtds_results",
+          "pointer": "/live_calls_made",
+          "expected": false
+        },
+        {
+          "key": "integration_qualified",
+          "tool": "capture_rtds_results",
+          "pointer": "/integration_qualified",
+          "expected": false
+        }
+      ],
+      "qualification": "offline supplied evidence/planning only; no native origin, freshness, live binding or engineering qualification"
     },
     {
       "task_id": "EVAL-N08",
-      "title": "Assess supplied results",
-      "prompt": "Assess supplied samples against explicit requirements while preserving provenance and unqualified engineering meaning.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "contract_version": "1.2",
+      "title": "Assess supplied samples with mixed outcomes",
+      "prompt": "Read offline_sample_source channel voltage over [0,3] seconds (offset 0, limit 10), then evaluate_results with exactly offline_assessment_request. Preserve all three declared criteria: the broad range passes, the narrow range fails and the absent channel remains inconclusive. Report numerical extrema, worst sample, source/specification/assessment hashes and the unqualified engineering verdict; these are supplied samples.",
+      "executable": true,
+      "fixture_source": "authored offline_v1 fixture; supplied records are not native execution",
+      "unsupported_reason": null,
       "expected_final_state": "assessed",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "read_result_samples": 1,
+        "evaluate_results": 1
+      },
+      "max_calls": 3,
+      "evidence_requirements": [
+        {
+          "key": "sample_count",
+          "tool": "read_result_samples",
+          "pointer": "/sample_count",
+          "expected": 4
+        },
+        {
+          "key": "status",
+          "tool": "evaluate_results",
+          "pointer": "/status",
+          "expected": "failed"
+        },
+        {
+          "key": "source_hash",
+          "tool": "evaluate_results",
+          "pointer": "/source/data_sha256",
+          "fixture_key": "offline_samples_sha256"
+        },
+        {
+          "key": "specification_hash",
+          "tool": "evaluate_results",
+          "pointer": "/specification_sha256",
+          "fixture_key": "offline_assessment_spec_sha256"
+        },
+        {
+          "key": "assessment_id",
+          "tool": "evaluate_results",
+          "pointer": "/assessment_id"
+        },
+        {
+          "key": "broad_status",
+          "tool": "evaluate_results",
+          "pointer": "/results/0/status",
+          "expected": "passed"
+        },
+        {
+          "key": "minimum",
+          "tool": "evaluate_results",
+          "pointer": "/results/0/metrics/minimum",
+          "expected": 0
+        },
+        {
+          "key": "maximum",
+          "tool": "evaluate_results",
+          "pointer": "/results/0/metrics/maximum",
+          "expected": 2
+        },
+        {
+          "key": "narrow_status",
+          "tool": "evaluate_results",
+          "pointer": "/results/1/status",
+          "expected": "failed"
+        },
+        {
+          "key": "worst_time",
+          "tool": "evaluate_results",
+          "pointer": "/results/1/worst_sample/time",
+          "expected": 2
+        },
+        {
+          "key": "exceedance",
+          "tool": "evaluate_results",
+          "pointer": "/results/1/worst_sample/bound_exceedance",
+          "expected": 0.5
+        },
+        {
+          "key": "missing_status",
+          "tool": "evaluate_results",
+          "pointer": "/results/2/status",
+          "expected": "inconclusive"
+        },
+        {
+          "key": "missing_reason",
+          "tool": "evaluate_results",
+          "pointer": "/results/2/reasons/0",
+          "expected": "channel_not_found"
+        },
+        {
+          "key": "engineering_verdict",
+          "tool": "evaluate_results",
+          "pointer": "/engineering_verdict",
+          "expected": "not_evaluated"
+        },
+        {
+          "key": "live_calls",
+          "tool": "evaluate_results",
+          "pointer": "/live_calls_made",
+          "expected": false
+        }
+      ],
+      "qualification": "offline supplied evidence/planning only; no native origin, freshness, live binding or engineering qualification"
     },
     {
       "task_id": "EVAL-N09",
@@ -232,16 +925,179 @@
     },
     {
       "task_id": "EVAL-N10",
+      "contract_version": "1.2",
       "title": "Reconstruct a GROUP",
-      "prompt": "Reconstruct a source-derived GROUP with preserved hierarchy, UUID mapping, local readback, save/reopen and cleanup evidence.",
-      "executable": false,
-      "fixture_source": "not yet qualified or authored for model execution",
-      "unsupported_reason": "Unsupported and unexecuted in this checkpoint; a bounded fixture and separate qualification are required.",
+      "prompt": "Reconstruct the declared source GROUP in a genuinely new native case using the fixed clipboard strategy, preserve membership/context and source-observed group-local readback, then save, reopen and locally Compile it. Call eval_native_inspect exactly once with no arguments. Ground the full construction plan in its returned component identities, types, placement, parameters or parameter hashes, wires, groups, settings and definition evidence. Submit eval_native_construct exactly once with request containing precisely task_id, fixture_id, fixture_sha256, source_sha256, snapshot_id and the complete returned plan. Then call eval_native_compile exactly once with request containing task_id, fixture_id, construction_receipt_sha256 from the construction receipt_sha256 and candidate_sha256. Report only observed save/reopen, reconstruction, local Compile artifacts and cleanup evidence. If any step fails, stop; do not retry, call a production Compile tool, create policy, query racks, use Runtime/load-flow/GUI, or claim engineering or general integration qualification.",
+      "executable": true,
+      "fixture_source": "explicit operator-pinned private source-derived native fixture",
+      "unsupported_reason": null,
       "expected_final_state": "group_reconstructed",
-      "required_tool_counts": {},
-      "max_calls": 0,
-      "evidence_requirements": [],
-      "qualification": "no engineering or native qualification inferred"
+      "required_tool_counts": {
+        "eval_native_inspect": 1,
+        "eval_native_construct": 1,
+        "eval_native_compile": 1
+      },
+      "max_calls": 3,
+      "evidence_requirements": [
+        {
+          "key": "manifest_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/fixture_sha256",
+          "fixture_key": "native_manifest_sha256"
+        },
+        {
+          "key": "source_sha256",
+          "tool": "eval_native_inspect",
+          "pointer": "/source_sha256",
+          "fixture_key": "source_sha256"
+        },
+        {
+          "key": "snapshot_id",
+          "tool": "eval_native_inspect",
+          "pointer": "/snapshot_id"
+        },
+        {
+          "key": "strategy",
+          "tool": "eval_native_inspect",
+          "pointer": "/plan/strategy",
+          "fixture_key": "native_strategy"
+        },
+        {
+          "key": "construction_status",
+          "tool": "eval_native_construct",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "candidate_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/candidate_sha256"
+        },
+        {
+          "key": "construction_receipt_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "construction_journal_sha256",
+          "tool": "eval_native_construct",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "component_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/component_count",
+          "fixture_key": "native_component_count"
+        },
+        {
+          "key": "group_count",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/group_count",
+          "fixture_key": "native_group_count"
+        },
+        {
+          "key": "reopened",
+          "tool": "eval_native_construct",
+          "pointer": "/native_evidence/reopened",
+          "expected": true
+        },
+        {
+          "key": "construction_cleanup",
+          "tool": "eval_native_construct",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "same_static_topology",
+          "tool": "eval_native_construct",
+          "pointer": "/reconstruction/same_static_topology",
+          "expected": true
+        },
+        {
+          "key": "compile_status",
+          "tool": "eval_native_compile",
+          "pointer": "/status",
+          "expected": "verified"
+        },
+        {
+          "key": "compile_receipt_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/receipt_sha256"
+        },
+        {
+          "key": "compile_journal_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/native_journal_sha256"
+        },
+        {
+          "key": "compile_returned_true",
+          "tool": "eval_native_compile",
+          "pointer": "/native_evidence/return_value",
+          "expected": true
+        },
+        {
+          "key": "compile_cleanup",
+          "tool": "eval_native_compile",
+          "pointer": "/cleanup_verified",
+          "expected": true
+        },
+        {
+          "key": "artifacts_status",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/status",
+          "expected": "verified"
+        },
+        {
+          "key": "success_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/success_log_sha256"
+        },
+        {
+          "key": "error_log_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_sha256"
+        },
+        {
+          "key": "error_log_empty",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/error_log_empty",
+          "expected": true
+        },
+        {
+          "key": "fresh_artifacts",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/fresh_artifacts",
+          "expected": true
+        },
+        {
+          "key": "binary_sha256",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/sha256"
+        },
+        {
+          "key": "binary_bytes",
+          "tool": "eval_native_compile",
+          "pointer": "/compile_artifacts/matching_binaries/0/bytes"
+        },
+        {
+          "key": "integration_qualified",
+          "tool": "eval_native_compile",
+          "pointer": "/integration_qualified",
+          "expected": false
+        },
+        {
+          "key": "automatic_retry",
+          "tool": "eval_native_compile",
+          "pointer": "/automatic_retry",
+          "expected": false
+        },
+        {
+          "key": "grouped_readback_count",
+          "tool": "eval_native_construct",
+          "pointer": "/native_evidence/grouped_source_readback_count"
+        }
+      ],
+      "qualification": "task/input-scoped native save/reopen and local Compile evidence; source-derived synthesis only; no rack, Runtime, electrical, dynamic, general native or engineering qualification"
     }
   ]
 }

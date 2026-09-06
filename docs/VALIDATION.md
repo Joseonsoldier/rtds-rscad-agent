@@ -1,5 +1,37 @@
 # Public alpha validation
 
+## WP-N11B — remaining no-rack evaluations (2026-09-06/07)
+
+Baseline `837fa06`. All seven remaining tasks have bounded model evidence; this supersedes the earlier unsupported-task list below. Production package bytes, manifest118, legacy nine-task contracts, tool profiles and nine skills are unchanged.
+
+| Check | Actual result |
+| --- | --- |
+| Full software suite | **884 run / 882 passed / 2 existing skips**, zero failures/errors, **575.841 s**, exit 0. |
+| Focused integration | 107 runner/scorer/host/fixture tests passed in 14.467 s; final runner/host/native-metric subset 56 passed in 6.310 s. These overlap the full suite. |
+| Offline N05–08 cohort | Eight planned/dispatched/collected/scored; **7 passed, one N07 citation failure**, 22 paired MCP calls; zero native/Runtime calls. |
+| Clarified N07 protocol | Two planned/dispatched/collected/scored; **2/2 passed**, six paired calls. Exact carrier instruction added; contract and initial failure unchanged. |
+| Local-native cohort | Six planned/dispatched/model-observed/native-observed/collected/scored; **6/6 passed**, 18 paired MCP calls; six reconstruction and six Compile actions. |
+| Independent native audit | **6/6 passed**, 497 unique file hashes; original host bindings, raw receipt/job/journal/MCP links, topology/UUID/RTX preservation and fresh compiler outputs. Audit made no SDK/model/native/socket/process calls. |
+| Independent reconciliation | **16 attempts, 15 passed, one retained failure, 46 paired MCP calls**; final scorer reproduces every original result. All **2,248 inherited and 3,160 accumulated** original/evidence hashes match. |
+| Source/resource gates | Nine skill validators, pip check, manifest118, source scanner233/zero issues and whitespace checks passed. |
+| External wheel | Fresh external venv; installed import/integrity118, nine skills/dry-run/export, synthetic demo, read-only constants CLI and actual STDIO **50/10/30** passed. Checkout import/live RSCAD calls false. |
+
+The two skips remain opt-in installed Codex discovery and unavailable OS symlink privilege; Windows junction tests passed. New tests cover sealed diagnostic data, exact tool sequences, source/config/SDK inventories, changed startup bindings, pending/killed native state, recovery exceptions, raw artifact projection and unknown metrics. Offline integration exercises actual STDIO and fourteen forbidden effects per task. No test-only production bypass is introduced.
+
+| Local source-derived case | Result | Components / GROUPs | Construction / Compile RPCs per trial | Compile durations | Static warnings |
+| --- | --- | --- | --- | --- | --- |
+| Voltage Divider | 2/2 passed | 6 / 0 | 680 / 17 | 0.610, 0.984 s | 1 |
+| CH3 transformer/network | 2/2 passed | 62 / 0; hierarchy preserved | 434 / 17 | 0.953, 0.578 s | 8 |
+| CH5 induction-machine GROUP | 2/2 passed | 77 / 1 | 542 / 17 | 0.844, 0.531 s | 30 |
+
+Every reconstruction verified save/close/reopen, exact stored settings/non-DFX preservation, parsed topology and UUID mapping. GROUP readback stays source-local. Empty Runtime canvas reconciliation is the existing narrow rule, not a populated-RTX exemption. Each Compile used the exact candidate/companions in fresh working storage, returned true, produced success text/empty error logs and matching nonempty build/output binaries. Every native action and model job confirmed its separate cleanup obligations. Static warnings and untested dynamic behavior remain explicit.
+
+The first N07 model cited the correct path from `capture_rtds_results` where the contract required `prepare_workflow`. The original prompt exposed pointers but omitted allowed carriers. Final prompts expose both; no oracle answer or permissive scoring exception was added. The failure and 134-file execution snapshot remain unchanged. The clarified/native protocol has a separate 136-file snapshot. Parsed contracts and independently rescored results are checked after Git newline normalization; this does not imply additional model/native execution.
+
+Tested wheel SHA-256: `28fe970f7e87b126ce206858ac3dfbdd28c2bb1f9b0577086cb9797b56ba93d5`. The unchanged production package and updated README metadata ship in the wheel; development tools/tests/contracts ship in the source distribution. Final delivery compares all118 source/wheel/sdist manifest entries and final docs/tests/tools/evaluation files, checks Twine/excluded artifacts, and revalidates protected hashes and staged bytes. The tested wheel stays unchanged when the sdist is refreshed with final documentation.
+
+No rack query/reservation/connection, Runtime execution/control/acquisition, LF or GUI automation occurred. N05 is authored failure evidence, N06 specification, N07 unexecuted preparation and N08 supplied-sample assessment. Native trials qualify only these local reconstruction/Compile cases; public native apply, general reliability, populated Runtime, simulator timing and electrical/dynamic acceptance remain unverified. Python RPC/sockets were constrained; Java background networking was not independently measured. Raw sources, transcripts, failed records and frozen implementations stay private in ignored `.validation/eval-remaining-20260906`.
+
 ## WP-N11A — actual Codex/MCP authored-fixture cohort (2026-09-06)
 
 Baseline `f5e2d36`. The development runner is separate from the unchanged nine-task benchmark. Root integrated two isolated Astra worktrees and independent review, then executed a predeclared six-attempt cohort. All source fixtures were newly authored; no vendor model/manual/SDK or active operator configuration was supplied to the evaluated model. Raw receipts remain private in ignored `.validation/model-evals-20260906`.

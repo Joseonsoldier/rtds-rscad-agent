@@ -46,6 +46,16 @@ class Recorder:
         self.journal = trace.open("x", encoding="utf-8", buffering=1)
         self.hashes = {**self.meta["original_hashes"], "original_hashes.json": digest(Path(self.meta["manifest"]))}
         self.owned_workflows = {}
+        self.task_state = {}
+        self.offline_task = self.meta.get("evaluation_task_id")
+        self.allowed_tools = ALLOWED_TOOLS
+        self.max_calls = 32
+        if self.offline_task:
+            from eval_offline_cases import TASKS
+            task = next(task for task in TASKS if task["task_id"] == self.offline_task)
+            self.allowed_tools = frozenset(task["required_tool_counts"])
+            self.max_calls = task["max_calls"]
+        self.protection_failed = False
         self.counter = 0
         self.lock = asyncio.Lock()
 
@@ -59,7 +69,8 @@ class Recorder:
             if path.is_symlink() or path.is_junction():
                 raise PermissionError("Evaluation fixture contains a link")
         actual = {p.relative_to(self.root).as_posix() for p in self.root.rglob("*") if p.is_file()
-                  and not p.is_relative_to(self.root / "data")}
+                  and (not p.is_relative_to(self.root / "data")
+                       or p.relative_to(self.root).as_posix() in self.meta.get("offline_bootstrap_hashes", {}))}
         if actual != set(self.hashes):
             raise PermissionError("Protected fixture file inventory changed")
         for relative, expected in self.hashes.items():
@@ -110,11 +121,13 @@ class Recorder:
             self.write({**base, "event": "started"})
             dispatched, is_error, unchanged = False, False, False
             try:
+                if self.protection_failed:
+                    raise PermissionError("An earlier protection failure stopped this evaluation session")
                 self.verify()
                 unchanged = True
-                if name not in ALLOWED_TOOLS or name not in functions:
+                if name not in self.allowed_tools or name not in functions:
                     raise PermissionError("Tool is not exposed by the evaluation allowlist")
-                if self.counter > 80 or len(json.dumps(arguments)) > 65536:
+                if self.counter > self.max_calls or len(json.dumps(arguments)) > 65536:
                     raise ValueError("Evaluation call budget exceeded")
                 if not isinstance(arguments, dict):
                     raise ValueError("Tool arguments must be an object")
@@ -127,7 +140,10 @@ class Recorder:
                         self.check_path(arguments[key])
                 for path in arguments.get("grounding_paths", []):
                     self.check_path(path)
-                if name == "prepare_workflow":
+                if self.offline_task:
+                    from eval_offline_cases import validate_call
+                    validate_call(self.offline_task, name, arguments, self.meta, self.task_state)
+                elif name == "prepare_workflow":
                     if (arguments.get("source_project") != self.meta["project"]
                         or arguments.get("test_spec") != self.meta["test_spec"]
                         or arguments.get("grounding_paths") != self.meta["grounding_paths"]):
@@ -140,6 +156,9 @@ class Recorder:
                         raise PermissionError("Evaluation requires inactive policy")
                 dispatched = True
                 result = functions[name](**arguments)
+                if self.offline_task:
+                    from eval_offline_cases import observe_call
+                    observe_call(self.offline_task, name, arguments, result, self.meta, self.task_state)
                 if name == "compile_project":
                     raise AssertionError("Inactive Compile unexpectedly returned without rejection")
                 if name == "prepare_workflow":
@@ -153,6 +172,8 @@ class Recorder:
             except Exception as exc:
                 unchanged, is_error = False, True
                 result = {"error_type": type(exc).__name__, "message": str(exc)}
+            if not unchanged:
+                self.protection_failed = True
             completed = {**base, "event": "completed", "is_error": is_error, "result": result,
                          "dispatched": dispatched, "protected_unchanged": unchanged}
             self.write(completed)
@@ -168,6 +189,9 @@ def build_server(recorder: Recorder):
     execution.RscadFxRuntimeDriver = no_native
     functions = {name: getattr(module, name) for module in (api_discovery, capabilities, execution, project_tools)
                  for name in ALLOWED_TOOLS if hasattr(module, name)}
+    if recorder.offline_task:
+        from eval_offline_cases import functions as offline_functions
+        functions = {name: function for name, function in offline_functions().items() if name in recorder.allowed_tools}
 
     class EvaluationServer(MCPServer):
         async def call_tool(self, name, arguments, context=None):
@@ -191,6 +215,10 @@ def install_process_guard(recorder: Recorder):
     repo = Path(__file__).resolve().parents[1]
     allowed_read = [recorder.root, repo / "src", repo / "tools",
                     Path(sys.prefix).resolve(), Path(sys.base_prefix).resolve()]
+    protected = {recorder.root / relative for relative in recorder.hashes}
+
+    def protected_target(path, *, directory=False):
+        return path in protected or (directory and any(p.is_relative_to(path) for p in protected))
 
     def audit(event, args):
         if event == "import" and (args[0] == "rtds" or args[0].startswith("rtds.")):
@@ -207,7 +235,7 @@ def install_process_guard(recorder: Recorder):
             if event == "open":
                 mode, flags = args[1], args[2]
                 writing = (isinstance(mode, str) and any(x in mode for x in "wax+")) or bool(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC))
-                if writing and not resolved.is_relative_to(recorder.root / "data"):
+                if writing and (not resolved.is_relative_to(recorder.root / "data") or protected_target(resolved)):
                     raise PermissionError("Evaluation guard permits writes only inside fixture data")
         if event in {"os.remove", "os.rmdir", "os.mkdir", "os.rename", "os.link", "os.symlink", "os.chmod", "os.utime"}:
             paths = args[:2] if event in {"os.rename", "os.link", "os.symlink"} else args[:1]
@@ -215,6 +243,12 @@ def install_process_guard(recorder: Recorder):
                 raise PermissionError("Evaluation guard prohibits creating links")
             if any(not Path(os.fsdecode(path)).absolute().resolve().is_relative_to(recorder.root / "data") for path in paths):
                 raise PermissionError("Evaluation guard permits writes only inside fixture data")
+            for path in paths:
+                target = Path(os.fsdecode(path)).absolute().resolve()
+                if event == "os.mkdir" and target.is_dir():
+                    continue
+                if protected_target(target, directory=True):
+                    raise PermissionError("Evaluation guard prohibits changing sealed fixture evidence")
     sys.addaudithook(audit)
 
 

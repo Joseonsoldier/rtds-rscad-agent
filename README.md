@@ -1,6 +1,6 @@
 # RTDS/RSCAD Agent
 
-WP-N11 adds an explicit [Codex/MCP evaluation runner](docs/MODEL_EVALUATION.md) for authored API discovery, project inspection and inactive-policy rejection. It pairs host/server tool records and scores exact evidence; seven further model tasks remain unexecuted. The original nine benchmark contracts and production tool profiles are unchanged.
+WP-N11 adds an explicit [Codex/MCP evaluation runner](docs/MODEL_EVALUATION.md) with ten bounded task contracts. Seven use authored offline inputs for discovery, inspection, diagnosis, planning, capture preparation, supplied-result analysis and policy rejection. Three require an explicit operator-bound suite for local API reconstruction and Compile of divider, transformer/network and GROUP models. The runner pairs host/server records, verifies original and artifact hashes, separates process/native cleanup and retains failed or unknown outcomes. Rack and Runtime execution remain excluded. The original nine benchmark contracts and production tool profiles are unchanged.
 
 WP-N10 adds [line input inspection, numeric preview and supplied constants comparison](docs/LINE_AUTHORING.md) through the read-only `lines` CLI. The observed three-phase scalar TLI profile preserves all unrequested bytes and requires fresh constants output after edits. `lines verify` checks supplied TLI/TLO numerical agreement; a bound generation record does not prove freshness or native execution. Cable/general authoring and public generator/Draft Compile integration remain unqualified.
 

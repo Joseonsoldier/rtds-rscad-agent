@@ -74,7 +74,7 @@ class ModelEvaluationTests(unittest.TestCase):
         task = self.tasks[f"EVAL-N{number:02d}"]
         return task, synthetic_trace(task)
 
-    def test_ten_ordered_tasks_only_three_executable(self):
+    def test_ten_ordered_tasks_match_supported_contracts(self):
         self.assertEqual(list(self.tasks), [f"EVAL-N{i:02d}" for i in range(1, 11)])
         self.assertEqual({key for key, task in self.tasks.items() if task["executable"]}, metrics.EXECUTABLE)
 
@@ -90,16 +90,13 @@ class ModelEvaluationTests(unittest.TestCase):
                 for key in ("compile_success", "edit_success", "diagnostic_correctness", "repeated_run_variance"):
                     self.assertIsNone(result["metrics"][key])
 
-    def test_unsupported_tasks_cannot_be_successes(self):
-        for number in (3, 4, 5, 6, 7, 8, 10):
-            task, trace = self.case(number)
-            result = metrics.score(task, trace)
-            self.assertEqual(result["status"], "unsupported")
-            self.assertTrue(all(value is None for value in result["metrics"].values()))
+    def test_executable_contract_cannot_be_silently_disabled(self):
+        for number in range(1, 11):
+            task = self.tasks[f"EVAL-N{number:02d}"]
             edited = deepcopy(task)
-            edited["executable"] = True
+            edited["executable"] = False
             with self.assertRaises(ValueError):
-                metrics.score(edited, trace)
+                metrics._validate_task(edited)
 
     def test_required_evidence_is_exact_value_not_presence(self):
         for key, value in (("signature", "invented()"), ("sdk_sha256", "c" * 64), ("unknown_status", "found")):
@@ -400,8 +397,11 @@ class ModelEvaluationTests(unittest.TestCase):
             self.assertTrue(all(g["metrics"]["repeated_run_variance"] is None for g in groups))
 
     def test_unsupported_aggregation_and_duplicate_attempt_rejection(self):
-        task, trace = self.case(3)
+        task, trace = self.case(1)
         unsupported = metrics.score(task, trace)
+        # Historical supplied unsupported reports remain aggregatable even
+        # after all current task contracts gain qualified fixture lanes.
+        unsupported.update(status="unsupported", metrics=dict.fromkeys(metrics.METRICS))
         summary = metrics.summarize([unsupported])[0]
         self.assertEqual(summary["scored_eligible_attempts"], 0)
         self.assertNotIn("executed_attempts", summary)
