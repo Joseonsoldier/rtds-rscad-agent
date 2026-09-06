@@ -1,11 +1,12 @@
 # Line and cable authoring scope
 
-WP-N10 implements a read-only parser and source-preserving numeric preview for `tline_rlc_3phase_ohmic_v1`. No public companion writer, constants generator, Draft builder or automatic Compile is added.
+WP-N10 implements a read-only parser, source-preserving numeric preview and supplied constants comparison for `tline_rlc_3phase_ohmic_v1`. No public companion writer, constants generator, Draft builder or automatic Compile is added.
 
 ```text
 rtds-agent lines list
 rtds-agent lines inspect ABS_TLI --sha256 SHA
 rtds-agent lines preview ABS_REQUEST_JSON
+rtds-agent lines verify ABS_CONSTANTS_REQUEST_JSON
 ```
 
 The profile requires the exact observed three-block scalar `.tli` structure, `Data Entry Format = 0`, and `Number of Phases = 3`. Eight editable quantities are length in km, frequency in Hz, positive/zero sequence resistance and inductive reactance in ohm/km, and positive/zero sequence **shunt capacitive reactance** in megaohm*km. The saved key says `Series Cap Reactance`; its spelling does not establish series topology. All eight values must be positive in this narrow profile; the six RLC constraints match the inspected editor validators and are not universal physical restrictions.
@@ -20,6 +21,12 @@ Input is bounded at 64 KiB/1,024 lines, JSON at 400,000 bytes/100,000 characters
 
 ## Installed discovery and generation boundary
 
+`lines verify` follows [the constants request schema](../src/rtds_agent/schemas/line_constants_request.schema.json): `schema_version: "1.0"`, `profile_id`, exact `input` and `output` objects containing absolute `path` and `sha256`, `generation_receipt: null` or a path/hash reference, and `provenance` references including both exact input/output identities. It reads existing `.tli/.tlo` bytes, applies 24 numerical checks, and exits zero only for `consistent`; `inconsistent`, `inconclusive` and invalid requests exit one. Detailed input/output inspections, parser reasons and raw spans are retained separately from the file references.
+
+The bounded TLO profile accepts one nine-field header and exactly three nine-field modal rows. The supported unbound subsystem/node placeholders are not verified Draft connectivity. Header frequency/length comparisons preserve explicit binary64 conversion details without rounding observed output. Modal time, impedance and both resistance columns use source-observed equations with a fixed relative `1e-12` numerical allowance and no absolute floor; transformation entries are exact. That allowance covers numerical comparison, not engineering acceptance. Ground resistivity effects and simulator time-step suitability remain unevaluated.
+
+An optional [generation receipt](../src/rtds_agent/schemas/line_generation_receipt.schema.json) binds the exact input/output/profile, generator artifact hashes and execution event file hash. Its status and process restrictions are supplied declarations: even a complete record never authenticates native origin, freshness or actual execution. `claims_verified`, `freshness_verified`, `generator_execution_verified`, `integration_qualified` and execution authority remain false. Historical algorithm discovery hashes are labeled separately from the references actually revalidated by this invocation. All request, receipt, artifact, event, input/output, settings and implementation bytes are checked again before return.
+
 Manuals distinguish `.tli/.cli` inputs from `.tlo/.clo` outputs consumed during Draft Compile. Current scalar RLC paths call internal Java `TLRLCData.generateTLO` / `CERLCData3or6Phase.generateCLO` and skip the external line solver. An executable or binary usage string therefore does not qualify scalar generation. Inspected external-solver wrappers have file/directory side effects and delegate the command vector to a helper outside this investigation's scope.
 
 No dedicated authoring method was found in the inspected 24 Python SDK modules and API HTML; this is bounded negative evidence, not proof of all API absence. Cable labels identify R/X in ohm/km and capacitive reactance in megaohm*km when its unit selector is metric; the complete CLI unit-selection path and safe generator invocation remain unqualified. A travel-time inequality conflicts with adjacent manual prose, so no normative time-step check was invented.
@@ -29,3 +36,9 @@ The remaining workflow is: explicit electrical specification → supported input
 The installed-file trial changed three fields in a private scalar copy, confirmed that undoing those numeric spans reconstructed the original bytes, saved it through a private harness, and re-read it through the public parser. Three actual unsupported inputs were refused. This was file-level roundtrip verification: no RSCAD open/save, constants generation, Compile, GUI, rack, Runtime or LF operation occurred. Public preview wrote zero files. See [implementation status](IMPLEMENTATION_STATUS.md) and [validation evidence](VALIDATION.md).
 
 Existing MCP inputs/counts (50 full / 10 core / 30 engineering), nine skills, Python/dependencies, inactive policy, protection, grants and Runtime restoration/cleanup remain unchanged. Vendor sources, extracted documents, bytecode, candidates and trial evidence stay private and excluded from distribution.
+
+## Local constants checkpoint: WP-N10B
+
+Two private installed Java API trials now generated fresh three-phase metric scalar TLO output, each passing eight numeric readbacks and 24 numerical checks. The original baseline failure, caused by denied standard AWT shutdown-hook registration, remains recorded separately. The reviewed helper permits that registration, keeps Java-level network/process/outside-output-write restrictions and an owned-child timeout, and still initializes AWT resources despite headless mode. This qualifies only the recorded installed helper/input subset; no public generator is shipped.
+
+CH2 native API setters support the comma-separated cache fields `LENGTH`, `ZM`, `TM`, `R`, `TI` plus `tlb`. Saved `Tnam1` is enumerable: its API value must be observed on the exact unchanged owned case and pinned separately from raw `TLINE#`; never guess the expanded string. Actual isolated edit/readback/save succeeded, but save added `.inf2` and changed the nonempty RTX. The preservation gate therefore refused reopen/Compile. Original files and companions remained unchanged and cleanup was confirmed. Existing empty-Runtime reconciliation does not apply to this case. Lossless save/reopen, Draft Compile and engineering acceptance remain unqualified; see the precise [results](VALIDATION.md).

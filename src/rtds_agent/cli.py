@@ -33,7 +33,7 @@ def main(argv=None) -> int:
     ds.add_parser('list', help='List bounded observed parser formats and taxonomy')
     corpus = ds.add_parser('corpus', help='Check an existing source-bound parser corpus without writing')
     corpus.add_argument('manifest')
-    lines = sub.add_parser('lines', help='Inspect or preview observed line input files; no solver or writes')
+    lines = sub.add_parser('lines', help='Inspect, preview or compare supplied line files; no solver or writes')
     ls = lines.add_subparsers(dest='action', required=True)
     ls.add_parser('list', help='List bounded input profiles and unresolved authoring steps')
     line_inspect = ls.add_parser('inspect', help='Inspect one explicitly hashed input')
@@ -42,6 +42,8 @@ def main(argv=None) -> int:
     line_inspect.add_argument('--profile', default='tline_rlc_3phase_ohmic_v1')
     line_preview = ls.add_parser('preview', help='Preview an existing source-bound request without writing a candidate')
     line_preview.add_argument('request')
+    line_verify = ls.add_parser('verify', help='Compare supplied input/output and optional generation record; no execution proof')
+    line_verify.add_argument('request')
     mcp = sub.add_parser("mcp")
     mcp.add_argument("action", choices=["serve"])
     mcp.add_argument("--profile", choices=["core", "engineering", "full"], default="full")
@@ -199,6 +201,11 @@ def main(argv=None) -> int:
                 result = inspect_line_authoring_input(args.source, args.sha256, args.profile)
                 _print(result)
                 return 0 if result['status'] == 'supported' else 1
+            elif args.action == 'verify':
+                from .line_constants import inspect_line_constants
+                result = inspect_line_constants(args.request)
+                _print(result)
+                return 0 if result['status'] == 'consistent' else 1
             else:
                 from .line_authoring import preview_line_authoring_request
                 _print(preview_line_authoring_request(args.request))

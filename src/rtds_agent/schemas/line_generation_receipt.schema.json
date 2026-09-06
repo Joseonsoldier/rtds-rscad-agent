@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rtds-agent.local/schemas/line_generation_receipt.schema.json",
+  "title": "Supplied scalar line generation record, not authenticated execution",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "attempt_id", "profile_id", "status", "input", "output", "generator", "execution"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "attempt_id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$"},
+    "profile_id": {"const": "tline_rlc_3phase_ohmic_v1"},
+    "status": {"const": "completed"},
+    "input": {"$ref": "#/$defs/file"},
+    "output": {"$ref": "#/$defs/file"},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "entrypoint", "artifacts"],
+      "properties": {
+        "kind": {"enum": ["installed_java_api", "synthetic_authored"]},
+        "entrypoint": {"const": "v5applications.tlineedit.datamodel.TLRLCData.generateTLO"},
+        "artifacts": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"$ref": "#/$defs/file"}}
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["exit_code", "fresh_output_directory", "network_denied", "child_processes_denied", "writes_restricted", "events"],
+      "properties": {
+        "exit_code": {"const": 0},
+        "fresh_output_directory": {"const": true},
+        "network_denied": {"const": true},
+        "child_processes_denied": {"const": true},
+        "writes_restricted": {"const": true},
+        "events": {"$ref": "#/$defs/file"}
+      }
+    }
+  },
+  "$defs": {
+    "file": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {
+      "path": {"type": "string", "minLength": 1, "maxLength": 4000},
+      "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }}
+  }
+}

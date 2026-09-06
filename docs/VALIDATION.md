@@ -1,5 +1,29 @@
 # Public alpha validation
 
+## WP-N10B — scalar constants and native preservation gate (2026-09-06)
+
+Baseline `1b30131`. Integrated parallel Astra source discovery, pure parser/comparator work, boundary tests and independent reviews. Review fixed lost parser evidence, historical/current source-label conflation, exact-buffer input/output binding in the private generator and optimized-Python refusal. Native helper review also moved recovery-marker creation before fallible evidence hashing; an extracted-function mock confirmed an unclosed modified case plus a missing companion still records failure and both recovery markers. No native action occurred in that mock.
+
+Full regression: **657 run, 655 passed, 2 existing skips, no failures/errors, 313.752 s**, exit 0. Skips remain opt-in installed Codex discovery and missing OS symlink privilege; Windows junction tests passed. Focused core17 passed in 0.032 s; independently focused boundary12 passed in 32.068 s. Actual STDIO **full50/core10/engineering30**, all nine skill validators, pip check, source scan204, manifest116 and `git diff --check` passed. A fresh external venv installed the wheel with constrained dependencies and passed installed import/integrity116, nine skill discovery/export, synthetic demo, new `lines verify` 24-check fixture and actual STDIO. No source-checkout import or live RSCAD call occurred in wheel qualification.
+
+Private native results (separate from software tests):
+
+| Attempt | Actual result | Scope and cleanup |
+| --- | --- | --- |
+| Initial scalar Java baseline | Failed before output; 45 s timeout | AWT shutdown-hook registration denied; exact owned child killed/waited, 1,802 protected hashes unchanged. |
+| Reviewed scalar baseline | Exit 0, 2.594 s; eight numeric readbacks and 24/24 output checks | Fresh output SHA `51c5ac5518d63497c785ea3db8ce07ad86c8301be0f7ca0467d0e5a8ffeb0fb6`; 1,809 protected hashes unchanged. |
+| Changed scalar candidate | Exit 0, 2.609 s; eight numeric readbacks and 24/24 output checks | Input SHA `12a87c530136bfbbd58a45c3b62d4ff1f61bda6e7a928f2b6ad0582f8ba79100`; fresh output SHA `a0a718b576d65b0567472f769f80927dbc13d2425e3850c5207a5ebfc3e23390`; 1,809 protected hashes unchanged. |
+| CH2 initial binding | Refused before any edit/save/Compile | Stored enumerable `TLINE#` differed from unrecorded API return; copy/source identical, close/disconnect verified, 1,805 protected hashes unchanged. |
+| CH2 reviewed binding | Both endpoint edits/readbacks and one save; preservation check failed | 93/93 allowed RPCs. `.inf2` added, nonempty `.rtx` rewritten; no reopen/Compile. Close/disconnect verified, 1,812 protected hashes unchanged. |
+
+Installed JDK source confirmed that denied hook registration interrupted AWT initialization before its completion notification. Reviewed helper permits ordinary registration while retaining Java API-level network/process/delete/outside-output-write/guard-replacement denials and a 45 s owned-process bound. Native AWT initialization still occurs despite headless mode. Standard deprecation and compiler-path discovery warnings were observed; no external compiler/solver was invoked by these generator attempts. This task-scoped installed Java API is not a supported public SDK authoring contract or an OS-level isolation certification.
+
+The public CLI re-read both actual generated pairs and supplied receipts: 24/24 consistent, zero writes, `claims_verified=false`, `freshness_verified=false`. Changed input with baseline output returned inconsistent with 10 failed checks and exit 1. Actual generation evidence does not change the public reader's deliberately nonauthoritative record semantics.
+
+The native saved CH2 container added `acsys1.inf2`, changed DFX from 25,926 to 26,212 bytes and changed RTX from 18,142 to 18,048 bytes. RTX changes include `RSCAD 2.2`→`2.7`, canvas dimensions and removed GROUP records. No attempt was made to restore/normalize nonempty Runtime or accept those changes as equivalent. That candidate remains private failed preservation evidence; **zero Compile calls**, no rack RPC, Runtime execution/control, GUI automation or LF. RSCAD reported `2.7`; independent Java background networking was not measured. General native line integration and electrical adequacy remain unqualified.
+
+Tested wheel SHA-256: `62bf84ced6ad44a679b842953ecb7184deed273a9b55deecbb34d5788cbf435c`. The exact tested wheel is retained while sdist is refreshed with these measured documentation results. Final gates compare all116 source/wheel/sdist manifest entries, final documentation/tests/tools, **1,872 protected hashes**, staged Git bytes, Twine and excluded-artifact scanning. Private artifacts remain under ignored `.validation/line-generation-20260906`.
+
 ## WP-N10 — observed scalar input preview (2026-09-06)
 
 Baseline `c89e03a`. Parallel Astra discovery and pure parser/schema work were integrated with source-bound readers and additive CLI/capabilities. Independent review fixed lossy decimal literals at the JSON boundary and required integer selector lexemes consistent with the installed parser. Exact numeric spans, current evidence and unsupported cases are retained without engineering or execution authority.

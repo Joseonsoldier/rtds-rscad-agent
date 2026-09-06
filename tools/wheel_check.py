@@ -96,6 +96,49 @@ print(json.dumps({"import_path_in_venv": loaded.relative_to(installation).as_pos
                                                    str(root / "exported-skills")], json_output=True)
         if exported.get("status") != "exported" or len(exported.get("skills", [])) != 9:
             raise RuntimeError("Installed skill export is incomplete")
+        # Authored fixture exercises the new CLI through the installed package.
+        line_data = root / "data"
+        line_data.mkdir(exist_ok=True)
+        tli = line_data / "authored.tli"
+        tlo = line_data / "authored.tlo"
+        tli.write_text('''Line Summary:
+{
+Line Length = 10
+Steady State Frequency = 50
+}
+Line Constants Ground Data:
+{
+GroundResistivity = 100
+}
+RLC Options:
+{
+Data Entry Format = 0
+Positive Sequence Series Resistance = 0.1
+Positive Sequence Series Ind Reactance = 0.25
+Positive Sequence Series Cap Reactance = 0.16
+Zero Sequence Series Resistance = 0.4
+Zero Sequence Series Ind Reactance = 1
+Zero Sequence Series Cap Reactance = 1
+Number of Phases = 3
+}
+''', encoding="ascii")
+        tlo.write_text('''! Authored fixture; no native generation
+3 0 1 1 50 50 10000 1e-9 1e-9 /
+1 1 0.03183098861837907 1000 .0004 .0004 .5773503 .8164967 0.0
+2 2 0.039788735772973836 200 .0001 .0001 .5773503 -.4082483 .7071068
+3 3 0.039788735772973836 200 .0001 .0001 .5773503 -.4082483 -.7071068
+''', encoding="ascii")
+        references = [{"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in (tli, tlo)]
+        line_request = line_data / "constants.json"
+        line_request.write_text(json.dumps({"schema_version": "1.0", "profile_id": "tline_rlc_3phase_ohmic_v1",
+            "input": references[0], "output": references[1], "generation_receipt": None,
+            "provenance": [{"source_path": r["path"], "source_sha256": r["sha256"], "locator": "Authored fixture"}
+                           for r in references]}), encoding="utf-8")
+        constants = run("installed read-only line constants CLI", ["-m", "rtds_agent", "lines", "verify", str(line_request)], json_output=True)
+        if (constants.get("status") != "consistent" or len(constants.get("checks", [])) != 24
+                or constants.get("freshness_verified") is not False or constants.get("files_written") != 0
+                or constants.get("live_calls_made") is not False):
+            raise RuntimeError("Installed constants check did not preserve numerical-only scope")
         smoke = root / "mcp_smoke.py"
         shutil.copyfile(ROOT / "tools" / "mcp_smoke.py", smoke)
         transport = run("installed real STDIO public contract", [str(smoke)], json_output=True, timeout=120)
