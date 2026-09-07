@@ -23,6 +23,7 @@ from typing import Any, Mapping
 from .runtime_binding import bind_live_control
 from .state_machine import sha256_file
 from .native_acquisition import MODE as NATIVE_MODE, NativeAcquisition, native_channels, discover_saved_signals
+from .live_lifecycle import claim_case, assert_owned_case, close_owned_case, observe_state, require_absent_case
 
 
 class RuntimeContractError(RuntimeError):
@@ -852,6 +853,7 @@ class RscadFxRuntimeDriver:
         }
         app = None
         case = None
+        owned_case_id = None
         signal_handles: dict[str, Any] = {}
         meter_handles: dict[str, Any] = {}
         plot_handles: dict[str, Any] = {}
@@ -892,13 +894,11 @@ class RscadFxRuntimeDriver:
                 raise RuntimeContractError(
                     f"selected rack {rack} is no longer available"
                 )
-            existing = app.get_case(file=str(working_copy), open_file=False)
-            if existing is not None:
-                raise RuntimeContractError(
-                    "working copy is already open; refusing to reuse it"
-                )
+            require_absent_case(app, working_copy)
             case = app.open_case(str(working_copy))
             result["opened_file"] = str(case.file)
+            owned_case_id = claim_case(case, working_copy)
+            result["owned_case_id"] = owned_case_id
             if _normalized(case.file) != _normalized(working_copy):
                 raise RuntimeContractError(
                     f"RSCAD opened unexpected file: {case.file}"
@@ -963,6 +963,7 @@ class RscadFxRuntimeDriver:
                     result["runtime_controls"].setdefault("bindings",[]).append(binding)
 
             def apply_action(action: dict[str, Any]) -> None:
+                assert_owned_case(app, case, working_copy, owned_case_id)
                 handle, binding = bind_live_control(case,working_copy,binding_sha256,action)
                 attribute = action["attribute"]
                 before = getattr(handle, attribute)
@@ -1008,10 +1009,12 @@ class RscadFxRuntimeDriver:
                 if action["phase"] == "before_run":
                     apply_action(action)
 
+            assert_owned_case(app, case, working_copy, owned_case_id)
             execution["run_call_attempted"] = True
             run_value = case.run()
             execution["run_return_value"] = repr(run_value)
-            execution["run_state_after_start"] = str(case.state.run_state)
+            execution["start_state_observations"] = observe_state(case, "running", self.sleeper)
+            execution["run_state_after_start"] = execution["start_state_observations"][-1]
             execution["run_started"] = (
                 execution["run_state_after_start"].lower() == "running"
             )
@@ -1111,6 +1114,7 @@ class RscadFxRuntimeDriver:
                 ):
                     try:
                         object_uuid, attribute = key
+                        assert_owned_case(app, case, working_copy, owned_case_id)
                         identity = next(a for a in writes if a["object_uuid"]==object_uuid and a["attribute"]==attribute)
                         handle, _ = bind_live_control(case,working_copy,binding_sha256,identity)
                         setattr(handle, attribute, original_value)
@@ -1148,9 +1152,11 @@ class RscadFxRuntimeDriver:
             if case is not None and execution["run_call_attempted"]:
                 execution["stop_call_attempted"] = True
                 try:
+                    assert_owned_case(app, case, working_copy, owned_case_id)
                     stop_value = case.stop()
                     execution["stop_return_value"] = repr(stop_value)
-                    execution["run_state_after_stop"] = str(case.state.run_state)
+                    execution["stop_state_observations"] = observe_state(case, "stopped", self.sleeper)
+                    execution["run_state_after_stop"] = execution["stop_state_observations"][-1]
                     execution["stop_succeeded"] = (
                         execution["run_state_after_stop"].lower() == "stopped"
                     )
@@ -1170,12 +1176,12 @@ class RscadFxRuntimeDriver:
             if case is not None:
                 result["cleanup"]["case_close_attempted"] = True
                 try:
-                    case.close(force=True)
+                    result["cleanup"]["case_close_evidence"] = close_owned_case(app, case, working_copy, owned_case_id)
                     result["cleanup"]["case_closed"] = True
                 except Exception as exc:
                     result["cleanup_errors"].append(
                         {
-                            "operation": "case.close(force=True)",
+                            "operation": "close_owned_case(force=False)",
                             "type": type(exc).__name__,
                             "message": str(exc),
                         }

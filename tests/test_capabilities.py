@@ -25,6 +25,7 @@ class RSCADFX:
     def get_version(self): pass
     def open_case(self, file): pass
     def get_case(self, file, open_file=True): pass
+    def _get_case_named(self, file, open_file): pass
     def get_available_racks(self): pass
 class Rack:
     def __init__(self, num):
@@ -39,6 +40,8 @@ class Rack:
 class State:
     @ConnectedProperty(True, False)
     def run_state(self) -> str: pass
+    @ConnectedProperty(True, False)
+    def modified(self) -> str: pass
 ''',
             "case_settings.py": "class CaseSettings:\n    def starting_rack(self) -> int: pass\n",
             "component.py": '''class Component:

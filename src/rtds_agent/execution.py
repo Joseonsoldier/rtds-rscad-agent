@@ -172,6 +172,110 @@ def _backend(policy: dict, workflow: Workflow, runtime: bool) -> ProductionRscad
     return ProductionRscadBackend(config, runtime_driver=RscadFxRuntimeDriver(config) if runtime else None, runtime_enabled=runtime)
 
 
+def _recovery_file(path: Path) -> Path:
+    """Recovery writes use the entry settings, never paths returned by a driver."""
+    for item in (path, *path.parents):
+        if item.is_symlink() or item.is_junction():
+            raise ToolSafetyError("Linked native recovery path refused")
+    if path.is_file() and path.stat().st_nlink != 1:
+        raise ToolSafetyError("Hard-linked native recovery path refused")
+    return path
+
+
+def _publish_native_recovery(settings, workflow_path, attempt_path, attempt):
+    """Preserve a permanent local barrier; only operator recovery can clear it.
+
+    This protects exactly settings.data_dir. A caller using private settings
+    alongside a different operator directory must coordinate that directory
+    separately; ambient configuration is never used to choose recovery paths.
+    """
+    target = _recovery_file(settings.data_dir / "native_recovery_required.json")
+    if not target.exists():
+        evidence = {key: attempt[key] for key in (
+            "attempt_id", "workflow_id", "action", "phase", "execution", "cleanup",
+            "stop", "restoration", "input_hashes", "result_ref", "error_type",
+            "native_cleanup_verified", "native_cleanup_evidence", "native_settings_sha256") if key in attempt}
+        _write(target, {"schema_version": "1.0", "status": "operator_recovery_required",
+            "created_at": now_iso(), "settings_sha256": sha256_json(settings.as_dict()),
+            "workflow_path": str(workflow_path), "attempt_path": str(attempt_path),
+            "dispatch_intent_sha256": sha256_file(_recovery_file(attempt_path)),
+            "reason": "Native execution may have occurred and cleanup is not confirmed",
+            "evidence": evidence, "automatic_retry": False, "automatic_clear": False,
+            "scope": "this settings data directory; separate operator coordination remains caller-owned"}, exclusive=True)
+    return {"path": str(target), "sha256": sha256_file(target)}
+
+
+def _guard_pending_native_attempts(settings):
+    """Fail closed even when a killed process could not publish its final barrier."""
+    root = _recovery_file(settings.projects_root)
+    if not root.exists():
+        return
+    for number, folder in enumerate(root.iterdir()):
+        if number >= 10000:
+            raise ToolSafetyError("Native recovery attempt inventory exceeds bound")
+        _recovery_file(folder)
+        if not folder.is_dir():
+            continue
+        for action in (ApprovalAction.COMPILE.value, ApprovalAction.RUNTIME.value):
+            path = _recovery_file(folder / (action + ".attempt.json"))
+            if not path.is_file():
+                continue
+            attempt = read_json(path)
+            if attempt.get("native_dispatch_pending") is True or attempt.get("native_recovery_required") is True:
+                _publish_native_recovery(settings, folder / "workflow.json", path, attempt)
+                raise PermissionError("A prior native attempt has unconfirmed cleanup; no new workflow dispatch")
+
+
+def _native_cleanup_state(evidence, *, runtime, controls, native_capture):
+    """Interpret lifecycle evidence independently of task/sample success."""
+    if not isinstance(evidence, dict):
+        return None, {"reason": "No bound native result evidence"}
+    driver = evidence.get("driver", evidence)
+    if not isinstance(driver, dict):
+        return None, {"reason": "Invalid native driver evidence"}
+    cleanup = evidence.get("cleanup", driver.get("cleanup"))
+    if not isinstance(cleanup, dict):
+        cleanup = {key: driver[key] for key in ("case_closed", "disconnected") if key in driver}
+    errors = evidence.get("cleanup_errors", driver.get("cleanup_errors", []))
+    details = {"case_cleanup": cleanup, "cleanup_errors": errors}
+    closed = cleanup.get("case_closed") is True and cleanup.get("disconnected") is True
+    execution = evidence.get("execution", driver.get("execution", {}))
+    # An explicit driver no-dispatch receipt may prove no resources were opened.
+    no_native = (driver.get("native_calls_made") is False
+        and driver.get("connection_attempted") is False
+        and driver.get("connected") is False and not errors
+        and driver.get("compile_called") is not True
+        and driver.get("run_call_attempted") is not True
+        and isinstance(execution, dict) and execution.get("run_call_attempted") is not True)
+    if no_native:
+        details["native_dispatch"] = "not_started"
+        return True, details
+    if not closed or errors:
+        details["reason"] = "Case closure/disconnection is missing, failed or uncertain"
+        return None, details
+    if not runtime:
+        return True, details
+    if not isinstance(execution, dict):
+        return None, {**details, "reason": "Runtime execution state is missing"}
+    not_started = execution.get("run_call_attempted") is False
+    stopped = execution.get("stop_succeeded") is True and str(execution.get("run_state_after_stop", "")).lower() == "stopped"
+    details["runtime_stop"] = "not_required" if not_started else "confirmed" if stopped else "unconfirmed"
+    control = driver.get("runtime_controls", {})
+    safety = driver.get("safety", evidence.get("safety", {}))
+    restored = not controls or (isinstance(control, dict) and control.get("all_restored") is True)
+    if controls and isinstance(safety, dict) and safety.get("runtime_parameter_write_called") is False:
+        restored = True
+    details["controls_restored"] = restored
+    acquisition = evidence.get("native_acquisition", driver.get("acquisition"))
+    acquisition_closed = not native_capture
+    if isinstance(acquisition, dict):
+        acquisition_closed = acquisition.get("dispatch_stopped") is True and acquisition.get("resources_closed") is True
+    elif native_capture and not_started and driver.get("connected") is False:
+        acquisition_closed = True
+    details["acquisition_closed"] = acquisition_closed
+    return (True if (not_started or stopped) and restored and acquisition_closed else None), details
+
+
 def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None, expected_workflow_sha256=None, expected_policy_sha256=None) -> dict[str, Any]:
     settings = get_settings()
     # Policy gate precedes even API inspection, backend construction and rack queries.
@@ -179,6 +283,7 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
     with execution_lock(settings):
         if (settings.data_dir / "native_recovery_required.json").exists():
             raise PermissionError("Unverified native case cleanup blocks live execution; inspect the exact native journal before operator recovery")
+        _guard_pending_native_attempts(settings)
         path, workflow = _load_workflow(workflow_path)
         from .core.execution_requirements import require_executable_spec
         require_executable_spec(workflow.manifest['test_spec'])
@@ -210,12 +315,21 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
         _write(marker, attempt, exclusive=True)
         primary_error = None
         result = None
+        native_pending = False
+        native_cleanup_verified = None
+        cleanup_source = None
         try:
             backend = (backend_factory or _backend)(policy, workflow, runtime)
             attempt["phase"] = "orchestrator_init"
             orchestrator = ApprovalGatedOrchestrator(workflow, backend)
             attempt["phase"] = "execution"
             attempt["execution"] = "unknown"
+            if isinstance(backend, ProductionRscadBackend) and action in (ApprovalAction.COMPILE, ApprovalAction.RUNTIME):
+                attempt.update(native_dispatch_pending=True, native_recovery_required=False,
+                    native_settings_sha256=sha256_json(settings.as_dict()), native_cleanup_verified=None)
+                # Persist before rack discovery, which itself opens an SDK connection.
+                _write(marker, attempt)
+                native_pending = True
             if runtime and plan['runtime_capture'].get('acquisition_mode')=='native_signal_arrays':
                 result=orchestrator.execute_runtime(acquisition_context={'run_id':attempt['workflow_id'],'attempt_id':attempt['attempt_id']})
             else:
@@ -237,6 +351,11 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
                     raise ToolSafetyError("Result changed before attempt cleanup recording")
                 cleanup_source = read_json(artifact)
                 attempt["result_ref"] = ref
+            if native_pending:
+                native_cleanup_verified, details = _native_cleanup_state(cleanup_source, runtime=runtime,
+                    controls=bool(plan and plan["runtime_controls"]["runtime_parameter_writes"]),
+                    native_capture=bool(plan and plan["runtime_capture"].get("acquisition_mode") == "native_signal_arrays"))
+                attempt.update(native_cleanup_verified=native_cleanup_verified, native_cleanup_evidence=details)
             if "cleanup" not in cleanup_source and isinstance(cleanup_source.get("driver"), dict):
                 cleanup_source = cleanup_source["driver"]
             cleanup = cleanup_source.get("cleanup")
@@ -266,6 +385,18 @@ def _execute(workflow_path: str, action: ApprovalAction, *, backend_factory=None
         finally:
             attempt["workflow_state"] = workflow.state.value
             attempt["at"] = now_iso()
+            if native_pending:
+                attempt["native_dispatch_pending"] = native_cleanup_verified is not True
+                attempt["native_recovery_required"] = native_cleanup_verified is not True
+                if native_cleanup_verified is not True:
+                    try:
+                        attempt["recovery_marker"] = _publish_native_recovery(settings, path, marker, attempt)
+                    except Exception as exc:
+                        attempt["recovery_persistence_error_type"] = type(exc).__name__
+                        if primary_error is None:
+                            primary_error = exc
+                        else:
+                            primary_error.add_note("Native recovery barrier persistence also failed: " + type(exc).__name__)
             try:
                 _save_workflow(path, workflow)
             except Exception as exc:

@@ -20,6 +20,10 @@ Writes additionally require the exact live `object_subpage`. Current case/hash, 
 
 ## Normal cleanup and failure
 
+Public Compile and Runtime verify the remotely observed case ID and exact file before dispatch and cleanup. They close only a stopped, unmodified owned case with `force=False`, require a successful close return, then confirm absence through a direct remote lookup. A cached lookup or suppressed SDK exception cannot establish absence. Compile refuses an unsaved change to the starting rack; prepare a separately verified copy already assigned to the selected rack.
+
+Public native execution persists its dispatch intent before rack discovery. Unconfirmed stop, restoration, close or disconnect creates `native_recovery_required.json` and blocks subsequent workflows. A pending attempt also blocks execution after process interruption, even if the process could not write its final marker. These records protect the configured data directory; a task using a separate private configuration must also coordinate with the operator's actual data directory. They never clear themselves.
+
 The driver attempts restoration, stop, case close and disconnect in its cleanup path and records each result. Do not assume a Python exception or a killed process stopped the simulator. Never use an unverified waveform image as a pass/fail result.
 
 An exclusive local execution lock serializes runs. A process killed unexpectedly can leave `execution.lock` and an `in_progress` attempt file. These files deliberately block reuse. A completed or attempted workflow is not silently retried; prepare a new working copy after reviewing the failure.

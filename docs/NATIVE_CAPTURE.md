@@ -1,5 +1,7 @@
 # Native signal acquisition — WP-N04
 
+The [2026-09-07 rack checkpoint](RACK_QUALIFICATION.md) exercised actual array reads through the older capture driver, with successful stop/close but a failed compiled-artifact integrity check. It did not qualify this opt-in transaction: the installed examples' unnamed graphs and duplicate saved container IDs still fail its discovery contract. Those checks remain unchanged.
+
 The opt-in `native_signal_arrays` mode implements a bounded SDK array session inside the existing Runtime execution path. Software integration is tested with authored SDK doubles. This checkpoint performs no real connection, Compile, Runtime, rack query, load flow or GUI operation. Installed source inspection establishes an API surface, not live qualification.
 
 ## Prepare and acquire

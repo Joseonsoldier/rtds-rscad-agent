@@ -60,8 +60,8 @@ class Settings:
             protected.extend(self.rscad_home / name for name in ("BIN", "DOC", "MLIB", "Examples", "python", "FIRMWARE", "HDWR", "SECURITY"))
         if any(within(self.data_dir, p) or within(p, self.data_dir) for p in protected):
             raise ConfigurationError("Data directory must not overlap code, source, document or vendor directories")
-        if self.expected_rscad_version != "2.7.3":
-            raise ConfigurationError("This alpha supports RSCAD FX 2.7.3 only")
+        if self.expected_rscad_version not in {"2.7.3", "2.7"}:
+            raise ConfigurationError("Supported exact RSCAD API version strings are 2.7.3 and explicitly configured 2.7")
         if self.vector_store_id and not self.vector_store_id.startswith("vs_"):
             raise ConfigurationError("vector_store_id must start with vs_")
         return self

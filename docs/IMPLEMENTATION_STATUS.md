@@ -1,5 +1,13 @@
 # Implementation status
 
+## Rack qualification and lifecycle hardening (2026-09-07)
+
+Baseline `501ec77`. The owner authorized available-rack use and confirmed physical I/O isolation; rack 1 was the sole available target. Public Compile passed twice on fresh CH7 copies. One pre-run attempt was refused by a missing task-wrapper `getSignal` allowlist entry; its failure was retained and a reviewed fresh protocol performed one actual Runtime start, captured 12,000 voltage samples, stopped and confirmed non-forced owned-case close/disconnect. **Overall Runtime qualification failed:** three bytes in the compiled artifact changed while source, working model and companions stayed unchanged. Hash checking and the failed outcome remain intact. See [full observed evidence and remaining work](RACK_QUALIFICATION.md).
+
+Implemented: exact `2.7` API-string opt-in with `2.7.3` default retained; direct remote case ownership/absence checks; stopped, unmodified, non-forced and confirmed closure; bounded startup/stop observation; saved-rack matching; durable public native intent and cross-workflow recovery barriers. No public tool/schema was added, and the model-evaluation no-rack lane remains unchanged. Full software regression: **907 run, 905 passed, 2 existing skips**, zero failures/errors. The installed static SDK audit passed 30 checks; fresh-wheel STDIO profiles remain 50/10/30 and nine skills.
+
+Pending: compiled initialization-byte semantics and a passing end-to-end integrity result, native-capture/control qualification for ambiguous saved Runtime layouts, model-native scheduler, live LF and engineering acceptance. All 167 installed examples were inspected without loosening duplicate/name checks. Failed-workflow CSV conversion/metrics were exercised as explicitly supplied data, with `not_evaluated` engineering verdict. Conservative task recovery markers remain for operator review; actual stop/close/disconnect are independently confirmed and both policies are inactive.
+
 ## WP-N11B — remaining evaluations without a rack (2026-09-06/07)
 
 Baseline `837fa06`. The remaining seven task contracts are implemented and have actual model/tool evidence in their bounded no-rack scope. This supersedes the earlier WP-N11A unsupported-task list below. Three isolated Astra workers supplied offline fixtures/scoring, native reconstruction/contracts and independent host/fixture review. The root integrated their changes and serialized every real RSCAD action.

@@ -143,8 +143,10 @@ class FakeLiveCase:
 
     def __init__(self, file: str, *, initial_state: str='stopped', stop_fails: bool=False, signal_fails: bool=False, loadflow_fails: bool=False, runtime_objects: dict[int, FakeRuntimeInput] | None=None) -> None:
         self.file = file
+        self.caseid = 123
+        self.closed = False
         self.settings = type('Settings', (), {'starting_rack': 1})()
-        self.state = type('State', (), {'run_state': initial_state})()
+        self.state = type('State', (), {'run_state': initial_state, 'modified': False})()
         self.stop_fails = stop_fails
         self.signal_fails = signal_fails
         self.loadflow_fails = loadflow_fails
@@ -182,8 +184,12 @@ class FakeLiveCase:
         self.state.run_state = 'stopped'
         return None
 
-    def close(self, *, force: bool) -> None:
+    def close(self, *, force: bool) -> bool:
+        if force:
+            raise AssertionError('Forced close is forbidden')
         self.close_calls += 1
+        self.closed = True
+        return True
 
 class FakeRack:
 
@@ -194,6 +200,7 @@ class FakeLiveApp:
 
     def __init__(self, case: FakeLiveCase) -> None:
         self.case = case
+        self.opened = False
         self.connect_calls = 0
         self.disconnect_calls = 0
 
@@ -209,7 +216,12 @@ class FakeLiveApp:
     def get_case(self, *, file: str, open_file: bool) -> None:
         return None
 
+    def _get_case_named(self, file: str, open_file: bool):
+        assert open_file is False
+        return -1 if self.case.closed or not self.opened else self.case.caseid
+
     def open_case(self, file: str) -> FakeLiveCase:
+        self.opened = True
         return self.case
 
     def disconnect(self, *, terminate: bool) -> None:
@@ -472,7 +484,8 @@ class RscadFxRuntimeDriverTests(unittest.TestCase):
         result, app = self._capture(case)
         self.assertFalse(result['execution']['stop_succeeded'])
         self.assertTrue(result['cleanup_errors'])
-        self.assertTrue(result['cleanup']['case_closed'])
+        self.assertFalse(result['cleanup']['case_closed'])
+        self.assertEqual(case.close_calls, 0)
         self.assertTrue(result['cleanup']['disconnected'])
         self.assertEqual(app.disconnect_calls, 1)
 
@@ -482,7 +495,7 @@ class RscadFxRuntimeDriverTests(unittest.TestCase):
         self.assertTrue(result['errors'])
         self.assertEqual(case.run_calls, 0)
         self.assertEqual(case.stop_calls, 0)
-        self.assertEqual(case.close_calls, 1)
+        self.assertEqual(case.close_calls, 0)
         self.assertEqual(app.disconnect_calls, 1)
 
 class ProductionRuntimeBackendTests(unittest.TestCase):

@@ -26,6 +26,7 @@ from rtds_agent.core.companion_dependencies import (
     verify_declared_inputs,
 )
 from rtds_agent.core.state_machine import sha256_file, sha256_json
+from rtds_agent.core.live_lifecycle import claim_case, assert_owned_case, close_owned_case, require_absent_case
 from rtds_agent.core.runtime_backend import (
     RuntimeContractError,
     validate_runtime_test_spec,
@@ -246,6 +247,7 @@ class RscadFxCompileDriver:
         }
         app = None
         case = None
+        owned_case_id = None
         try:
             app = self._new_connection()
             with redirect_stdout(StringIO()), redirect_stderr(StringIO()):
@@ -263,13 +265,13 @@ class RscadFxCompileDriver:
                 raise BackendSafetyViolation(
                     f"selected rack {rack} is no longer available"
                 )
-            existing = app.get_case(file=str(working), open_file=False)
-            if existing is not None:
-                raise BackendSafetyViolation(
-                    "working copy is already open; refusing to reuse it"
-                )
+            require_absent_case(app, working)
             case = app.open_case(str(working))
             result["opened_file"] = str(case.file)
+            owned_case_id = claim_case(case, working)
+            result["owned_case_id"] = owned_case_id
+            if str(case.state.run_state).lower() != "stopped" or case.state.modified is not False:
+                raise BackendSafetyViolation("Compile requires a stopped, unmodified owned copy")
             if normalized(case.file) != normalized(working):
                 raise BackendSafetyViolation(
                     f"RSCAD opened unexpected file: {case.file}"
@@ -277,12 +279,14 @@ class RscadFxCompileDriver:
             before_rack = int(case.settings.starting_rack)
             result["starting_rack_before"] = before_rack
             if before_rack != rack:
-                case.settings.starting_rack = rack
-                result["starting_rack_changed_in_memory"] = True
+                raise BackendSafetyViolation(
+                    "saved starting rack differs from selected rack; prepare a verified isolated copy for that rack"
+                )
             if int(case.settings.starting_rack) != rack:
                 raise BackendSafetyViolation(
                     "case starting_rack does not match selected rack"
                 )
+            assert_owned_case(app, case, working, owned_case_id)
             result["compile_called"] = True
             compile_value = case.compile()
             result["compile_return_value"] = repr(compile_value)
@@ -296,11 +300,11 @@ class RscadFxCompileDriver:
         finally:
             if case is not None:
                 try:
-                    case.close(force=True)
+                    result["case_close_evidence"] = close_owned_case(app, case, working, owned_case_id)
                     result["case_closed"] = True
                 except Exception as exc:
                     result["cleanup_errors"].append({
-                        "operation": "case.close(force=True)",
+                        "operation": "close_owned_case(force=False)",
                         "type": type(exc).__name__,
                         "message": str(exc),
                     })

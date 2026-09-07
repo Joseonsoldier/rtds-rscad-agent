@@ -139,7 +139,8 @@ def inspect_runtime_api_surface(
     texts: dict[str, str] = {}
     binding = HERE / "runtime_binding.py"
     acquisition = HERE / "native_acquisition.py"
-    for name, path in {**sources, "adapter": adapter, "binding": binding, "acquisition": acquisition}.items():
+    lifecycle = HERE / "live_lifecycle.py"
+    for name, path in {**sources, "adapter": adapter, "binding": binding, "acquisition": acquisition, "lifecycle": lifecycle}.items():
         parsed[name], texts[name] = _parse(path)
 
     application = _class(parsed["application"], "RSCADFX")
@@ -165,6 +166,7 @@ def inspect_runtime_api_surface(
         "get_version": _function_info(_function(application, "get_version")),
         "open_case": _function_info(_function(application, "open_case")),
         "get_case": _function_info(_function(application, "get_case")),
+        "get_case_named": _function_info(_function(application, "_get_case_named")),
         "get_available_racks": _function_info(
             _function(application, "get_available_racks")
         ),
@@ -174,6 +176,7 @@ def inspect_runtime_api_surface(
         "case_update_plots": _function_info(_function(case, "update_plots")),
         "case_get_signal": _function_info(_function(case, "get_signal")),
         "state_run_state": _function_info(_function(state, "run_state")),
+        "state_modified": _function_info(_function(state, "modified")),
         "settings_starting_rack": _function_info(
             _function(settings, "starting_rack")
         ),
@@ -195,7 +198,7 @@ def inspect_runtime_api_surface(
         "app.connect()",
         "app.get_version()",
         "app.get_available_racks()",
-        "app.get_case(file=str(working_copy), open_file=False)",
+        "require_absent_case(app, working_copy)",
         "app.open_case(str(working_copy))",
         "case.get_signal(",
         "case.run()",
@@ -203,7 +206,7 @@ def inspect_runtime_api_surface(
         "handle.get_time_data()",
         "handle.get_data()",
         "case.stop()",
-        "case.close(force=True)",
+        "close_owned_case(app, case, working_copy, owned_case_id)",
         "app.disconnect(terminate=False)",
         'setattr(handle, attribute, action["value"])',
         "setattr(handle, attribute, original_value)",
@@ -218,6 +221,12 @@ def inspect_runtime_api_surface(
         "rack.security",
     )
     checks = {
+        "owned_case_cleanup_reads_remote_identity_and_state": (
+            methods['get_case_named']['arguments'] == ['self', 'file', 'open_file']
+            and 'ConnectedProperty(True, False)' in methods['state_modified']['decorators']
+            and all(token in texts['lifecycle'] for token in ('case.close(force=False)',
+                'app._get_case_named(str(working_copy), False)', 'case.state.modified is not False',
+                'returned is not True', 'claim_case(case, working_copy) != identity'))),
         "native_acquisition_uses_bound_array_reads": all(token in texts['acquisition'] for token in
             ('bind_live_control(', 'self.case.get_signal(', 'handle.get_time_data()', 'handle.get_data()', 'handle.parent is not self.case.runtime')),
         "native_acquisition_has_no_connection_or_runtime_dispatch": not any(token in texts['acquisition'] for token in
@@ -310,6 +319,7 @@ def inspect_runtime_api_surface(
         "source_files": {name: _ref(path) for name, path in sources.items()},
         "binding_source": _ref(binding),
         "acquisition_source": _ref(acquisition),
+        "lifecycle_source": _ref(lifecycle),
         "adapter": {
             **_ref(adapter),
             "required_fragment_count": len(required_adapter_fragments),

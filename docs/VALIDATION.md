@@ -1,5 +1,22 @@
 # Public alpha validation
 
+## Rack qualification checkpoint (2026-09-07)
+
+Baseline `501ec77`; [live results and limitations](RACK_QUALIFICATION.md). Software gates pass, but live Runtime integrity qualification fails and must not be reported as success.
+
+| Check | Actual result |
+| --- | --- |
+| Full suite | **907 run / 905 passed / 2 existing skips**, no failures/errors, **350.091 s**, exit 0. |
+| New recovery tests | 12 passed, plus 10 existing execution failure tests; included in the full suite. |
+| Lifecycle/ownership tests | Nine new tests and two added write/restore identity-change tests; included in the full suite. Other focused runs: Runtime76, native-acquisition28, capabilities13 and final binding12 passed. Counts overlap. |
+| Installed static SDK | 30 checks passed; API 1.1, no SDK import during inspection. |
+| Actual local/rack actions | Rack inventory and stopped-copy discovery passed; two public Compiles passed; one pre-run refusal retained; one actual start/capture/stop with confirmed close/disconnect. |
+| Actual Runtime verdict | Failed compiled-artifact integrity: three changed bytes, 12,000 captured rows retained, source/model/companions unchanged. No hash exception. |
+| Numerical processing | Stale workflow conversion refused; exact failed-run CSV converted as supplied data, three channel quality checks valid, extrema assessment `not_evaluated`. |
+| Release/wheel | Manifest119, source scan236 with zero issues, pip check and Twine passed. Fresh external wheel import/integrity119, nine skills, synthetic demo and STDIO50/10/30 passed; no live calls. |
+
+The tested wheel SHA-256 is `7d6bc8ab0adfa43bd80e5e3e79430e7e9f7be0ec8f6c60618fb7d8d4b46dd47b`. A nonisolated build first failed because the development environment lacked the setuptools backend; the standard isolated build succeeded. Final documentation is refreshed in the sdist without changing the tested wheel/code. Git-byte checks and final source/distribution scans follow documentation completion. Raw records and failed attempts remain in ignored `.validation/rack-qualification-20260907`.
+
 ## WP-N11B — remaining no-rack evaluations (2026-09-06/07)
 
 Baseline `837fa06`. All seven remaining tasks have bounded model evidence; this supersedes the earlier unsupported-task list below. Production package bytes, manifest118, legacy nine-task contracts, tool profiles and nine skills are unchanged.

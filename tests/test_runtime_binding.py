@@ -88,6 +88,42 @@ class RuntimeBindingTests(unittest.TestCase):
         self.assertTrue(any('restore_runtime_input' in e['operation'] for e in result['cleanup_errors']))
         self.assertEqual(self.case.stop_calls,1);self.assertEqual(app.disconnect_calls,1)
 
+    def test_changed_remote_case_blocks_restore_and_stop(self):
+        app=fixture.FakeLiveApp(self.case)
+        driver=fixture.InjectedRuntimeDriver(self.config,app)
+        original=app._get_case_named
+        def replace_case():
+            app._get_case_named=lambda file,open_file: 999
+        self.case.update_plots=replace_case
+        result=driver.capture_case(working_copy=self.path,rack=1,
+            channels=fixture.runtime_spec()['measurement_channels'],warmup_seconds=0,
+            runtime_parameter_writes=[self.action])
+        self.assertEqual(result['runtime_controls']['applied'],1)
+        self.assertEqual(result['runtime_controls']['restored'],0)
+        self.assertEqual(self.control.position,self.action['value'])
+        self.assertEqual(self.case.stop_calls,0)
+        self.assertEqual(self.case.close_calls,0)
+        self.assertTrue(result['cleanup_errors'])
+        self.assertEqual(app.disconnect_calls,1)
+
+    def test_remote_case_change_before_write_never_changes_control(self):
+        app=fixture.FakeLiveApp(self.case)
+        driver=fixture.InjectedRuntimeDriver(self.config,app)
+        original_run=self.case.run
+        def replace_after_start():
+            original_run()
+            app._get_case_named=lambda file,open_file: 999
+        self.case.run=replace_after_start
+        result=driver.capture_case(working_copy=self.path,rack=1,
+            channels=fixture.runtime_spec()['measurement_channels'],warmup_seconds=0,
+            runtime_parameter_writes=[self.action])
+        self.assertEqual(result['runtime_controls']['applied'],0)
+        self.assertEqual(self.control.position,1)
+        self.assertFalse(result['safety']['runtime_parameter_write_called'])
+        self.assertEqual(self.case.stop_calls,0)
+        self.assertEqual(self.case.close_calls,0)
+        self.assertTrue(result['cleanup_errors'])
+
     def test_missing_subpage_contract_rejected_before_connection(self):
         self.action.pop('object_subpage')
         result,app=self.capture()
